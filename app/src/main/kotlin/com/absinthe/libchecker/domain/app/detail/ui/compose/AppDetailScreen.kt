@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import com.absinthe.libchecker.domain.app.detail.model.SignatureDetailItem
 import com.absinthe.libchecker.domain.app.detail.model.MODE_SORT_BY_SIZE
@@ -142,6 +143,7 @@ fun AppDetailScreen(
 
   var query by rememberSaveable { mutableStateOf("") }
   var searchExpanded by rememberSaveable { mutableStateOf(false) }
+  var selectedProcess by remember { mutableStateOf<String?>(null) }
   var sortBySize by rememberSaveable {
     mutableStateOf(GlobalValues.libSortMode == MODE_SORT_BY_SIZE)
   }
@@ -225,16 +227,17 @@ fun AppDetailScreen(
   }
 
   val isLoadingItems = rawItems == null
-  val filteredItems = remember(rawItems, query) {
+  val filteredItems = remember(rawItems, query, selectedProcess) {
     rawItems?.let { list ->
-      if (query.isBlank()) {
-        list
-      } else {
-        list.filter { chip ->
+      list.filter { chip ->
+        val processMatches = selectedProcess == null ||
+          chip.item.process == null ||
+          chip.item.process == selectedProcess
+        val queryMatches = query.isBlank() ||
           chip.item.name.contains(query, ignoreCase = true) ||
-            chip.rule?.label?.contains(query, ignoreCase = true) == true ||
-            chip.labels.any { it.contains(query, ignoreCase = true) }
-        }
+          chip.rule?.label?.contains(query, ignoreCase = true) == true ||
+          chip.labels.any { it.contains(query, ignoreCase = true) }
+        processMatches && queryMatches
       }
     } ?: emptyList()
   }
@@ -605,6 +608,32 @@ fun AppDetailScreen(
           tabs.getOrNull(index)?.let(viewModel::loadSoAnalysisData)
         }
       )
+    }
+
+    val processColors = viewModel.contentState.processesMap
+    if (processColors.isNotEmpty() && (GlobalValues.processMode || processColors.size > 1)) {
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .horizontalScroll(rememberScrollState())
+          .padding(horizontal = 12.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+      ) {
+        ProcessChip(
+          label = stringResource(R.string.process_all),
+          color = 0,
+          selected = selectedProcess == null,
+          onClick = { selectedProcess = null }
+        )
+        processColors.forEach { (process, color) ->
+          ProcessChip(
+            label = process,
+            color = color,
+            selected = selectedProcess == process,
+            onClick = { selectedProcess = process }
+          )
+        }
+      }
     }
 
     Box(Modifier.weight(1f)) {
@@ -1071,6 +1100,41 @@ private fun SheetInfoBlock(label: String, value: String) {
       text = value,
       fontSize = 13.sp,
       color = MiuixTheme.colorScheme.onSurface
+    )
+  }
+}
+
+@Composable
+private fun ProcessChip(
+  label: String,
+  color: Int,
+  selected: Boolean,
+  onClick: () -> Unit
+) {
+  val colorScheme = MiuixTheme.colorScheme
+  Row(
+    modifier = Modifier
+      .squircleBackground(
+        if (selected) colorScheme.primaryContainer else colorScheme.surfaceContainerHigh,
+        14.dp
+      )
+      .clickable(onClick = onClick)
+      .padding(horizontal = 10.dp, vertical = 5.dp),
+    verticalAlignment = Alignment.CenterVertically
+  ) {
+    if (color != 0) {
+      Box(
+        modifier = Modifier
+          .padding(end = 6.dp)
+          .size(8.dp)
+          .squircleBackground(Color(color), 4.dp)
+      )
+    }
+    Text(
+      text = label,
+      fontSize = 12.sp,
+      fontWeight = FontWeight(550),
+      color = if (selected) colorScheme.onPrimaryContainer else colorScheme.onSurface
     )
   }
 }
