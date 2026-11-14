@@ -4,44 +4,40 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.compose.runtime.Composable
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.absinthe.libchecker.database.backup.RoomBackup
 import com.absinthe.libchecker.domain.home.ui.MainActivity
 import com.absinthe.libchecker.domain.snapshot.album.ui.compose.AlbumScreen
-import com.absinthe.libchecker.domain.snapshot.backup.ui.SnapshotBackupBottomSheetDialogFragment
+import com.absinthe.libchecker.domain.snapshot.backup.presentation.SnapshotBackupViewModel
 import com.absinthe.libchecker.domain.snapshot.backup.ui.SnapshotRoomBackupOwner
+import com.absinthe.libchecker.domain.snapshot.backup.ui.compose.SnapshotBackupSheet
 import com.absinthe.libchecker.domain.snapshot.comparison.ui.ComparisonActivity
 import com.absinthe.libchecker.domain.snapshot.list.presentation.SnapshotViewModel
 import com.absinthe.libchecker.domain.snapshot.track.ui.TrackActivity
 import com.absinthe.libchecker.ui.base.BaseComposeActivity
 import com.absinthe.libchecker.utils.extensions.addBackStateHandler
-import com.absinthe.libchecker.database.backup.RoomBackup
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import timber.log.Timber
 
 class AlbumActivity : BaseComposeActivity(), SnapshotRoomBackupOwner {
 
   private val viewModel: SnapshotViewModel by viewModel()
+  private val backupViewModel: SnapshotBackupViewModel by viewModel()
   override val snapshotRoomBackup = RoomBackup(this)
-  private var pendingRestoreUri: Uri? = null
-  private val fragmentLifecycleCallbacks =
-    object : FragmentManager.FragmentLifecycleCallbacks() {
-      override fun onFragmentDetached(fragmentManager: FragmentManager, fragment: Fragment) {
-        if (fragment is SnapshotBackupBottomSheetDialogFragment) {
-          window.decorView.post(::dispatchPendingRestoreUri)
-        }
-      }
-    }
+
+  private var showBackupSheet by mutableStateOf(false)
+  private var pendingRestoreUri by mutableStateOf<Uri?>(null)
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    supportFragmentManager.registerFragmentLifecycleCallbacks(fragmentLifecycleCallbacks, false)
     if (
       savedInstanceState == null &&
       intent?.action == Intent.ACTION_VIEW &&
       intent?.data != null
     ) {
-      showBackupBottomSheet(intent.data)
+      pendingRestoreUri = intent.data
+      showBackupSheet = true
     }
     onBackPressedDispatcher.addBackStateHandler(
       lifecycleOwner = this,
@@ -64,48 +60,7 @@ class AlbumActivity : BaseComposeActivity(), SnapshotRoomBackupOwner {
     }
     val restoreUri = intent.data ?: return
     pendingRestoreUri = restoreUri
-    dispatchPendingRestoreUri()
-  }
-
-  override fun onResumeFragments() {
-    super.onResumeFragments()
-    dispatchPendingRestoreUri()
-  }
-
-  override fun onDestroy() {
-    supportFragmentManager.unregisterFragmentLifecycleCallbacks(fragmentLifecycleCallbacks)
-    super.onDestroy()
-  }
-
-  private fun dispatchPendingRestoreUri() {
-    val restoreUri = pendingRestoreUri ?: return
-    if (supportFragmentManager.isStateSaved) {
-      return
-    }
-    val tag = SnapshotBackupBottomSheetDialogFragment::class.java.name
-    val currentSheet =
-      supportFragmentManager.findFragmentByTag(tag) as? SnapshotBackupBottomSheetDialogFragment
-    if (currentSheet?.isRemoving == true) {
-      return
-    }
-    if (currentSheet != null) {
-      currentSheet.restoreFromLaunchUri(restoreUri)
-      pendingRestoreUri = null
-    } else if (showBackupBottomSheet(restoreUri)) {
-      pendingRestoreUri = null
-    }
-  }
-
-  private fun showBackupBottomSheet(restoreUri: Uri? = null): Boolean {
-    val tag = SnapshotBackupBottomSheetDialogFragment::class.java.name
-    if (supportFragmentManager.findFragmentByTag(tag) != null) {
-      return false
-    }
-    return runCatching {
-      SnapshotBackupBottomSheetDialogFragment
-        .newInstance(restoreUri)
-        .showNow(supportFragmentManager, tag)
-    }.onFailure(Timber::e).isSuccess
+    showBackupSheet = true
   }
 
   @Composable
@@ -119,7 +74,18 @@ class AlbumActivity : BaseComposeActivity(), SnapshotRoomBackupOwner {
       onOpenTrack = {
         startActivity(Intent(this, TrackActivity::class.java))
       },
-      onOpenBackup = { showBackupBottomSheet() }
+      onOpenBackup = { showBackupSheet = true }
+    )
+
+    SnapshotBackupSheet(
+      show = showBackupSheet,
+      viewModel = backupViewModel,
+      roomBackup = snapshotRoomBackup,
+      initialRestoreUri = pendingRestoreUri,
+      onDismiss = {
+        showBackupSheet = false
+        pendingRestoreUri = null
+      }
     )
   }
 }
