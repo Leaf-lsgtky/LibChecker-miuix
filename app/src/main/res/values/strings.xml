@@ -469,4 +469,5 @@
   <string name="adv_app_appearance_preview">Preview appearance</string>
   <string name="app_icon_layers">App icon layers</string>
   <string name="lib_detail_compare_with_installed">Compare with the installed app</string>
+  <string name="app_info_launch_self_hint">But why…</string>
 </resources>

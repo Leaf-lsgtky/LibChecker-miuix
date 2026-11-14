@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import com.absinthe.libchecker.R
 import com.absinthe.libchecker.domain.app.detail.model.AppInfoActionItem
+import com.absinthe.libchecker.domain.app.detail.action.AppInfoLaunchAction
 import com.absinthe.libchecker.domain.app.detail.model.AppInfoBottomSheetState
 import com.absinthe.libchecker.domain.app.detail.model.externalActions
 import com.absinthe.libchecker.domain.app.detail.model.launcherActivityCopyText
@@ -113,33 +114,47 @@ fun AppInfoSheet(
     }
   }
 
+  suspend fun loadAlternatives() {
+    alternatives = runCatching { viewModel.getAlternativeLaunchItems(packageName) }
+      .getOrNull()
+      .orEmpty()
+  }
+
   fun launchApp() {
-    val intent = context.packageManager.getLaunchIntentForPackage(packageName)
-    if (intent == null) {
-      context.showToast(R.string.toast_cant_open_app)
-      scope.launch {
-        alternatives = runCatching { viewModel.getAlternativeLaunchItems(packageName) }
-          .getOrNull()
-          .orEmpty()
-      }
-      return
-    }
-    runCatching { context.startActivity(intent) }
-      .onFailure {
-        context.showToast(R.string.toast_cant_open_app)
-        scope.launch {
-          alternatives = runCatching { viewModel.getAlternativeLaunchItems(packageName) }
-            .getOrNull()
-            .orEmpty()
+    scope.launch {
+      val action = runCatching {
+        viewModel.getAppInfoPrimaryActions(packageName).launchAction
+      }.getOrNull()
+      when (action) {
+        AppInfoLaunchAction.Self -> context.showToast(R.string.app_info_launch_self_hint)
+
+        AppInfoLaunchAction.Alternative -> loadAlternatives()
+
+        is AppInfoLaunchAction.Available -> runCatching {
+          context.startActivity(action.action.intent)
+        }.onFailure {
+          context.showToast(R.string.toast_cant_open_app)
+          loadAlternatives()
+        }
+
+        null -> {
+          context.showToast(R.string.toast_cant_open_app)
+          loadAlternatives()
         }
       }
+    }
   }
 
   fun openSettings() {
-    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-      .setData(Uri.fromParts("package", packageName, null))
-    runCatching { context.startActivity(intent) }
-      .onFailure { context.showToast(R.string.toast_cant_open_app) }
+    scope.launch {
+      val intent = runCatching {
+        viewModel.getAppInfoPrimaryActions(packageName).settingsIntent
+      }.getOrNull()
+        ?: Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+          .setData(Uri.fromParts("package", packageName, null))
+      runCatching { context.startActivity(intent) }
+        .onFailure { context.showToast(R.string.toast_cant_open_app) }
+    }
   }
 
   fun share(target: AppPackageShareTarget) {

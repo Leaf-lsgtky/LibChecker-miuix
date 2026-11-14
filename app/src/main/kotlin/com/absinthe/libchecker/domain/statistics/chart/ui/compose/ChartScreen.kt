@@ -69,6 +69,7 @@ fun ChartScreen(
   modifier: Modifier = Modifier
 ) {
   val context = LocalContext.current
+  val localView = androidx.compose.ui.platform.LocalView.current
   val scrollBehavior = MiuixScrollBehavior()
   val colorScheme = MiuixTheme.colorScheme
   val selectorPlan by viewModel.statisticSelectorPlan.collectAsStateWithLifecycle()
@@ -92,6 +93,9 @@ fun ChartScreen(
       onEmpty = { empty = it },
       onSubtitle = { subtitle = it },
       onSliceSelected = { source, x ->
+        runCatching {
+          localView.performHapticFeedback(android.view.HapticFeedbackConstants.CONFIRM)
+        }
         scope.launch {
           classifyState = runCatching {
             viewModel.buildClassifyDialogState(
@@ -145,7 +149,12 @@ fun ChartScreen(
         text = text,
         fontSize = 12.sp,
         color = colorScheme.onSurfaceVariantSummary,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+        modifier = Modifier
+          .fillMaxWidth()
+          .clickable {
+            copyToClipboardWithToast(context, com.absinthe.libchecker.api.ApiManager.ANDROID_VERSION_DISTRIBUTION_URL)
+          }
+          .padding(horizontal = 16.dp, vertical = 4.dp)
       )
     }
 
@@ -159,6 +168,7 @@ fun ChartScreen(
           ChartLegendRow(
             entry = entry,
             onClick = {
+              if (entry.count == 0) return@ChartLegendRow
               val source = controller.currentSource
               if (source != null) {
                 scope.launch {
@@ -397,6 +407,7 @@ private fun StatisticChip(
   onClick: () -> Unit
 ) {
   val context = LocalContext.current
+  val localView = androidx.compose.ui.platform.LocalView.current
   val colorScheme = MiuixTheme.colorScheme
   var icon by remember(statistic.id) {
     mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)
@@ -436,4 +447,10 @@ private fun StatisticChip(
       )
     }
   }
+}
+
+private fun copyToClipboardWithToast(context: android.content.Context, text: String) {
+  val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
+  clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("", text))
+  com.absinthe.libchecker.compat.VersionCompat.showCopiedOnClipboardToast(context)
 }
