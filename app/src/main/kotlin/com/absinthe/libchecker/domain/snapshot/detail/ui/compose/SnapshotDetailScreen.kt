@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -244,11 +245,13 @@ private fun DetailItem(item: SnapshotDetailItemDisplayData) {
   val statusColor = colorResource(item.status.colorRes)
   Column {
     Row(verticalAlignment = Alignment.CenterVertically) {
-      Box(
+      AsyncImage(
+        model = item.status.iconRes,
+        contentDescription = null,
+        colorFilter = ColorFilter.tint(statusColor),
         modifier = Modifier
           .padding(end = 8.dp)
-          .size(8.dp)
-          .squircleBackground(statusColor, 4.dp)
+          .size(14.dp)
       )
       Text(
         text = item.title.toAnnotatedString(),
