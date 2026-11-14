@@ -222,7 +222,7 @@ fun TimeNodeSheet(
       ) {
         day.snapshotTimestamp?.let { timestamp ->
           TextButton(
-            text = stringResource(R.string.snapshot_time_node_current),
+            text = stringResource(R.string.snapshot_contribution_view_snapshot),
             onClick = {
               dayDetail = null
               onSelect(timestamp)

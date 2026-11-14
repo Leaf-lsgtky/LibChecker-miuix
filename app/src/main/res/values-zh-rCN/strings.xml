@@ -426,4 +426,5 @@
   <string name="snapshot_auto_remove_summary">仅保留最近 %1$d 个快照</string>
   <string name="snapshot_contribution_total">共 %1$d 次更新</string>
   <string name="recent_visits_pinned">已固定</string>
+  <string name="snapshot_contribution_view_snapshot">查看该快照</string>
 </resources>
