@@ -233,18 +233,29 @@ private fun DetailInfoRow(item: DetailInfoItemDisplay) {
         )
       }
     } else {
-      Text(
-        text = item.text.toString(),
-        fontSize = 13.sp,
-        color = MiuixTheme.colorScheme.onSurface,
+      Row(
         modifier = Modifier.then(
           if (item.linkUrl != null) {
             Modifier.clickable { context.openUrlInBrowser(item.linkUrl) }
           } else {
             Modifier
           }
+        ),
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        AsyncImage(
+          model = item.iconRes,
+          contentDescription = null,
+          modifier = Modifier
+            .padding(end = 6.dp)
+            .size(16.dp)
         )
-      )
+        Text(
+          text = item.text.toString(),
+          fontSize = 13.sp,
+          color = MiuixTheme.colorScheme.onSurface
+        )
+      }
     }
     Spacer(Modifier.height(2.dp))
   }

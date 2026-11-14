@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.absinthe.libchecker.R
 import com.absinthe.libchecker.domain.snapshot.detail.model.SnapshotDetailItemDisplayData
 import com.absinthe.libchecker.domain.snapshot.detail.model.SnapshotDetailSection
@@ -259,12 +260,20 @@ private fun DetailItem(item: SnapshotDetailItemDisplayData) {
         overflow = TextOverflow.Ellipsis
       )
       item.ruleChip?.let { chip ->
-        Box(
+        Row(
           modifier = Modifier
             .padding(start = 8.dp)
             .squircleBackground(colorScheme.tertiaryContainer, 6.dp)
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+          verticalAlignment = Alignment.CenterVertically
         ) {
+          AsyncImage(
+            model = chip.iconRes,
+            contentDescription = null,
+            modifier = Modifier
+              .padding(end = 4.dp)
+              .size(12.dp)
+          )
           Text(
             text = chip.label,
             fontSize = 10.sp,
