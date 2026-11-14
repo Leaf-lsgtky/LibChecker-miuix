@@ -193,6 +193,8 @@ internal class ChartHostController(
         ChartLegendEntry(
           x = x,
           iconRes = item.iconRes,
+          isGrayIcon = item.isGrayIcon,
+          statisticIcon = item.statisticIcon,
           label = source.getLabelByXValue(context, x),
           count = item.data.size
         )
@@ -204,6 +206,8 @@ internal class ChartHostController(
 internal data class ChartLegendEntry(
   val x: Int,
   val iconRes: Int,
+  val isGrayIcon: Boolean = false,
+  val statisticIcon: com.absinthe.libchecker.domain.statistics.chart.model.StatisticIconSpec? = null,
   val label: String,
   val count: Int
 )

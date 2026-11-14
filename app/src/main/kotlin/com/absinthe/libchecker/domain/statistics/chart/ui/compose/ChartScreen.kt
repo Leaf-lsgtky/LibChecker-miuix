@@ -378,11 +378,38 @@ private fun ChartLegendRow(entry: ChartLegendEntry, onClick: () -> Unit) {
         .squircleBackground(colorScheme.surfaceContainerHigh, 20.dp),
       contentAlignment = Alignment.Center
     ) {
-      AsyncImage(
-        model = entry.iconRes,
-        contentDescription = null,
-        modifier = Modifier.size(24.dp)
-      )
+      val rowContext = androidx.compose.ui.platform.LocalContext.current
+      var legendIcon by remember(entry) {
+        mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)
+      }
+      LaunchedEffect(entry) {
+        legendIcon = entry.statisticIcon?.let { spec ->
+          runCatching { spec.resolveDrawable(rowContext) }.getOrNull()?.let { drawable ->
+            runCatching { drawable.toBitmap(72, 72).asImageBitmap() }.getOrNull()
+          }
+        }
+      }
+      val loadedIcon = legendIcon
+      if (loadedIcon != null) {
+        androidx.compose.foundation.Image(
+          bitmap = loadedIcon,
+          contentDescription = null,
+          modifier = Modifier.size(24.dp)
+        )
+      } else {
+        AsyncImage(
+          model = entry.iconRes,
+          contentDescription = null,
+          colorFilter = if (entry.isGrayIcon) {
+            androidx.compose.ui.graphics.ColorFilter.colorMatrix(
+              androidx.compose.ui.graphics.ColorMatrix().apply { setToSaturation(0f) }
+            )
+          } else {
+            null
+          },
+          modifier = Modifier.size(24.dp)
+        )
+      }
     }
     Text(
       text = entry.label,
