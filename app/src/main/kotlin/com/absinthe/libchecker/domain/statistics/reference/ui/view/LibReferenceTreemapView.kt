@@ -42,6 +42,9 @@ import com.absinthe.libchecker.utils.extensions.getColorByAttr
 import com.absinthe.libchecker.view.drawable.setG2Shape
 import com.google.android.material.R as MaterialR
 
+private const val DEFAULT_SURFACE_COLOR = 0xFFF0F0F4.toInt()
+private const val DEFAULT_ON_SURFACE_COLOR = 0xFF1A1A1A.toInt()
+
 class LibReferenceTreemapView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
@@ -147,7 +150,11 @@ class LibReferenceTreemapView @JvmOverloads constructor(
   }
   private data class IconStyle(val drawable: Drawable, val background: Int, val foreground: Int)
   private val surfaceColor = context.getColorByAttr(MaterialR.attr.colorSurfaceContainer)
+    .takeIf { it != 0 }
+    ?: DEFAULT_SURFACE_COLOR
   private val onSurfaceColor = context.getColorByAttr(MaterialR.attr.colorOnSurface)
+    .takeIf { it != 0 }
+    ?: DEFAULT_ON_SURFACE_COLOR
   private val iconStyles = mutableMapOf<Pair<Int, Boolean>, IconStyle>()
 
   private fun iconStyle(iconRes: Int, simple: Boolean): IconStyle = iconStyles.getOrPut(iconRes to simple) {
@@ -169,7 +176,7 @@ class LibReferenceTreemapView @JvmOverloads constructor(
       ColorUtils.colorToHSL(color, hsl)
       hsl[1] *= 0.6f
       ColorUtils.HSLToColor(hsl)
-    } ?: onSurfaceColor
+    } ?: surfaceColor
     val foreground = if (ColorUtils.calculateContrast(Color.BLACK, background) >= ColorUtils.calculateContrast(Color.WHITE, background)) {
       Color.BLACK
     } else {
