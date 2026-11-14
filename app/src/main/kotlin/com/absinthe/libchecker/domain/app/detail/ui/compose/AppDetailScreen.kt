@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
 import com.absinthe.libchecker.R
 import com.absinthe.libchecker.annotation.ACTIVITY
@@ -60,6 +61,7 @@ import com.absinthe.libchecker.annotation.RECEIVER
 import com.absinthe.libchecker.annotation.SERVICE
 import com.absinthe.libchecker.annotation.SIGNATURES
 import com.absinthe.libchecker.annotation.STATIC
+import com.absinthe.libchecker.domain.app.detail.action.AppElfDetail
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureAction
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureIcon
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureItemData
@@ -71,6 +73,7 @@ import com.absinthe.libchecker.domain.app.list.ui.compose.AppIcon
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
 import com.absinthe.libchecker.ui.compose.component.LcEmptyState
 import com.absinthe.libchecker.utils.extensions.launchLibReferencePage
+import com.absinthe.libchecker.utils.showToast
 import com.absinthe.libchecker.ui.compose.component.LcLoadingState
 import com.absinthe.libchecker.ui.compose.util.WideContentBox
 import com.absinthe.libchecker.ui.compose.util.horizontalCutoutPadding
@@ -125,6 +128,7 @@ fun AppDetailScreen(
   var showAppInfo by remember { mutableStateOf(false) }
   var featureDetail by remember { mutableStateOf<AppDetailFeatureItemData?>(null) }
   var longPressChip by remember { mutableStateOf<LibStringItemChip?>(null) }
+  var elfDetail by remember { mutableStateOf<AppElfDetail?>(null) }
   val is64Bit by viewModel.featureState.is64Bit.collectAsStateWithLifecycle()
 
   val nativeTabs by contentState.nativeLibTabs.collectAsStateWithLifecycle()
@@ -224,6 +228,33 @@ fun AppDetailScreen(
     )
   }
 
+  elfDetail?.let { detail ->
+    WindowBottomSheet(
+      show = true,
+      title = stringResource(R.string.lib_detail_elf_info),
+      onDismissRequest = { elfDetail = null }
+    ) {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp)
+          .padding(bottom = 16.dp)
+      ) {
+        SheetInfoBlock(
+          label = stringResource(R.string.lib_detail_elf_deps),
+          value = detail.deps.joinToString("\n").ifEmpty { "-" }
+        )
+        SheetInfoBlock(
+          label = stringResource(R.string.lib_detail_elf_entry_points),
+          value = detail.entryPoints.joinToString("\n").ifEmpty { "-" }
+        )
+        SheetInfoBlock(
+          label = stringResource(R.string.lib_detail_elf_stripped),
+          value = if (detail.isStripped) "Yes" else "No"
+        )
+      }
+    }
+  }
   longPressChip?.let { chip ->
     val actions = remember(chip) {
       viewModel.buildDetailItemLongClickActions(
@@ -250,6 +281,18 @@ fun AppDetailScreen(
             android.content.ClipData.newPlainText("", actions.copyText)
           )
           longPressChip = null
+        }
+        actions.elfInfo?.let { elfInfo ->
+          SheetActionRow(text = stringResource(R.string.lib_detail_elf_info)) {
+            viewModel.loadElfDetail(packageInfo.packageName, elfInfo.elfPath)
+            longPressChip = null
+          }
+        }
+        if (actions.elfExtractAvailable) {
+          SheetActionRow(text = stringResource(R.string.lib_detail_elf_extract)) {
+            viewModel.extractNativeLibrary(chip.item)
+            longPressChip = null
+          }
         }
         actions.reference?.let { reference ->
           SheetActionRow(text = stringResource(R.string.lib_detail_view_reference)) {
@@ -736,6 +779,23 @@ private fun SheetActionRow(text: String, onClick: () -> Unit) {
     Text(
       text = text,
       fontSize = 14.sp,
+      color = MiuixTheme.colorScheme.onSurface
+    )
+  }
+}
+
+@Composable
+private fun SheetInfoBlock(label: String, value: String) {
+  Column(modifier = Modifier.padding(vertical = 6.dp)) {
+    Text(
+      text = label,
+      fontSize = 12.sp,
+      color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+    )
+    Spacer(Modifier.height(2.dp))
+    Text(
+      text = value,
+      fontSize = 13.sp,
       color = MiuixTheme.colorScheme.onSurface
     )
   }
