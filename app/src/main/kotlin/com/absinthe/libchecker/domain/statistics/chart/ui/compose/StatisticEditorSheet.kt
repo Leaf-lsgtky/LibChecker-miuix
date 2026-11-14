@@ -91,6 +91,7 @@ fun StatisticEditorSheet(
             statistic = statistic,
             draggable = true,
             actionLabel = "−",
+            actionEnabled = state.selectedStatistics.size > 1,
             onAction = { viewModel.removeStatistic(statistic.id) },
             modifier = Modifier
               .zIndex(if (draggingId == statistic.id) 1f else 0f)
@@ -184,6 +185,7 @@ private fun StatisticEditorRow(
   statistic: StatisticDefinition,
   actionLabel: String,
   onAction: () -> Unit,
+  actionEnabled: Boolean = true,
   draggable: Boolean = false,
   modifier: Modifier = Modifier
 ) {
@@ -241,14 +243,18 @@ private fun StatisticEditorRow(
     Box(
       modifier = Modifier
         .squircleBackground(colorScheme.surfaceContainerHigh, 12.dp)
-        .clickable(onClick = onAction)
+        .clickable(enabled = actionEnabled, onClick = onAction)
         .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
       Text(
         text = actionLabel,
         fontSize = 14.sp,
         fontWeight = FontWeight(600),
-        color = colorScheme.onSurface
+        color = if (actionEnabled) {
+          colorScheme.onSurface
+        } else {
+          colorScheme.onSurfaceVariantSummary
+        }
       )
     }
   }
