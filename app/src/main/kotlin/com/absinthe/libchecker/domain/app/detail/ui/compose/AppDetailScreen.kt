@@ -203,26 +203,13 @@ fun AppDetailScreen(
     }
   }
 
-  featureDetail?.let { item ->
-    WindowDialog(
-      show = true,
-      title = stringResource(item.titleRes),
-      summary = featureDetailText(item.action),
-      onDismissRequest = { featureDetail = null }
-    ) {
-      Row(
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(horizontal = 24.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.End
-      ) {
-        TextButton(
-          text = stringResource(android.R.string.ok),
-          onClick = { featureDetail = null }
-        )
-      }
-    }
-  }
+  FeatureDetailSheet(
+    show = featureDetail != null,
+    viewModel = viewModel,
+    packageInfo = packageInfo,
+    item = featureDetail,
+    onDismiss = { featureDetail = null }
+  )
 
   if (showAppInfo) {
     AppInfoSheet(
@@ -689,41 +676,3 @@ private data class LibDetailRequest(
   val type: Int,
   val isValid: Boolean
 )
-@Composable
-private fun featureDetailText(action: AppDetailFeatureAction): String {
-  return when (action) {
-    is AppDetailFeatureAction.Kotlin ->
-      action.extras?.values?.firstOrNull { !it.isNullOrBlank() } ?: "Kotlin"
-
-    is AppDetailFeatureAction.Agp ->
-      action.version ?: "AGP"
-
-    is AppDetailFeatureAction.JetpackCompose ->
-      action.version ?: stringResource(R.string.jetpack_compose)
-
-    is AppDetailFeatureAction.ComposeMultiplatformResources ->
-      action.version ?: stringResource(R.string.compose_multiplatform_resources)
-
-    is AppDetailFeatureAction.AppFunction ->
-      action.functions.joinToString("\n") { it.toString() }
-
-    AppDetailFeatureAction.SplitApks -> stringResource(R.string.app_bundle)
-    AppDetailFeatureAction.XposedModule -> stringResource(R.string.xposed_module)
-    AppDetailFeatureAction.PlaySigning -> stringResource(R.string.play_app_signing)
-    AppDetailFeatureAction.Pwa -> stringResource(R.string.pwa)
-    AppDetailFeatureAction.LiveUpdateNotification ->
-      stringResource(R.string.feature_live_update_notification)
-
-    AppDetailFeatureAction.AppProp -> stringResource(R.string.lib_detail_app_props_title)
-    AppDetailFeatureAction.InstallSource ->
-      stringResource(R.string.lib_detail_app_install_source_title)
-
-    AppDetailFeatureAction.ElfPageSize16Kb ->
-      stringResource(R.string.lib_detail_dialog_title_16kb_page_size)
-
-    AppDetailFeatureAction.ElfPageSize16KbCompat ->
-      stringResource(R.string.lib_detail_dialog_title_16kb_page_size_compat)
-
-    is AppDetailFeatureAction.AppIcons -> stringResource(R.string.app_info_export)
-  }
-}

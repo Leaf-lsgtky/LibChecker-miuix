@@ -440,4 +440,9 @@
   <string name="comparison_side_archive">Choose file</string>
   <string name="comparison_start">Compare</string>
   <string name="app_info_export">Export</string>
+  <string name="feature_play_signing_description">This app is signed with Google Play App Signing.</string>
+  <string name="feature_pwa_description">This app is a Progressive Web App.</string>
+  <string name="feature_xposed_description">This app is an Xposed module.</string>
+  <string name="feature_live_update_description">This app supports live update notifications.</string>
+  <string name="feature_app_icons_description">This app provides additional app icons.</string>
 </resources>

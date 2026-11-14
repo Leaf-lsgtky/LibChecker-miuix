@@ -29,8 +29,12 @@ internal class ChartHostController(
   private val scope: CoroutineScope,
   private val viewModel: ChartViewModel,
   private val onProgress: (Int) -> Unit,
-  private val onLegend: (List<ChartLegendEntry>) -> Unit = {}
+  private val onLegend: (List<ChartLegendEntry>) -> Unit = {},
+  private val onSliceSelected: (Int) -> Unit = {}
 ) {
+
+  var currentSource: com.absinthe.libchecker.domain.statistics.chart.source.IChartDataSource<*>? = null
+    private set
 
   private var host: ViewGroup? = null
   private var renderer: ChartDataRenderer? = null
@@ -101,6 +105,7 @@ internal class ChartHostController(
       entryLabelColor = colorOnSurface
       entryLabelTextSize = 11f
       holeColor = Color.TRANSPARENT
+      onChartValueSelectedListener = chartSelectionListener
     }
   }
 
@@ -140,7 +145,20 @@ internal class ChartHostController(
       }
       maxVisibleCount = 50
       isDrawMarkersEnabled = false
+      onChartValueSelectedListener = chartSelectionListener
     }
+  }
+
+  private val chartSelectionListener = object :
+    com.github.mikephil.charting.listener.OnChartValueSelectedListener {
+    override fun onValueSelected(
+      e: com.github.mikephil.charting.data.Entry<*>,
+      h: com.github.mikephil.charting.highlight.Highlight
+    ) {
+      onSliceSelected(e.x.toInt())
+    }
+
+    override fun onNothingSelected() = Unit
   }
 
   private fun buildLegend(plan: ChartDataSourcePlan): List<ChartLegendEntry> {
@@ -148,6 +166,7 @@ internal class ChartHostController(
       is ChartDataSourcePlan.Pie -> plan.dataSource
       is ChartDataSourcePlan.Bar -> plan.dataSource
     }
+    currentSource = source
     if (source !is com.absinthe.libchecker.domain.statistics.chart.source.BaseChartDataSource<*>) {
       return emptyList()
     }
