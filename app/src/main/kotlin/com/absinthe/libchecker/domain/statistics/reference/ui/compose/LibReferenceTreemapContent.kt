@@ -24,7 +24,7 @@ fun LibReferenceTreemapContent(
     },
     update = { view ->
       view.colorfulRuleIcon = colorfulRuleIcon
-      view.submitReferences(references, animate = true)
+      view.submitReferences(references)
     }
   )
 }
