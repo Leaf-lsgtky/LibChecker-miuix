@@ -81,6 +81,9 @@ fun ChartScreen(
   var showEditor by remember { mutableStateOf(false) }
   var empty by remember { mutableStateOf(false) }
   var subtitle by remember { mutableStateOf<String?>(null) }
+  val selectedDefinitions by viewModel.selectedStatisticDefinitions.collectAsStateWithLifecycle()
+  val currentStatisticTitle = selectedDefinitions.firstOrNull()?.title
+    ?.let { spec -> runCatching { spec.resolve(context) }.getOrNull() }
   val scope = rememberCoroutineScope()
 
   val controller = remember(viewModel) {
@@ -101,8 +104,9 @@ fun ChartScreen(
             viewModel.buildClassifyDialogState(
               source = source,
               x = x,
-              title = source.getLabelByXValue(context, x),
-              subtitle = null
+              title = currentStatisticTitle ?: source.getLabelByXValue(context, x),
+              subtitle = source.getLabelByXValue(context, x)
+                .takeIf { currentStatisticTitle != null }
             )
           }.getOrNull()
         }
@@ -176,8 +180,8 @@ fun ChartScreen(
                     viewModel.buildClassifyDialogState(
                       source = source,
                       x = entry.x,
-                      title = entry.label,
-                      subtitle = null
+                      title = currentStatisticTitle ?: entry.label,
+                      subtitle = entry.label.takeIf { currentStatisticTitle != null }
                     )
                   }.getOrNull()
                 }

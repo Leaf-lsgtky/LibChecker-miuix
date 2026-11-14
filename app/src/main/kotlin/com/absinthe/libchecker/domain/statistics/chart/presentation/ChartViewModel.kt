@@ -55,6 +55,8 @@ class ChartViewModel internal constructor(
   private val _statisticSelectorPlan = MutableStateFlow(StatisticSelectorPlan(emptyList(), null))
   val statisticSelectorPlan = _statisticSelectorPlan.asStateFlow()
 
+  val selectedStatisticDefinitions = _statisticDefinitions.asStateFlow()
+
   private val _statisticCatalogEditorState = MutableStateFlow(StatisticCatalogEditorState())
   val statisticCatalogEditorState = _statisticCatalogEditorState.asStateFlow()
   private var statisticCatalogRefreshJob: Job? = null
