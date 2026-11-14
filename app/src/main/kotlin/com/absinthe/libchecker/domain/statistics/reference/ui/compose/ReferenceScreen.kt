@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -132,7 +133,9 @@ fun ReferenceScreen(
           }
         ) {
           Icon(
-            imageVector = if (treemapEnabled) MiuixIcons.ListView else MiuixIcons.GridView,
+            painter = painterResource(
+              if (treemapEnabled) R.drawable.ic_reference_list else R.drawable.ic_reference_treemap
+            ),
             contentDescription = stringResource(
               if (treemapEnabled) {
                 R.string.lib_reference_switch_to_list
@@ -159,7 +162,7 @@ fun ReferenceScreen(
           collapseOnSelection = false
         ) {
           Icon(
-            imageVector = MiuixIcons.Tune,
+            painter = painterResource(R.drawable.ic_menu),
             contentDescription = stringResource(R.string.menu_filter)
           )
         }

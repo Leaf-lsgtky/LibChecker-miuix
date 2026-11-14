@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -100,28 +101,28 @@ fun AlbumScreen(
 
   val items = listOf(
     AlbumEntry(
-      icon = MiuixIcons.ConvertFile,
+      iconRes = R.drawable.ic_compare,
       tint = Color(0xFFE53935),
       title = stringResource(R.string.album_item_comparison_title),
       subtitle = stringResource(R.string.album_item_comparison_subtitle),
       onClick = onOpenComparison
     ),
     AlbumEntry(
-      icon = MiuixIcons.Delete,
+      iconRes = R.drawable.ic_manage,
       tint = Color(0xFF1E88E5),
       title = stringResource(R.string.album_item_management_title),
       subtitle = stringResource(R.string.album_item_management_subtitle),
       onClick = { showManagement = true }
     ),
     AlbumEntry(
-      icon = MiuixIcons.Backup,
+      iconRes = R.drawable.ic_backup,
       tint = Color(0xFF43A047),
       title = stringResource(R.string.album_item_backup_restore_title),
       subtitle = stringResource(R.string.album_item_backup_restore_subtitle),
       onClick = onOpenBackup
     ),
     AlbumEntry(
-      icon = MiuixIcons.Recent,
+      iconRes = R.drawable.ic_track,
       tint = Color(0xFFFB8C00),
       title = stringResource(R.string.album_item_track_title),
       subtitle = stringResource(R.string.album_item_track_subtitle),
@@ -267,7 +268,7 @@ fun AlbumScreen(
 }
 
 private data class AlbumEntry(
-  val icon: ImageVector,
+  @androidx.annotation.DrawableRes val iconRes: Int,
   val tint: Color,
   val title: String,
   val subtitle: String,
@@ -295,7 +296,7 @@ private fun AlbumRow(entry: AlbumEntry) {
         contentAlignment = Alignment.Center
       ) {
         Icon(
-          imageVector = entry.icon,
+          painter = painterResource(entry.iconRes),
           contentDescription = null,
           tint = entry.tint,
           modifier = Modifier.size(24.dp)
