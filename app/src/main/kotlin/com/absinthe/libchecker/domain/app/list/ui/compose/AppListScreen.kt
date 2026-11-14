@@ -74,6 +74,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import top.yukonga.miuix.kmp.basic.Icon
+import androidx.compose.ui.res.painterResource
+import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.InputField
 import top.yukonga.miuix.kmp.basic.LinearProgressIndicator
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
@@ -98,6 +100,9 @@ fun AppListScreen(
   homeViewModel: HomeViewModel,
   detailViewModel: com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel,
   reselectSignal: Int = 0,
+  recentVisitsViewModel: com.absinthe.libchecker.domain.home.presentation.RecentVisitsViewModel? = null,
+  onOpenRecentApp: ((String) -> Unit)? = null,
+  onOpenRecentLibrary: ((com.absinthe.libchecker.domain.home.recent.RecentVisit) -> Unit)? = null,
   onOpenDetail: (LCItem) -> Unit,
   modifier: Modifier = Modifier,
   listState: LazyListState = rememberLazyListState()
@@ -162,6 +167,24 @@ fun AppListScreen(
     if (reselectSignal > 0) {
       listState.animateScrollToItem(0)
     }
+  }
+
+  var showRecentVisits by remember { mutableStateOf(false) }
+
+  if (showRecentVisits && recentVisitsViewModel != null) {
+    com.absinthe.libchecker.domain.home.ui.compose.RecentVisitsSheet(
+      show = true,
+      viewModel = recentVisitsViewModel,
+      onOpenApp = { targetPackage ->
+        showRecentVisits = false
+        onOpenRecentApp?.invoke(targetPackage)
+      },
+      onOpenLibrary = { visit ->
+        showRecentVisits = false
+        onOpenRecentLibrary?.invoke(visit)
+      },
+      onDismiss = { showRecentVisits = false }
+    )
   }
 
   LaunchedEffect(Unit) {
@@ -279,6 +302,14 @@ fun AppListScreen(
       title = title,
       scrollBehavior = scrollBehavior,
       actions = {
+        if (recentVisitsViewModel != null) {
+          IconButton(onClick = { showRecentVisits = true }) {
+            Icon(
+              painter = painterResource(R.drawable.ic_time),
+              contentDescription = stringResource(R.string.recent_apps)
+            )
+          }
+        }
         AppListMenu(
           displayOptions = displayOptions,
           onDisplayOptionsChange = ::updateDisplayOptions
