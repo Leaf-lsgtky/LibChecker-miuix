@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import com.absinthe.libchecker.domain.statistics.chart.model.StatisticSource
+import top.yukonga.miuix.kmp.icon.extended.Sort
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.basic.Icon
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -84,6 +88,7 @@ fun StatisticEditorSheet(
         itemsIndexed(state.selectedStatistics, key = { _, it -> "selected-${it.id}" }) { index, statistic ->
           StatisticEditorRow(
             statistic = statistic,
+            draggable = true,
             actionLabel = "−",
             onAction = { viewModel.removeStatistic(statistic.id) },
             modifier = Modifier
@@ -178,6 +183,7 @@ private fun StatisticEditorRow(
   statistic: StatisticDefinition,
   actionLabel: String,
   onAction: () -> Unit,
+  draggable: Boolean = false,
   modifier: Modifier = Modifier
 ) {
   val context = LocalContext.current
@@ -194,6 +200,16 @@ private fun StatisticEditorRow(
       .padding(vertical = 4.dp),
     verticalAlignment = Alignment.CenterVertically
   ) {
+    if (draggable) {
+      Icon(
+        imageVector = MiuixIcons.Sort,
+        contentDescription = stringResource(R.string.chart_statistics_drag),
+        tint = colorScheme.onSurfaceVariantSummary,
+        modifier = Modifier
+          .padding(end = 8.dp)
+          .size(18.dp)
+      )
+    }
     if (icon != null) {
       androidx.compose.foundation.Image(
         bitmap = icon!!,
@@ -203,12 +219,24 @@ private fun StatisticEditorRow(
           .size(24.dp)
       )
     }
-    Text(
-      text = statistic.title.resolve(context),
-      modifier = Modifier.weight(1f),
-      fontSize = 14.sp,
-      color = colorScheme.onSurface
-    )
+    Column(Modifier.weight(1f)) {
+      Text(
+        text = statistic.title.resolve(context),
+        fontSize = 14.sp,
+        color = colorScheme.onSurface
+      )
+      Text(
+        text = stringResource(
+          if (statistic.source == StatisticSource.BUILTIN) {
+            R.string.chart_statistics_source_builtin
+          } else {
+            R.string.chart_statistics_source_online
+          }
+        ),
+        fontSize = 11.sp,
+        color = colorScheme.onSurfaceVariantSummary
+      )
+    }
     Box(
       modifier = Modifier
         .squircleBackground(colorScheme.surfaceContainerHigh, 12.dp)

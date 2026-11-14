@@ -89,6 +89,20 @@ fun SnapshotScreen(
   listState: LazyListState = rememberLazyListState()
 ) {
   val context = LocalContext.current
+  val notificationPermissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+    contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+  ) { }
+  LaunchedEffect(Unit) {
+    if (
+      android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+      androidx.core.content.ContextCompat.checkSelfPermission(
+        context,
+        android.Manifest.permission.POST_NOTIFICATIONS
+      ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+    ) {
+      notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
+  }
   val lifecycleOwner = LocalLifecycleOwner.current
   val scope = rememberCoroutineScope()
   val focusManager = LocalFocusManager.current
@@ -103,6 +117,7 @@ fun SnapshotScreen(
   var query by rememberSaveable { mutableStateOf("") }
   var searchExpanded by rememberSaveable { mutableStateOf(false) }
   var showDeleteDialog by remember { mutableStateOf(false) }
+  var showKeepPreviousDialog by remember { mutableStateOf(false) }
   var isCapturing by remember { mutableStateOf(false) }
   val comparingProgress by viewModel.comparingProgress.collectAsStateWithLifecycle(0)
 
@@ -174,6 +189,37 @@ fun SnapshotScreen(
   val formattedDates = remember(timeStamps) {
     timeStamps.associate { it.timestamp to viewModel.getFormatDateString(it.timestamp) }
   }
+
+  if (showKeepPreviousDialog) {
+    WindowDialog(
+      show = true,
+      title = stringResource(R.string.dialog_title_keep_previous_snapshot),
+      summary = stringResource(R.string.dialog_message_keep_previous_snapshot),
+      onDismissRequest = { showKeepPreviousDialog = false }
+    ) {
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+      ) {
+        TextButton(
+          text = stringResource(R.string.btn_drop),
+          onClick = {
+            showKeepPreviousDialog = false
+            isCapturing = shootController.computeSnapshot(dropPrevious = true)
+          }
+        )
+        TextButton(
+          text = stringResource(R.string.btn_keep),
+          onClick = {
+            showKeepPreviousDialog = false
+            isCapturing = shootController.computeSnapshot(dropPrevious = false)
+          }
+        )
+      }
+    }
+  }
   val tabs = remember(timeStamps, formattedDates) {
     timeStamps.map { stamp ->
       formattedDates[stamp.timestamp]?.substringAfter(", ", missingDelimiterValue = "")
@@ -199,7 +245,11 @@ fun SnapshotScreen(
         IconButton(
           onClick = {
             if (!isCapturing) {
-              isCapturing = shootController.computeSnapshot(dropPrevious = false)
+              if (timeStamps.isNotEmpty()) {
+                showKeepPreviousDialog = true
+              } else {
+                isCapturing = shootController.computeSnapshot(dropPrevious = false)
+              }
             }
           }
         ) {
