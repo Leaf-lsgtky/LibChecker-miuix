@@ -58,6 +58,8 @@ import com.absinthe.libchecker.ui.base.ThemeTransitionController
 import com.absinthe.libchecker.ui.compose.LocalHomeAppearance
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
 import com.absinthe.libchecker.ui.compose.util.WideContentBox
+import com.absinthe.libchecker.ui.compose.util.sheetContentSafePadding
+import com.absinthe.libchecker.ui.compose.util.sheetHeightTransition
 import com.absinthe.libchecker.ui.compose.util.horizontalCutoutPadding
 import com.absinthe.libchecker.utils.OsUtils
 import com.absinthe.libchecker.utils.SPUtils
@@ -515,7 +517,12 @@ private fun SettingsMainPage(
       title = stringResource(R.string.settings_get_updates),
       onDismissRequest = { showUpdatesDialog = false }
     ) {
-      Column(Modifier.fillMaxWidth()) {
+      Column(
+        Modifier
+          .fillMaxWidth()
+          .sheetContentSafePadding()
+          .sheetHeightTransition()
+      ) {
         updateItems.forEach { item ->
           Card(
             modifier = Modifier

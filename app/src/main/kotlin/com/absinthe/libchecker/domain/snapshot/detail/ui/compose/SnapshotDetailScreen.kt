@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import top.yukonga.miuix.kmp.icon.extended.Back
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -213,19 +218,26 @@ private fun SectionCard(
       )
       section.statusCounts.forEach { count ->
         val statusColor = colorResource(count.status.colorRes)
-        Box(
-          modifier = Modifier
-            .padding(start = 6.dp)
-            .squircleBackground(statusColor.copy(alpha = 0.14f), 6.dp)
-            .padding(horizontal = 6.dp, vertical = 2.dp)
-        ) {
-          Text(
-            text = "${count.label} ${count.countText}",
-            style = MiuixTheme.textStyles.footnote2.copy(fontSize = 10.sp),
-            color = statusColor
-          )
-        }
+        com.absinthe.libchecker.ui.compose.component.LcTag(
+          text = "${count.label} ${count.countText}",
+          modifier = Modifier.padding(start = 6.dp),
+          containerColor = statusColor.copy(alpha = 0.14f),
+          contentColor = statusColor
+        )
       }
+      val rotation by animateFloatAsState(
+        targetValue = if (collapsed) 0f else 90f,
+        label = "section-chevron"
+      )
+      Icon(
+        imageVector = MiuixIcons.Back,
+        contentDescription = null,
+        tint = colorScheme.onSurfaceVariantSummary,
+        modifier = Modifier
+          .padding(start = 6.dp)
+          .size(14.dp)
+          .graphicsLayer { rotationZ = rotation }
+      )
     }
     if (!collapsed) {
       Spacer(Modifier.height(8.dp))
@@ -243,7 +255,15 @@ private fun SectionCard(
 private fun DetailItem(item: SnapshotDetailItemDisplayData) {
   val colorScheme = MiuixTheme.colorScheme
   val statusColor = colorResource(item.status.colorRes)
-  Column {
+  Row(modifier = Modifier.height(androidx.compose.foundation.layout.IntrinsicSize.Min)) {
+    Box(
+      modifier = Modifier
+        .padding(end = 8.dp)
+        .width(3.dp)
+        .fillMaxHeight()
+        .squircleBackground(statusColor, 1.5.dp)
+    )
+    Column(Modifier.weight(1f)) {
     Row(verticalAlignment = Alignment.CenterVertically) {
       AsyncImage(
         model = item.status.iconRes,
@@ -306,6 +326,7 @@ private fun DetailItem(item: SnapshotDetailItemDisplayData) {
         maxLines = 2,
         overflow = TextOverflow.Ellipsis
       )
+    }
     }
   }
 }

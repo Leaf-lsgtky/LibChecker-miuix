@@ -19,6 +19,8 @@ import com.absinthe.libchecker.constant.GlobalValues
 import com.absinthe.libchecker.constant.options.AdvancedOptions
 import com.absinthe.libchecker.domain.app.detail.header.AppDetailHeaderExtraInfo
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
+import top.yukonga.miuix.kmp.basic.HorizontalDivider
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -1088,17 +1090,20 @@ private fun DetailHeader(
       color = colorScheme.onSurfaceVariantSummary,
       maxLines = 2,
       overflow = TextOverflow.Ellipsis,
-      modifier = Modifier.combinedClickable(
-        onClick = {},
-        onLongClick = { context.copyTextWithToast(infoLine) }
-      )
+      modifier = Modifier
+        .padding(start = 70.dp)
+        .combinedClickable(
+          onClick = {},
+          onLongClick = { context.copyTextWithToast(infoLine) }
+        )
     )
     extraInfo?.sharedUserId?.let { sharedUserId ->
       Spacer(Modifier.height(2.dp))
       Text(
         text = "sharedUserId: $sharedUserId",
         style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
-        color = colorScheme.onSurfaceVariantSummary
+        color = colorScheme.onSurfaceVariantSummary,
+        modifier = Modifier.padding(start = 70.dp)
       )
     }
     val abi = appInfo?.nativeLibraryDir
@@ -1107,7 +1112,10 @@ private fun DetailHeader(
       ?: android.os.Build.SUPPORTED_ABIS.firstOrNull()
     if (abi != null) {
       Spacer(Modifier.height(6.dp))
-      Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+      Row(
+        modifier = Modifier.padding(start = 70.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+      ) {
         if (is64Bit != null) {
           AbiBadge(text = if (is64Bit == true) "64 BIT" else "32 BIT")
         }
@@ -1147,7 +1155,8 @@ private fun DetailItemRow(
       modifier = Modifier
         .fillMaxWidth()
         .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-        .padding(horizontal = 16.dp, vertical = 12.dp),
+        .heightIn(min = 48.dp)
+        .padding(horizontal = 16.dp, vertical = 6.dp),
       verticalAlignment = Alignment.CenterVertically
     ) {
       Column(Modifier.weight(1f)) {
@@ -1183,12 +1192,10 @@ private fun DetailItemRow(
       }
     }
     if (showDivider) {
-      Box(
-        Modifier
-          .fillMaxWidth()
-          .padding(start = 16.dp)
-          .height(0.5.dp)
-          .background(colorScheme.dividerLine)
+      HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        thickness = 1.dp,
+        color = colorScheme.dividerLine
       )
     }
   }
@@ -1200,6 +1207,7 @@ private fun RuleChip(iconRes: Int, label: String) {
   Row(
     modifier = Modifier
       .padding(start = 12.dp)
+      .widthIn(max = 148.dp)
       .squircleBackground(colorScheme.tertiaryContainer, 10.dp)
       .padding(horizontal = 8.dp, vertical = 4.dp),
     verticalAlignment = Alignment.CenterVertically
@@ -1215,7 +1223,8 @@ private fun RuleChip(iconRes: Int, label: String) {
       text = label,
       style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp),
       color = colorScheme.onTertiaryContainer,
-      maxLines = 1
+      maxLines = 1,
+      overflow = TextOverflow.Ellipsis
     )
   }
 }

@@ -576,7 +576,7 @@ private fun SnapshotDiffRow(
       .padding(bottom = 12.dp),
     onClick = onClick,
     showIndication = true,
-    insideMargin = PaddingValues(start = 10.dp, end = 16.dp, top = 10.dp, bottom = 10.dp)
+    insideMargin = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 10.dp)
   ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
       com.absinthe.libchecker.domain.app.list.ui.compose.AppIcon(
@@ -648,17 +648,9 @@ private fun SnapshotStateTag(
   container: androidx.compose.ui.graphics.Color,
   content: androidx.compose.ui.graphics.Color
 ) {
-  Box(
-    modifier = Modifier
-      .squircleBackground(container, 6.dp)
-      .padding(horizontal = 6.dp, vertical = 2.dp)
-  ) {
-    Text(
-      text = text,
-      fontSize = 10.sp,
-      fontWeight = FontWeight(550),
-      color = content,
-      maxLines = 1
-    )
-  }
+  com.absinthe.libchecker.ui.compose.component.LcTag(
+    text = text,
+    containerColor = container,
+    contentColor = content
+  )
 }

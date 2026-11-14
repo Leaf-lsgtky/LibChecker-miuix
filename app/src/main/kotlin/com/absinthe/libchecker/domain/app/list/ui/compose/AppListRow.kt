@@ -70,7 +70,7 @@ fun AppListRow(
       .padding(bottom = 12.dp),
     onClick = onClick,
     showIndication = true,
-    insideMargin = PaddingValues(start = 10.dp, end = 16.dp, top = 10.dp, bottom = 10.dp)
+    insideMargin = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 10.dp)
   ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
       AppIcon(
@@ -183,19 +183,12 @@ fun AppIcon(
 /** Compact MIUI style tag used for rule labels and platform badges. */
 @Composable
 fun StatusTag(text: String, modifier: Modifier = Modifier) {
-  Box(
-    modifier = modifier
-      .squircleBackground(MiuixTheme.colorScheme.tertiaryContainer, 6.dp)
-      .padding(horizontal = 6.dp, vertical = 2.dp)
-  ) {
-    Text(
-      text = text,
-      fontSize = 10.sp,
-      fontWeight = FontWeight(550),
-      color = MiuixTheme.colorScheme.onTertiaryContainer,
-      maxLines = 1
-    )
-  }
+  com.absinthe.libchecker.ui.compose.component.LcTag(
+    text = text,
+    modifier = modifier,
+    containerColor = MiuixTheme.colorScheme.tertiaryContainer,
+    contentColor = MiuixTheme.colorScheme.onTertiaryContainer
+  )
 }
 
 /** Highlights every case-insensitive occurrence of [query] with [highlightColor]. */

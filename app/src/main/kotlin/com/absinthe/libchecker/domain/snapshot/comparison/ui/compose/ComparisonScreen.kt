@@ -51,6 +51,8 @@ import com.absinthe.libchecker.domain.app.list.ui.compose.AppIcon
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
 import com.absinthe.libchecker.ui.compose.component.LcEmptyState
 import com.absinthe.libchecker.ui.compose.component.LcLoadingState
+import com.absinthe.libchecker.ui.compose.util.sheetContentSafePadding
+import com.absinthe.libchecker.ui.compose.util.sheetHeightTransition
 import com.absinthe.libchecker.ui.compose.util.WideContentBox
 import com.absinthe.libchecker.ui.compose.util.horizontalCutoutPadding
 import com.absinthe.libchecker.utils.showToast
@@ -271,7 +273,12 @@ fun ComparisonScreen(
       title = stringResource(R.string.dialog_title_select_to_delete),
       onDismissRequest = { choosingSide = null }
     ) {
-      Column(Modifier.fillMaxWidth()) {
+      Column(
+        Modifier
+          .fillMaxWidth()
+          .sheetContentSafePadding()
+          .sheetHeightTransition()
+      ) {
         timeStamps.forEach { stamp ->
           Card(
             modifier = Modifier
