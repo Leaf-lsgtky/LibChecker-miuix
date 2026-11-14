@@ -62,6 +62,8 @@ import top.yukonga.miuix.kmp.basic.LinearProgressIndicator
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.GridView
+import top.yukonga.miuix.kmp.icon.extended.ListView
 import top.yukonga.miuix.kmp.icon.extended.Report
 import top.yukonga.miuix.kmp.icon.extended.Tune
 import top.yukonga.miuix.kmp.menu.OverlayIconCascadingDropdownMenu
@@ -94,6 +96,7 @@ fun ReferenceScreen(
   var searchResult by remember { mutableStateOf<List<LibReference>?>(null) }
   var options by remember { mutableIntStateOf(viewModel.getLibReferenceOptions()) }
   var easterEgg by remember { mutableStateOf(false) }
+  var treemapEnabled by remember { mutableStateOf(viewModel.treemapEnabled) }
 
   LaunchedEffect(Unit) {
     viewModel.onReferencePageVisible(hasDisplayedReferences = false)
@@ -122,6 +125,23 @@ fun ReferenceScreen(
       title = stringResource(R.string.title_statistics),
       scrollBehavior = scrollBehavior,
       actions = {
+        IconButton(
+          onClick = {
+            treemapEnabled = !treemapEnabled
+            viewModel.treemapEnabled = treemapEnabled
+          }
+        ) {
+          Icon(
+            imageVector = if (treemapEnabled) MiuixIcons.ListView else MiuixIcons.GridView,
+            contentDescription = stringResource(
+              if (treemapEnabled) {
+                R.string.lib_reference_switch_to_list
+              } else {
+                R.string.lib_reference_switch_to_treemap
+              }
+            )
+          )
+        }
         IconButton(onClick = onOpenChart) {
           AsyncImage(
             model = R.drawable.ic_chart,
@@ -183,7 +203,13 @@ fun ReferenceScreen(
           title = if (easterEgg) "🥚" else stringResource(R.string.empty_list)
         )
 
-        else -> WideContentBox { sidePadding ->
+        else -> if (treemapEnabled) {
+          LibReferenceTreemapContent(
+            references = displayed,
+            colorfulRuleIcon = viewModel.colorfulRuleIcon,
+            onReferenceClick = onOpenReference
+          )
+        } else WideContentBox { sidePadding ->
           LazyColumn(
             state = listState,
             modifier = Modifier
