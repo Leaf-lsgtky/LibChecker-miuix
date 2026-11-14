@@ -445,4 +445,6 @@
   <string name="feature_xposed_description">This app is an Xposed module.</string>
   <string name="feature_live_update_description">This app supports live update notifications.</string>
   <string name="feature_app_icons_description">This app provides additional app icons.</string>
+  <string name="about_developers">Contributors</string>
+  <string name="about_developers_summary">Maintainers and contributors of this project</string>
 </resources>

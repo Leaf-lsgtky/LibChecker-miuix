@@ -15,6 +15,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.ColorPainter
@@ -42,6 +46,7 @@ import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
+import top.yukonga.miuix.kmp.icon.extended.Contacts
 import top.yukonga.miuix.kmp.icon.extended.Favorites
 import top.yukonga.miuix.kmp.icon.extended.File
 import top.yukonga.miuix.kmp.icon.extended.Help
@@ -66,6 +71,7 @@ fun AboutScreen(
   val scrollBehavior = MiuixScrollBehavior()
   val colorScheme = MiuixTheme.colorScheme
   val placeholder = ColorPainter(colorScheme.surfaceContainerHigh)
+  var showDevelopers by remember { mutableStateOf(false) }
 
   Column(modifier = modifier.fillMaxSize()) {
     AdaptiveTopAppBar(
@@ -176,6 +182,12 @@ fun AboutScreen(
               onClick = { context.openUrlInBrowser(URLManager.PLAY_STORE_DETAIL_PAGE) }
             )
             ArrowPreference(
+              title = stringResource(R.string.about_developers),
+              summary = stringResource(R.string.about_developers_summary),
+              startAction = { AboutIcon(MiuixIcons.Contacts) },
+              onClick = { showDevelopers = true }
+            )
+            ArrowPreference(
               title = stringResource(R.string.about_open_source_licenses),
               summary = stringResource(R.string.about_open_source_licenses_summary),
               startAction = { AboutIcon(MiuixIcons.File) },
@@ -193,6 +205,11 @@ fun AboutScreen(
       }
     }
   }
+
+  DevelopersSheet(
+    show = showDevelopers,
+    onDismiss = { showDevelopers = false }
+  )
 }
 
 @Composable
