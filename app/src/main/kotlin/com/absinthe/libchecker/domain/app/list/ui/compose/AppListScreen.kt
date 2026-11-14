@@ -335,14 +335,16 @@ fun AppListScreen(
               .padding(bottom = 8.dp)
           )
           AnimatedVisibility(
-            visible = loading || toolbarLoading,
+            visible = items.isEmpty() && loading,
             enter = fadeIn(),
             exit = fadeOut()
           ) {
             LinearProgressIndicator(
-              modifier = Modifier.fillMaxWidth(),
-              progress = if (loading && initProgress in 1..99) initProgress / 100f else null,
-              height = 2.dp
+              modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
+              progress = if (initProgress in 1..99) initProgress / 100f else 0f,
+              height = 3.dp
             )
           }
         }

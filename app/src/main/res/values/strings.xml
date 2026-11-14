@@ -476,4 +476,5 @@
   <string name="snapshot_contribution_total">%1$d updates in total</string>
   <string name="recent_visits_pinned">Pinned</string>
   <string name="snapshot_contribution_view_snapshot">View snapshot</string>
+  <string name="action_back">Back</string>
 </resources>

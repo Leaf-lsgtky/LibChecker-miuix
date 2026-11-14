@@ -181,11 +181,13 @@ fun ReferenceScreen(
               .padding(horizontal = 12.dp)
               .padding(bottom = 8.dp)
           )
-          if (isLoading) {
+          if (isLoading && references.isNullOrEmpty()) {
             LinearProgressIndicator(
-              modifier = Modifier.fillMaxWidth(),
-              progress = loadingState.overallProgress?.let { it / 100f },
-              height = 2.dp
+              modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
+              progress = loadingState.overallProgress?.let { it / 100f } ?: 0f,
+              height = 3.dp
             )
           }
         }
@@ -275,7 +277,7 @@ private fun ReferenceRow(reference: LibReference, onClick: () -> Unit) {
       Column(Modifier.weight(1f)) {
         Text(
           text = label,
-          fontWeight = FontWeight(550),
+          style = MiuixTheme.textStyles.title4,
           color = colorScheme.onSurface,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis
@@ -283,8 +285,7 @@ private fun ReferenceRow(reference: LibReference, onClick: () -> Unit) {
         Spacer(Modifier.height(2.dp))
         Text(
           text = reference.libName,
-          fontSize = 12.sp,
-          fontWeight = FontWeight(500),
+          style = MiuixTheme.textStyles.footnote1,
           color = colorScheme.onSurfaceVariantSummary,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis
@@ -292,9 +293,8 @@ private fun ReferenceRow(reference: LibReference, onClick: () -> Unit) {
       }
       Text(
         text = reference.referredList.size.toString(),
-        fontSize = 13.sp,
-        fontWeight = FontWeight(550),
-        color = colorScheme.onSurfaceVariantSummary,
+        style = MiuixTheme.textStyles.title3,
+        color = colorScheme.onSurface,
         modifier = Modifier.padding(start = 12.dp)
       )
     }
@@ -310,8 +310,8 @@ private fun buildReferenceMenuEntries(
     LibReferenceOptions.NATIVE_LIBS to stringResource(R.string.ref_category_native),
     LibReferenceOptions.SERVICES to stringResource(R.string.ref_category_service),
     LibReferenceOptions.ACTIVITIES to stringResource(R.string.ref_category_activity),
-    LibReferenceOptions.RECEIVERS to stringResource(R.string.ref_category_service),
-    LibReferenceOptions.PROVIDERS to stringResource(R.string.ref_category_service),
+    LibReferenceOptions.RECEIVERS to stringResource(R.string.ref_category_br),
+    LibReferenceOptions.PROVIDERS to stringResource(R.string.ref_category_cp),
     LibReferenceOptions.METADATA to stringResource(R.string.ref_category_metadata),
     LibReferenceOptions.PACKAGES to stringResource(R.string.ref_category_package),
     LibReferenceOptions.SHARED_UID to stringResource(R.string.ref_category_shared_uid),

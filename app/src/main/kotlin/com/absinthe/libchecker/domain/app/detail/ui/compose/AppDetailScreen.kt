@@ -710,7 +710,7 @@ fun AppDetailScreen(
       scrollBehavior = scrollBehavior,
       navigationIcon = {
         IconButton(onClick = onBack) {
-          Icon(MiuixIcons.Back, contentDescription = null)
+          Icon(MiuixIcons.Back, contentDescription = stringResource(R.string.action_back))
         }
       },
       actions = {
@@ -1085,7 +1085,10 @@ private fun DetailHeader(
     Text(
       text = infoLine,
       fontSize = 12.sp,
+      fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
       color = colorScheme.onSurfaceVariantSummary,
+      maxLines = 2,
+      overflow = TextOverflow.Ellipsis,
       modifier = Modifier.combinedClickable(
         onClick = {},
         onLongClick = { context.copyTextWithToast(infoLine) }
@@ -1145,7 +1148,6 @@ private fun DetailItemRow(
     Row(
       modifier = Modifier
         .fillMaxWidth()
-        .background(colorScheme.surfaceContainer)
         .combinedClickable(onClick = onClick, onLongClick = onLongClick)
         .padding(horizontal = 16.dp, vertical = 12.dp),
       verticalAlignment = Alignment.CenterVertically

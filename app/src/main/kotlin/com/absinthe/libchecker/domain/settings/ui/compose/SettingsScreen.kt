@@ -585,8 +585,7 @@ private fun AppearanceSettingsPage(
       navigationIcon = {
         IconButton(onClick = onBack) {
           Icon(
-            imageVector = MiuixIcons.Back,
-            contentDescription = null
+            imageVector = MiuixIcons.Back, contentDescription = stringResource(R.string.action_back)
           )
         }
       }

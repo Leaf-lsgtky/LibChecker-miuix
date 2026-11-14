@@ -136,7 +136,7 @@ fun AlbumScreen(
       scrollBehavior = scrollBehavior,
       navigationIcon = {
         IconButton(onClick = onBack) {
-          Icon(MiuixIcons.Back, contentDescription = null)
+          Icon(MiuixIcons.Back, contentDescription = stringResource(R.string.action_back))
         }
       }
     )

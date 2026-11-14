@@ -1,6 +1,8 @@
 package com.absinthe.libchecker.domain.statistics.reference.ui.compose
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
@@ -16,7 +18,10 @@ fun LibReferenceTreemapContent(
   modifier: Modifier = Modifier
 ) {
   AndroidView(
-    modifier = modifier.fillMaxSize(),
+    modifier = modifier
+      .fillMaxSize()
+      .padding(horizontal = 12.dp)
+      .padding(top = 6.dp, bottom = 6.dp),
     factory = { context ->
       LibReferenceTreemapView(context).apply {
         this.onReferenceClick = onReferenceClick
@@ -24,7 +29,7 @@ fun LibReferenceTreemapContent(
     },
     update = { view ->
       view.colorfulRuleIcon = colorfulRuleIcon
-      view.submitReferences(references)
+      view.submitReferences(references, animate = true, aggregateSmallReferences = false)
     }
   )
 }
