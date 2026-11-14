@@ -3,6 +3,11 @@ package com.absinthe.libchecker.domain.app.detail.ui.compose
 import android.content.pm.PackageInfo
 import android.text.Html
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyRow
 import top.yukonga.miuix.kmp.icon.extended.File
 import com.absinthe.libchecker.utils.extensions.openUrlInBrowser
 import com.absinthe.libchecker.constant.URLManager
@@ -72,6 +77,9 @@ fun FeatureDetailSheet(
   var description by remember { mutableStateOf<String?>(null) }
   var loading by remember { mutableStateOf(false) }
   var propItems by remember { mutableStateOf<List<AppPropItem>>(emptyList()) }
+  var appIcons by remember {
+    mutableStateOf<List<com.absinthe.libchecker.domain.app.detail.model.AppIconItem>>(emptyList())
+  }
   var xmlText by remember { mutableStateOf<String?>(null) }
 
   LaunchedEffect(show, item) {
@@ -79,6 +87,7 @@ fun FeatureDetailSheet(
     loading = true
     rows = emptyList()
     propItems = emptyList()
+    appIcons = emptyList()
     description = null
     when (val action = item.action) {
       is AppDetailFeatureAction.Kotlin -> {
@@ -163,7 +172,10 @@ fun FeatureDetailSheet(
         description = context.getString(R.string.feature_live_update_description)
 
       is AppDetailFeatureAction.AppIcons -> {
-        description = context.getString(R.string.feature_app_icons_description)
+        appIcons = viewModel.featureState.appIcons
+        if (appIcons.isEmpty()) {
+          description = context.getString(R.string.feature_app_icons_description)
+        }
       }
     }
     loading = false
@@ -220,6 +232,28 @@ fun FeatureDetailSheet(
               fontSize = 13.sp,
               color = MiuixTheme.colorScheme.onSurfaceVariantSummary
             )
+            Spacer(Modifier.height(8.dp))
+          }
+          if (appIcons.isNotEmpty()) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+              itemsIndexed(appIcons) { index, icon ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                  androidx.compose.foundation.Image(
+                    bitmap = remember(icon) { icon.drawable.toBitmap(96, 96).asImageBitmap() },
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp)
+                  )
+                  if (index == 0 && icon.isMonochrome) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                      text = stringResource(R.string.dialog_themed),
+                      fontSize = 10.sp,
+                      color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                    )
+                  }
+                }
+              }
+            }
             Spacer(Modifier.height(8.dp))
           }
           if (propItems.isNotEmpty()) {
