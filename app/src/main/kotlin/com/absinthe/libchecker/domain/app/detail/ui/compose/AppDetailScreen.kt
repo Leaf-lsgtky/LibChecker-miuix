@@ -96,6 +96,7 @@ import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.More
 import top.yukonga.miuix.kmp.icon.extended.Copy
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.extended.Tune
@@ -149,6 +150,7 @@ fun AppDetailScreen(
   var elfDetailName by remember { mutableStateOf<String?>(null) }
   var showInstallSource by remember { mutableStateOf(false) }
   var showXposedInfo by remember { mutableStateOf(false) }
+  var showComponentMenu by remember { mutableStateOf(false) }
   var permissionProviders by remember {
     mutableStateOf<List<com.absinthe.libchecker.domain.app.detail.action.ProviderPermissionItem>?>(null)
   }
@@ -234,6 +236,13 @@ fun AppDetailScreen(
       filteredItems.sortedBy { it.item.name.lowercase() }
     }
   }
+
+  ComponentMenuSheet(
+    show = showComponentMenu,
+    viewModel = viewModel,
+    rulePackageName = packageInfo.packageName,
+    onDismiss = { showComponentMenu = false }
+  )
 
   XposedInfoSheet(
     show = showXposedInfo,
@@ -522,6 +531,14 @@ fun AppDetailScreen(
       navigationIcon = {
         IconButton(onClick = onBack) {
           Icon(MiuixIcons.Back, contentDescription = null)
+        }
+      },
+      actions = {
+        IconButton(onClick = { showComponentMenu = true }) {
+          Icon(
+            imageVector = MiuixIcons.More,
+            contentDescription = stringResource(R.string.advanced_menu)
+          )
         }
       },
       bottomContent = {
