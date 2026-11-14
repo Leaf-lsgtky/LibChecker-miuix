@@ -451,4 +451,6 @@
   <string name="lib_detail_elf_deps">Dependencies</string>
   <string name="lib_detail_elf_entry_points">Entry points</string>
   <string name="lib_detail_elf_stripped">Stripped</string>
+  <string name="lib_detail_permission_detail">Permission details</string>
+  <string name="lib_detail_permission_provider">Defined by</string>
 </resources>

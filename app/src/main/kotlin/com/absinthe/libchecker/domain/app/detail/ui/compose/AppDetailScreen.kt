@@ -31,6 +31,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -62,6 +63,7 @@ import com.absinthe.libchecker.annotation.SERVICE
 import com.absinthe.libchecker.annotation.SIGNATURES
 import com.absinthe.libchecker.annotation.STATIC
 import com.absinthe.libchecker.domain.app.detail.action.AppElfDetail
+import com.absinthe.libchecker.domain.app.detail.model.PermissionDetailContent
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureAction
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureIcon
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureItemData
@@ -129,6 +131,8 @@ fun AppDetailScreen(
   var featureDetail by remember { mutableStateOf<AppDetailFeatureItemData?>(null) }
   var longPressChip by remember { mutableStateOf<LibStringItemChip?>(null) }
   var elfDetail by remember { mutableStateOf<AppElfDetail?>(null) }
+  var permissionDetail by remember { mutableStateOf<PermissionDetailContent?>(null) }
+  val scope = rememberCoroutineScope()
   val is64Bit by viewModel.featureState.is64Bit.collectAsStateWithLifecycle()
 
   val nativeTabs by contentState.nativeLibTabs.collectAsStateWithLifecycle()
@@ -228,6 +232,33 @@ fun AppDetailScreen(
     )
   }
 
+  permissionDetail?.let { detail ->
+    WindowBottomSheet(
+      show = true,
+      title = detail.label?.toString() ?: detail.name,
+      onDismissRequest = { permissionDetail = null }
+    ) {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp)
+          .padding(bottom = 16.dp)
+      ) {
+        detail.description?.toString()?.takeIf(String::isNotBlank)?.let { description ->
+          SheetInfoBlock(
+            label = stringResource(R.string.lib_detail_permission_detail),
+            value = description
+          )
+        }
+        detail.providerAppName?.takeIf(String::isNotBlank)?.let { provider ->
+          SheetInfoBlock(
+            label = stringResource(R.string.lib_detail_permission_provider),
+            value = provider
+          )
+        }
+      }
+    }
+  }
   elfDetail?.let { detail ->
     WindowBottomSheet(
       show = true,
@@ -281,6 +312,15 @@ fun AppDetailScreen(
             android.content.ClipData.newPlainText("", actions.copyText)
           )
           longPressChip = null
+        }
+        if (selectedType == PERMISSION) {
+          SheetActionRow(text = stringResource(R.string.lib_detail_permission_detail)) {
+            val name = chip.item.name
+            longPressChip = null
+            scope.launch {
+              permissionDetail = runCatching { viewModel.getPermissionDetail(name) }.getOrNull()
+            }
+          }
         }
         actions.elfInfo?.let { elfInfo ->
           SheetActionRow(text = stringResource(R.string.lib_detail_elf_info)) {
