@@ -7,6 +7,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +39,7 @@ import com.absinthe.libchecker.R
 import com.absinthe.libchecker.domain.app.detail.model.AppInfoActionItem
 import com.absinthe.libchecker.domain.app.detail.model.AppInfoBottomSheetState
 import com.absinthe.libchecker.domain.app.detail.model.externalActions
+import com.absinthe.libchecker.domain.app.detail.model.launcherActivityCopyText
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel.AppPackageShareActionResult
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel.AppPackageShareExportResult
@@ -175,6 +177,12 @@ fun AppInfoSheet(
         PrimaryAction(
           label = stringResource(R.string.app_info_launch),
           onClick = ::launchApp,
+          onLongClick = {
+            state.launcherActivityCopyText?.let { text ->
+              val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
+              clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("", text))
+            }
+          },
           modifier = Modifier.weight(1f)
         )
         PrimaryAction(
@@ -230,12 +238,13 @@ fun AppInfoSheet(
 private fun PrimaryAction(
   label: String,
   onClick: () -> Unit,
+  onLongClick: (() -> Unit)? = null,
   modifier: Modifier = Modifier
 ) {
   Box(
     modifier = modifier
       .squircleBackground(MiuixTheme.colorScheme.surfaceContainerHigh, 14.dp)
-      .clickable(onClick = onClick)
+      .combinedClickable(onClick = onClick, onLongClick = onLongClick)
       .padding(vertical = 10.dp),
     contentAlignment = Alignment.Center
   ) {

@@ -161,6 +161,9 @@ internal class ChartHostController(
       h: com.github.mikephil.charting.highlight.Highlight
     ) {
       val source = currentSource ?: return
+      if (source is com.absinthe.libchecker.domain.statistics.chart.source.impl.MarketDistributionChartDataSource) {
+        return
+      }
       onSliceSelected(source, e.x.toInt())
     }
 

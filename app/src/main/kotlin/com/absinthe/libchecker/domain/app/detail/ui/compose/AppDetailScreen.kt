@@ -5,10 +5,17 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import com.absinthe.libchecker.domain.app.detail.model.SignatureDetailItem
+import com.absinthe.libchecker.domain.app.detail.model.MODE_SORT_BY_SIZE
+import com.absinthe.libchecker.domain.app.detail.model.MODE_SORT_BY_LIB
+import com.absinthe.libchecker.constant.GlobalValues
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -89,6 +96,7 @@ import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Copy
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.extended.Tune
 import top.yukonga.miuix.kmp.squircle.squircleBackground
@@ -125,7 +133,9 @@ fun AppDetailScreen(
 
   var query by rememberSaveable { mutableStateOf("") }
   var searchExpanded by rememberSaveable { mutableStateOf(false) }
-  var sortBySize by rememberSaveable { mutableStateOf(false) }
+  var sortBySize by rememberSaveable {
+    mutableStateOf(GlobalValues.libSortMode == MODE_SORT_BY_SIZE)
+  }
   var nativeTabIndex by remember { mutableIntStateOf(0) }
   val featureItems = remember { mutableStateListOf<AppDetailFeatureItemData>() }
   var libDetailRequest by remember { mutableStateOf<LibDetailRequest?>(null) }
@@ -134,6 +144,9 @@ fun AppDetailScreen(
   var longPressChip by remember { mutableStateOf<LibStringItemChip?>(null) }
   var elfDetail by remember { mutableStateOf<AppElfDetail?>(null) }
   var permissionDetail by remember { mutableStateOf<PermissionDetailContent?>(null) }
+  var signatureDetail by remember { mutableStateOf<List<SignatureDetailItem>?>(null) }
+  var elfInfoIcon by remember { mutableStateOf<Int?>(null) }
+  var elfDetailName by remember { mutableStateOf<String?>(null) }
   var permissionProviders by remember {
     mutableStateOf<List<com.absinthe.libchecker.domain.app.detail.action.ProviderPermissionItem>?>(null)
   }
@@ -299,11 +312,67 @@ fun AppDetailScreen(
       }
     }
   }
+  signatureDetail?.let { items ->
+    WindowBottomSheet(
+      show = true,
+      title = stringResource(R.string.signature_detail),
+      onDismissRequest = { signatureDetail = null }
+    ) {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp)
+          .padding(bottom = 16.dp)
+      ) {
+        Column(modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState())) {
+          items.forEach { item ->
+            Row(
+              modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp),
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+              Column(Modifier.weight(1f)) {
+                Text(
+                  text = item.type,
+                  fontSize = 13.sp,
+                  fontWeight = FontWeight(550),
+                  color = MiuixTheme.colorScheme.onSurface
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                  text = item.content,
+                  fontSize = 12.sp,
+                  color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                )
+              }
+              IconButton(
+                onClick = {
+                  val clipboard =
+                    context.getSystemService(android.content.ClipboardManager::class.java)
+                  clipboard?.setPrimaryClip(
+                    android.content.ClipData.newPlainText("", item.content)
+                  )
+                }
+              ) {
+                Icon(
+                  imageVector = MiuixIcons.Copy,
+                  contentDescription = stringResource(android.R.string.copy),
+                  tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                  modifier = Modifier.size(18.dp)
+                )
+              }
+            }
+          }
+        }
+      }
+    }
+  }
   elfDetail?.let { detail ->
     WindowBottomSheet(
       show = true,
-      title = stringResource(R.string.lib_detail_elf_info),
-      onDismissRequest = { elfDetail = null }
+      title = elfDetailName ?: stringResource(R.string.lib_detail_elf_info),
+      onDismissRequest = { elfDetail = null; elfDetailName = null }
     ) {
       Column(
         modifier = Modifier
@@ -321,7 +390,13 @@ fun AppDetailScreen(
         )
         SheetInfoBlock(
           label = stringResource(R.string.lib_detail_elf_stripped),
-          value = if (detail.isStripped) "Yes" else "No"
+          value = stringResource(
+            if (detail.isStripped) {
+              R.string.lib_detail_optimization_on
+            } else {
+              R.string.lib_detail_optimization_off
+            }
+          )
         )
       }
     }
@@ -375,6 +450,7 @@ fun AppDetailScreen(
         }
         actions.elfInfo?.let { elfInfo ->
           SheetActionRow(text = stringResource(R.string.lib_detail_elf_info)) {
+            elfDetailName = elfInfo.elfPath.substringAfterLast('/')
             viewModel.loadElfDetail(packageInfo.packageName, elfInfo.elfPath)
             longPressChip = null
           }
@@ -512,7 +588,16 @@ fun AppDetailScreen(
                 color = colorScheme.onSurfaceVariantSummary
               )
               Spacer(Modifier.weight(1f))
-              IconButton(onClick = { sortBySize = !sortBySize }) {
+              IconButton(
+          onClick = {
+            sortBySize = !sortBySize
+            GlobalValues.libSortMode = if (sortBySize) {
+              MODE_SORT_BY_SIZE
+            } else {
+              MODE_SORT_BY_LIB
+            }
+          }
+        ) {
                 Icon(
                   imageVector = MiuixIcons.Tune,
                   contentDescription = stringResource(R.string.menu_sort),
@@ -552,11 +637,26 @@ fun AppDetailScreen(
                 showDivider = index < displayItems.lastIndex,
                 onClick = {
                   if (chip.item.name.isNotBlank()) {
-                    libDetailRequest = LibDetailRequest(
-                      name = chip.item.name,
-                      type = selectedType,
-                      isValid = chip.rule != null
-                    )
+                    when (selectedType) {
+                      PERMISSION -> {
+                        val name = chip.item.name
+                        scope.launch {
+                          permissionDetail = runCatching {
+                            viewModel.getPermissionDetail(name)
+                          }.getOrNull()
+                        }
+                      }
+
+                      SIGNATURES -> {
+                        signatureDetail = viewModel.buildSignatureDetailItems(chip.item.name)
+                      }
+
+                      else -> libDetailRequest = LibDetailRequest(
+                        name = chip.item.name,
+                        type = selectedType,
+                        isValid = chip.rule != null
+                      )
+                    }
                   }
                 },
                 onLongClick = { longPressChip = chip }
