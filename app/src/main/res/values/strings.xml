@@ -458,4 +458,6 @@
   <string name="lib_detail_component_demo">Component row preview</string>
   <string name="chart_statistics_online_analysis">Detect online rules</string>
   <string name="app_info_alternative_launch">Alternative launch</string>
+  <string name="library_declaration_title">Library declaration</string>
+  <string name="library_declaration_summary">Where the marked library information comes from</string>
 </resources>

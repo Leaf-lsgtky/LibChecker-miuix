@@ -1,6 +1,7 @@
 package com.absinthe.libchecker.domain.about.ui.compose
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -44,7 +45,10 @@ import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.window.WindowDialog
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Info
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.extended.Contacts
 import top.yukonga.miuix.kmp.icon.extended.Favorites
@@ -72,6 +76,7 @@ fun AboutScreen(
   val colorScheme = MiuixTheme.colorScheme
   val placeholder = ColorPainter(colorScheme.surfaceContainerHigh)
   var showDevelopers by remember { mutableStateOf(false) }
+  var showDeclaration by remember { mutableStateOf(false) }
 
   Column(modifier = modifier.fillMaxSize()) {
     AdaptiveTopAppBar(
@@ -193,6 +198,12 @@ fun AboutScreen(
               startAction = { AboutIcon(MiuixIcons.File) },
               onClick = onOpenLicenses
             )
+            ArrowPreference(
+              title = stringResource(R.string.library_declaration_title),
+              summary = stringResource(R.string.library_declaration_summary),
+              startAction = { AboutIcon(MiuixIcons.Info) },
+              onClick = { showDeclaration = true }
+            )
           }
         }
         item {
@@ -210,6 +221,27 @@ fun AboutScreen(
     show = showDevelopers,
     onDismiss = { showDevelopers = false }
   )
+
+  if (showDeclaration) {
+    WindowDialog(
+      show = true,
+      title = stringResource(R.string.library_declaration_title),
+      summary = stringResource(R.string.library_declaration),
+      onDismissRequest = { showDeclaration = false }
+    ) {
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.End
+      ) {
+        TextButton(
+          text = stringResource(android.R.string.ok),
+          onClick = { showDeclaration = false }
+        )
+      }
+    }
+  }
 }
 
 @Composable
