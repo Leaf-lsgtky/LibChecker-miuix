@@ -99,7 +99,11 @@ fun DevelopersSheet(
           message = stringResource(R.string.loading)
         )
       } else {
-        LazyColumn(modifier = Modifier.heightIn(max = 480.dp)) {
+        LazyColumn(
+          modifier = Modifier
+            .heightIn(max = 480.dp)
+            .padding(top = 8.dp)
+        ) {
           items(items, key = { it.github + it.name }) { developer ->
             DeveloperRow(
               developer = developer,
