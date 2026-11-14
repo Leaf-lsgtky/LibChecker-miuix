@@ -191,6 +191,7 @@ internal class ChartHostController(
     return source.getChartSourceItems()
       .map { (x, item) ->
         ChartLegendEntry(
+          x = x,
           iconRes = item.iconRes,
           label = source.getLabelByXValue(context, x),
           count = item.data.size
@@ -201,6 +202,7 @@ internal class ChartHostController(
 }
 
 internal data class ChartLegendEntry(
+  val x: Int,
   val iconRes: Int,
   val label: String,
   val count: Int

@@ -156,7 +156,24 @@ fun ChartScreen(
           .padding(horizontal = 12.dp)
       ) {
         legend.forEach { entry ->
-          ChartLegendRow(entry = entry)
+          ChartLegendRow(
+            entry = entry,
+            onClick = {
+              val source = controller.currentSource
+              if (source != null) {
+                scope.launch {
+                  classifyState = runCatching {
+                    viewModel.buildClassifyDialogState(
+                      source = source,
+                      x = entry.x,
+                      title = entry.label,
+                      subtitle = null
+                    )
+                  }.getOrNull()
+                }
+              }
+            }
+          )
         }
       }
       Spacer(Modifier.height(4.dp))
@@ -245,6 +262,25 @@ fun ChartScreen(
           .padding(horizontal = 16.dp)
           .padding(bottom = 16.dp)
       ) {
+        state.androidVersion?.let { version ->
+          Row(verticalAlignment = Alignment.CenterVertically) {
+            version.iconRes?.let { iconRes ->
+              AsyncImage(
+                model = iconRes,
+                contentDescription = null,
+                modifier = Modifier
+                  .padding(end = 6.dp)
+                  .size(18.dp)
+              )
+            }
+            Text(
+              text = version.text,
+              fontSize = 12.sp,
+              color = colorScheme.onSurfaceVariantSummary
+            )
+          }
+          Spacer(Modifier.height(4.dp))
+        }
         state.subtitle?.let { subtitle ->
           Text(
             text = subtitle,
@@ -316,11 +352,12 @@ fun ChartScreen(
 }
 
 @Composable
-private fun ChartLegendRow(entry: ChartLegendEntry) {
+private fun ChartLegendRow(entry: ChartLegendEntry, onClick: () -> Unit) {
   val colorScheme = MiuixTheme.colorScheme
   Row(
     modifier = Modifier
       .fillMaxWidth()
+      .clickable(onClick = onClick)
       .padding(vertical = 6.dp),
     verticalAlignment = Alignment.CenterVertically
   ) {
