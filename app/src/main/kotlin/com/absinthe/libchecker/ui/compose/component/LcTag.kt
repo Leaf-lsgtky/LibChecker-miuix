@@ -24,14 +24,15 @@ fun LcTag(
   contentColor: Color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
   horizontalPadding: Int = 6,
   verticalPadding: Int = 2,
-  cornerRadius: Int = 6
+  cornerRadius: Int = 6,
+  textStyle: androidx.compose.ui.text.TextStyle = MiuixTheme.textStyles.footnote2.copy(fontSize = 10.sp)
 ) {
   Text(
     text = text,
     modifier = modifier
       .squircleBackground(containerColor, cornerRadius.dp)
       .padding(horizontal = horizontalPadding.dp, vertical = verticalPadding.dp),
-    style = MiuixTheme.textStyles.footnote2.copy(fontSize = 10.sp),
+    style = textStyle,
     color = contentColor,
     maxLines = 1
   )

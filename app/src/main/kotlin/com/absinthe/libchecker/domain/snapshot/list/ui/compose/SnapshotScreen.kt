@@ -65,6 +65,8 @@ import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.InputField
 import top.yukonga.miuix.kmp.basic.LinearProgressIndicator
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
+import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.basic.TabRow
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
@@ -129,6 +131,8 @@ fun SnapshotScreen(
   }
   var showKeepPreviousDialog by remember { mutableStateOf(false) }
   var isCapturing by remember { mutableStateOf(false) }
+  var isRefreshing by remember { mutableStateOf(false) }
+  val pullToRefreshState = rememberPullToRefreshState()
   val comparingProgress by viewModel.comparingProgress.collectAsStateWithLifecycle(0)
 
   suspend fun reloadTimeStamps(selectLatest: Boolean) {
@@ -416,7 +420,20 @@ fun SnapshotScreen(
 
         items.isEmpty() -> LcEmptyState(title = stringResource(R.string.snapshot_empty_list_title))
 
-        else -> WideContentBox { sidePadding ->
+        else -> PullToRefresh(
+          isRefreshing = isRefreshing,
+          onRefresh = {
+            isRefreshing = true
+            scope.launch {
+              reloadTimeStamps(selectLatest = true)
+              isRefreshing = false
+            }
+          },
+          pullToRefreshState = pullToRefreshState,
+          topAppBarScrollBehavior = scrollBehavior,
+          modifier = Modifier.fillMaxSize()
+        ) {
+          WideContentBox { sidePadding ->
           LazyColumn(
             state = listState,
             modifier = Modifier
@@ -487,6 +504,7 @@ fun SnapshotScreen(
               )
             }
           }
+        }
         }
       }
     }

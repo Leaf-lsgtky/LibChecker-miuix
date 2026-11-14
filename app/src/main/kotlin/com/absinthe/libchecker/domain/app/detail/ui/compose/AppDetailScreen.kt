@@ -1081,18 +1081,15 @@ private fun DetailHeader(
 
 @Composable
 private fun AbiBadge(text: String) {
-  val colorScheme = MiuixTheme.colorScheme
-  Box(
-    modifier = Modifier
-      .squircleBackground(colorScheme.onSurface, 4.dp)
-      .padding(horizontal = 4.dp, vertical = 2.dp)
-  ) {
-    Text(
-      text = text,
-      style = MiuixTheme.textStyles.footnote2.copy(fontSize = 9.sp),
-      color = colorScheme.surface
-    )
-  }
+  com.absinthe.libchecker.ui.compose.component.LcTag(
+    text = text,
+    containerColor = MiuixTheme.colorScheme.onSurface,
+    contentColor = MiuixTheme.colorScheme.surface,
+    horizontalPadding = 4,
+    verticalPadding = 2,
+    cornerRadius = 4,
+    textStyle = MiuixTheme.textStyles.footnote2.copy(fontSize = 9.sp)
+  )
 }
 
 @Composable

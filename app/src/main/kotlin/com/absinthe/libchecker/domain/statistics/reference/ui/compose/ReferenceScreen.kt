@@ -61,6 +61,8 @@ import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.InputField
 import top.yukonga.miuix.kmp.basic.LinearProgressIndicator
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
+import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.GridView
@@ -91,6 +93,8 @@ fun ReferenceScreen(
   val loadingState by viewModel.loadingState.collectAsStateWithLifecycle()
   val focusManager = LocalFocusManager.current
   val scrollBehavior = MiuixScrollBehavior()
+  var isRefreshing by remember { mutableStateOf(false) }
+  val pullToRefreshState = rememberPullToRefreshState()
 
   var query by rememberSaveable { mutableStateOf("") }
   var searchExpanded by rememberSaveable { mutableStateOf(false) }
@@ -120,6 +124,9 @@ fun ReferenceScreen(
 
   val displayed = (searchResult ?: references).orEmpty()
   val isLoading = references == null && searchResult == null
+  LaunchedEffect(isLoading) {
+    if (!isLoading) isRefreshing = false
+  }
 
   Column(modifier = modifier.fillMaxSize()) {
     AdaptiveTopAppBar(
@@ -214,7 +221,17 @@ fun ReferenceScreen(
             colorfulRuleIcon = viewModel.colorfulRuleIcon,
             onReferenceClick = onOpenReference
           )
-        } else WideContentBox { sidePadding ->
+        } else PullToRefresh(
+          isRefreshing = isRefreshing,
+          onRefresh = {
+            isRefreshing = true
+            viewModel.requestComputeReference(isVisible = true, needShowLoading = true)
+          },
+          pullToRefreshState = pullToRefreshState,
+          topAppBarScrollBehavior = scrollBehavior,
+          modifier = Modifier.fillMaxSize()
+        ) {
+          WideContentBox { sidePadding ->
           LazyColumn(
             state = listState,
             modifier = Modifier
@@ -239,6 +256,7 @@ fun ReferenceScreen(
               )
             }
           }
+        }
         }
       }
     }
