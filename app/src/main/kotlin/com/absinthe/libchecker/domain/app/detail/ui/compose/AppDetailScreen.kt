@@ -403,7 +403,7 @@ fun AppDetailScreen(
         if (providers.isEmpty()) {
           Text(
             text = stringResource(R.string.empty_list),
-            fontSize = 13.sp,
+            style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
             color = MiuixTheme.colorScheme.onSurfaceVariantSummary
           )
         } else {
@@ -473,14 +473,13 @@ fun AppDetailScreen(
               Column(Modifier.weight(1f)) {
                 Text(
                   text = item.type,
-                  fontSize = 13.sp,
-                  fontWeight = FontWeight(550),
+                  style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
                   color = MiuixTheme.colorScheme.onSurface
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
                   text = item.content,
-                  fontSize = 12.sp,
+                  style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
                   color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                 )
               }
@@ -866,7 +865,7 @@ fun AppDetailScreen(
             ) {
               Text(
                 text = "${stringResource(R.string.items_count)}${displayItems.size}",
-                fontSize = 12.sp,
+                style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
                 color = colorScheme.onSurfaceVariantSummary
               )
               Spacer(Modifier.weight(1f))
@@ -993,7 +992,7 @@ private fun ScrollableTabs(
       ) {
         Text(
           text = title,
-          fontSize = 14.sp,
+          style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
           fontWeight = if (selected) FontWeight(600) else FontWeight(500),
           color = contentColor,
           maxLines = 1
@@ -1049,7 +1048,7 @@ private fun DetailHeader(
         Spacer(Modifier.height(2.dp))
         Text(
           text = packageInfo.packageName,
-          fontSize = 12.sp,
+          style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
           color = colorScheme.onSurfaceVariantSummary,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis
@@ -1057,7 +1056,7 @@ private fun DetailHeader(
         Spacer(Modifier.height(2.dp))
         Text(
           text = "${packageInfo.versionName} (${PackageInfoCompat.getLongVersionCode(packageInfo)})",
-          fontSize = 12.sp,
+          style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
           color = colorScheme.onSurfaceVariantSummary,
           maxLines = 1
         )
@@ -1084,7 +1083,7 @@ private fun DetailHeader(
     }
     Text(
       text = infoLine,
-      fontSize = 12.sp,
+      style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
       fontFamily = androidx.compose.ui.text.font.FontFamily.SansSerif,
       color = colorScheme.onSurfaceVariantSummary,
       maxLines = 2,
@@ -1098,7 +1097,7 @@ private fun DetailHeader(
       Spacer(Modifier.height(2.dp))
       Text(
         text = "sharedUserId: $sharedUserId",
-        fontSize = 12.sp,
+        style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
         color = colorScheme.onSurfaceVariantSummary
       )
     }
@@ -1128,8 +1127,7 @@ private fun AbiBadge(text: String) {
   ) {
     Text(
       text = text,
-      fontSize = 9.sp,
-      fontWeight = FontWeight(700),
+      style = MiuixTheme.textStyles.footnote2.copy(fontSize = 9.sp),
       color = colorScheme.surface
     )
   }
@@ -1155,8 +1153,7 @@ private fun DetailItemRow(
       Column(Modifier.weight(1f)) {
         Text(
           text = highlightText(chip.item.name, highlight),
-          fontSize = 14.sp,
-          fontWeight = FontWeight(500),
+          style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
           color = colorScheme.onSurface,
           textDecoration = if (chip.item.source == DISABLED) TextDecoration.LineThrough else null,
           maxLines = 2,
@@ -1174,7 +1171,7 @@ private fun DetailItemRow(
           Spacer(Modifier.height(2.dp))
           Text(
             text = secondary,
-            fontSize = 12.sp,
+            style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
             color = colorScheme.onSurfaceVariantSummary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -1216,8 +1213,7 @@ private fun RuleChip(iconRes: Int, label: String) {
     )
     Text(
       text = label,
-      fontSize = 11.sp,
-      fontWeight = FontWeight(550),
+      style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp),
       color = colorScheme.onTertiaryContainer,
       maxLines = 1
     )
@@ -1274,7 +1270,7 @@ private fun SheetActionRow(text: String, onClick: () -> Unit) {
   ) {
     Text(
       text = text,
-      fontSize = 14.sp,
+      style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
       color = MiuixTheme.colorScheme.onSurface
     )
   }
@@ -1285,13 +1281,13 @@ private fun SheetInfoBlock(label: String, value: String) {
   Column(modifier = Modifier.padding(vertical = 6.dp)) {
     Text(
       text = label,
-      fontSize = 12.sp,
+      style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
       color = MiuixTheme.colorScheme.onSurfaceVariantSummary
     )
     Spacer(Modifier.height(2.dp))
     Text(
       text = value,
-      fontSize = 13.sp,
+      style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
       color = MiuixTheme.colorScheme.onSurface
     )
   }
@@ -1325,8 +1321,7 @@ private fun ProcessChip(
     }
     Text(
       text = label,
-      fontSize = 12.sp,
-      fontWeight = FontWeight(550),
+      style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
       color = if (selected) colorScheme.onPrimaryContainer else colorScheme.onSurface
     )
   }

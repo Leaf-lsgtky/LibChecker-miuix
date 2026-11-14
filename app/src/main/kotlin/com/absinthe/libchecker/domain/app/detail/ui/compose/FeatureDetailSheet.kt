@@ -204,7 +204,7 @@ fun FeatureDetailSheet(
         androidx.compose.foundation.text.selection.SelectionContainer {
           Text(
             text = text,
-            fontSize = 11.sp,
+            style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp),
             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
             color = MiuixTheme.colorScheme.onSurface
           )
@@ -234,7 +234,7 @@ fun FeatureDetailSheet(
           description?.let { text ->
             Text(
               text = text,
-              fontSize = 13.sp,
+              style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
               color = MiuixTheme.colorScheme.onSurfaceVariantSummary
             )
             Spacer(Modifier.height(8.dp))
@@ -252,7 +252,7 @@ fun FeatureDetailSheet(
                     Spacer(Modifier.height(2.dp))
                     Text(
                       text = stringResource(R.string.dialog_themed),
-                      fontSize = 10.sp,
+                      style = MiuixTheme.textStyles.footnote2.copy(fontSize = 10.sp),
                       color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                     )
                   }
@@ -297,8 +297,7 @@ fun FeatureDetailSheet(
               ) {
                 Text(
                   text = stringResource(R.string.lib_detail_app_props_tip),
-                  fontSize = 13.sp,
-                  fontWeight = FontWeight(550),
+                  style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
                   color = MiuixTheme.colorScheme.primary,
                   textDecoration = TextDecoration.Underline
                 )
@@ -345,15 +344,14 @@ private fun FeatureRowItem(row: FeatureRow) {
     Column(Modifier.weight(1f)) {
       Text(
         text = row.title,
-        fontSize = 13.sp,
-        fontWeight = FontWeight(550),
+        style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
         color = colorScheme.onSurface
       )
       row.subtitle?.takeIf(String::isNotBlank)?.let { subtitle ->
         Spacer(Modifier.height(2.dp))
         Text(
           text = subtitle,
-          fontSize = 12.sp,
+          style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
           color = colorScheme.onSurfaceVariantSummary
         )
       }
@@ -377,8 +375,7 @@ private fun AppPropRow(
     Column(Modifier.weight(1f)) {
       Text(
         text = item.key,
-        fontSize = 13.sp,
-        fontWeight = FontWeight(550),
+        style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
         color = colorScheme.onSurface
       )
       Spacer(Modifier.height(2.dp))
@@ -398,14 +395,14 @@ private fun AppPropRow(
           )
           Text(
             text = "#%08X".format(preview.color),
-            fontSize = 12.sp,
+            style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
             color = colorScheme.onSurfaceVariantSummary
           )
         }
 
         else -> Text(
           text = item.visibleValue.toString(),
-          fontSize = 12.sp,
+          style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
           color = colorScheme.onSurfaceVariantSummary
         )
       }

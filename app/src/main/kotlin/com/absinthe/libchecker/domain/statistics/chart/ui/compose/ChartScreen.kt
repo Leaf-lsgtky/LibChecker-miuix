@@ -134,7 +134,7 @@ fun ChartScreen(
               text = stringResource(
                 if (detailedAbi) R.string.chart_abi_detailed else R.string.chart_abi_concise
               ),
-              fontSize = 13.sp,
+              style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
               color = colorScheme.onSurfaceVariantSummary
             )
             Spacer(Modifier.size(6.dp))
@@ -151,7 +151,7 @@ fun ChartScreen(
     subtitle?.let { text ->
       Text(
         text = text,
-        fontSize = 12.sp,
+        style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
         color = colorScheme.onSurfaceVariantSummary,
         modifier = Modifier
           .fillMaxWidth()
@@ -289,7 +289,7 @@ fun ChartScreen(
             }
             Text(
               text = version.text,
-              fontSize = 12.sp,
+              style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
               color = colorScheme.onSurfaceVariantSummary
             )
           }
@@ -298,7 +298,7 @@ fun ChartScreen(
         state.subtitle?.let { subtitle ->
           Text(
             text = subtitle,
-            fontSize = 12.sp,
+            style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
             color = colorScheme.onSurfaceVariantSummary
           )
           Spacer(Modifier.height(8.dp))
@@ -333,13 +333,12 @@ fun ChartScreen(
               Column(Modifier.weight(1f)) {
                 Text(
                   text = item.label,
-                  fontSize = 14.sp,
-                  fontWeight = FontWeight(550),
+                  style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
                   color = colorScheme.onSurface
                 )
                 Text(
                   text = item.packageName,
-                  fontSize = 12.sp,
+                  style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
                   color = colorScheme.onSurfaceVariantSummary
                 )
               }
@@ -351,8 +350,7 @@ fun ChartScreen(
                 ) {
                   Text(
                     text = chip,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight(550),
+                    style = MiuixTheme.textStyles.footnote2.copy(fontSize = 10.sp),
                     color = colorScheme.onTertiaryContainer
                   )
                 }
@@ -418,14 +416,12 @@ private fun ChartLegendRow(entry: ChartLegendEntry, onClick: () -> Unit) {
     Text(
       text = entry.label,
       modifier = Modifier.weight(1f),
-      fontSize = 14.sp,
-      fontWeight = FontWeight(500),
+      style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
       color = colorScheme.onSurface
     )
     Text(
       text = entry.count.toString(),
-      fontSize = 28.sp,
-      fontWeight = FontWeight(600),
+      style = MiuixTheme.textStyles.title1.copy(fontSize = 28.sp),
       color = colorScheme.onSurface
     )
   }
@@ -471,8 +467,7 @@ private fun StatisticChip(
       Spacer(Modifier.size(6.dp))
       Text(
         text = statistic.title.resolve(context),
-        fontSize = 13.sp,
-        fontWeight = FontWeight(550),
+        style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
         color = colorScheme.onSurface,
         maxLines = 1
       )

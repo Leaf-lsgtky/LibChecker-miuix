@@ -163,20 +163,20 @@ private fun TitleCard(title: SnapshotTitleDisplayData) {
     Spacer(Modifier.height(2.dp))
     Text(
       text = title.versionInfo.toString(),
-      fontSize = 12.sp,
+      style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
       color = colorScheme.onSurfaceVariantSummary
     )
     Spacer(Modifier.height(2.dp))
     Text(
       text = title.apis.toString(),
-      fontSize = 12.sp,
+      style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
       color = colorScheme.onSurfaceVariantSummary
     )
     title.packageSize?.let {
       Spacer(Modifier.height(2.dp))
       Text(
         text = it.text.toString(),
-        fontSize = 12.sp,
+        style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
         color = colorScheme.onSurfaceVariantSummary
       )
     }
@@ -221,8 +221,7 @@ private fun SectionCard(
         ) {
           Text(
             text = "${count.label} ${count.countText}",
-            fontSize = 10.sp,
-            fontWeight = FontWeight(550),
+            style = MiuixTheme.textStyles.footnote2.copy(fontSize = 10.sp),
             color = statusColor
           )
         }
@@ -257,8 +256,7 @@ private fun DetailItem(item: SnapshotDetailItemDisplayData) {
       Text(
         text = item.title.toAnnotatedString(),
         modifier = Modifier.weight(1f),
-        fontSize = 13.sp,
-        fontWeight = FontWeight(500),
+        style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
         color = colorScheme.onSurface,
         maxLines = 3,
         overflow = TextOverflow.Ellipsis
@@ -280,8 +278,7 @@ private fun DetailItem(item: SnapshotDetailItemDisplayData) {
           )
           Text(
             text = chip.label,
-            fontSize = 10.sp,
-            fontWeight = FontWeight(550),
+            style = MiuixTheme.textStyles.footnote2.copy(fontSize = 10.sp),
             color = colorScheme.onTertiaryContainer,
             maxLines = 1
           )
@@ -293,7 +290,7 @@ private fun DetailItem(item: SnapshotDetailItemDisplayData) {
       Text(
         text = item.extra.toAnnotatedString(),
         modifier = Modifier.padding(start = 16.dp),
-        fontSize = 12.sp,
+        style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
         color = colorScheme.onSurfaceVariantSummary,
         maxLines = 4,
         overflow = TextOverflow.Ellipsis
@@ -304,7 +301,7 @@ private fun DetailItem(item: SnapshotDetailItemDisplayData) {
       Text(
         text = path.toString(),
         modifier = Modifier.padding(start = 16.dp),
-        fontSize = 11.sp,
+        style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp),
         color = colorScheme.onSurfaceVariantSummary,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis

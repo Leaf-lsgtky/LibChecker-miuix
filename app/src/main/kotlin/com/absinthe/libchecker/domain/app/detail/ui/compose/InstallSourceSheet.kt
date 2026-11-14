@@ -93,7 +93,7 @@ fun InstallSourceSheet(
 
         display == null -> Text(
           text = stringResource(R.string.empty_list),
-          fontSize = 13.sp,
+          style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
           color = MiuixTheme.colorScheme.onSurfaceVariantSummary
         )
 
@@ -135,7 +135,7 @@ private fun InstallSourceAppRow(
   Column(modifier = Modifier.padding(vertical = 6.dp)) {
     Text(
       text = title,
-      fontSize = 12.sp,
+      style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
       color = colorScheme.onSurfaceVariantSummary
     )
     Spacer(Modifier.height(4.dp))
@@ -164,18 +164,17 @@ private fun InstallSourceAppRow(
           Column(Modifier.weight(1f)) {
             Text(
               text = content.data.label,
-              fontSize = 14.sp,
-              fontWeight = FontWeight(550),
+              style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
               color = colorScheme.onSurface
             )
             Text(
               text = content.data.packageName,
-              fontSize = 12.sp,
+              style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
               color = colorScheme.onSurfaceVariantSummary
             )
             Text(
               text = content.data.versionInfo,
-              fontSize = 12.sp,
+              style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
               color = colorScheme.onSurfaceVariantSummary
             )
           }
@@ -194,18 +193,17 @@ private fun InstallSourceAppRow(
           Column(Modifier.weight(1f)) {
             Text(
               text = content.appName,
-              fontSize = 14.sp,
-              fontWeight = FontWeight(550),
+              style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
               color = colorScheme.onSurface
             )
             Text(
               text = content.packageName,
-              fontSize = 12.sp,
+              style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
               color = colorScheme.onSurfaceVariantSummary
             )
             Text(
               text = content.versionInfo,
-              fontSize = 12.sp,
+              style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
               color = colorScheme.onSurfaceVariantSummary
             )
           }
@@ -221,12 +219,12 @@ private fun InstalledTimeBlock(time: AppInstalledTimeDisplayData) {
   Column(modifier = Modifier.padding(vertical = 6.dp)) {
     Text(
       text = stringResource(R.string.lib_detail_app_first_installed_time) + " " + time.firstInstalledTime,
-      fontSize = 13.sp,
+      style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
       color = colorScheme.onSurface
     )
     Text(
       text = stringResource(R.string.lib_detail_app_last_updated_time) + " " + time.lastUpdatedTime,
-      fontSize = 13.sp,
+      style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
       color = colorScheme.onSurface
     )
   }
@@ -250,7 +248,7 @@ private fun DexoptBlock(info: DexOptimizationReader.DexFileOptimizationInfo) {
   Column(modifier = Modifier.padding(vertical = 6.dp)) {
     Text(
       text = stringResource(R.string.lib_detail_app_dexopt_title),
-      fontSize = 12.sp,
+      style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
       color = colorScheme.onSurfaceVariantSummary
     )
     Spacer(Modifier.height(6.dp))
@@ -278,7 +276,7 @@ private fun DexoptBlock(info: DexOptimizationReader.DexFileOptimizationInfo) {
       Spacer(Modifier.height(6.dp))
       Text(
         text = instructionSet,
-        fontSize = 12.sp,
+        style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
         color = colorScheme.onSurfaceVariantSummary
       )
     }
@@ -299,13 +297,12 @@ private fun DexoptValueCard(
   ) {
     Text(
       text = label,
-      fontSize = 11.sp,
+      style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp),
       color = colorScheme.onSurfaceVariantSummary
     )
     Text(
       text = value,
-      fontSize = 14.sp,
-      fontWeight = FontWeight(600),
+      style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
       color = colorScheme.onSurface
     )
   }

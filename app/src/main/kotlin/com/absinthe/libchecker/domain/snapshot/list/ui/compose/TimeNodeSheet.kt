@@ -102,8 +102,7 @@ fun TimeNodeSheet(
         Column(Modifier.weight(1f)) {
           Text(
             text = stringResource(R.string.snapshot_auto_remove_title),
-            fontSize = 14.sp,
-            fontWeight = FontWeight(550),
+            style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
             color = MiuixTheme.colorScheme.onSurface
           )
           Text(
@@ -111,7 +110,7 @@ fun TimeNodeSheet(
               R.string.snapshot_auto_remove_summary,
               autoRemoveThreshold.coerceAtLeast(1)
             ),
-            fontSize = 11.sp,
+            style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp),
             color = MiuixTheme.colorScheme.onSurfaceVariantSummary
           )
         }
@@ -142,7 +141,7 @@ fun TimeNodeSheet(
       if (items.isEmpty()) {
         Text(
           text = stringResource(R.string.empty_list),
-          fontSize = 13.sp,
+          style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
           color = MiuixTheme.colorScheme.onSurfaceVariantSummary
         )
       } else {
@@ -167,15 +166,14 @@ fun TimeNodeSheet(
               Column(Modifier.weight(1f)) {
                 Text(
                   text = node.timestampText,
-                  fontSize = 14.sp,
-                  fontWeight = FontWeight(550),
+                  style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
                   color = MiuixTheme.colorScheme.onSurface
                 )
                 if (node.description.isNotBlank()) {
                   Spacer(Modifier.height(2.dp))
                   Text(
                     text = node.description,
-                    fontSize = 11.sp,
+                    style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp),
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                   )
                 }
@@ -183,7 +181,7 @@ fun TimeNodeSheet(
               if (node.appCount > 0) {
                 Text(
                   text = node.appCount.toString(),
-                  fontSize = 12.sp,
+                  style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
                   color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                 )
               }
@@ -192,7 +190,7 @@ fun TimeNodeSheet(
                 Text(
                   text = stringResource(R.string.snapshot_time_node_current),
                   modifier = Modifier.padding(start = 8.dp),
-                  fontSize = 11.sp,
+                  style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp),
                   color = MiuixTheme.colorScheme.primary
                 )
               }
@@ -257,13 +255,13 @@ private fun ContributionGrid(
   Column(modifier = Modifier.padding(vertical = 4.dp)) {
     Text(
       text = stringResource(R.string.snapshot_contribution_total, data.totalUpdates),
-      fontSize = 11.sp,
+      style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp),
       color = colorScheme.onSurfaceVariantSummary
     )
     Spacer(Modifier.height(2.dp))
     Text(
       text = stringResource(R.string.snapshot_contribution_hint),
-      fontSize = 10.sp,
+      style = MiuixTheme.textStyles.footnote2.copy(fontSize = 10.sp),
       color = colorScheme.onSurfaceVariantSummary
     )
     Spacer(Modifier.height(6.dp))
