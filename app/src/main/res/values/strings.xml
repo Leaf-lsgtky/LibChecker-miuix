@@ -467,4 +467,5 @@
   <string name="process_all">All</string>
   <string name="lib_insight_title">SDK details</string>
   <string name="adv_app_appearance_preview">Preview appearance</string>
+  <string name="app_icon_layers">App icon layers</string>
 </resources>

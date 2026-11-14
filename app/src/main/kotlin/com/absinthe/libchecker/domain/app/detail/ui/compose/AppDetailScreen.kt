@@ -83,6 +83,8 @@ import com.absinthe.libchecker.domain.app.detail.model.DISABLED
 import com.absinthe.libchecker.domain.app.detail.model.LibStringItemChip
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel
 import com.absinthe.libchecker.domain.app.detail.ui.DetailTabSpecBuilder
+import androidx.core.graphics.drawable.toBitmap
+import com.absinthe.libchecker.utils.extensions.copyBitmapToClipboard
 import com.absinthe.libchecker.domain.app.list.ui.compose.AppIcon
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
 import com.absinthe.libchecker.ui.compose.component.LcEmptyState
@@ -162,6 +164,7 @@ fun AppDetailScreen(
   var showInstallSource by remember { mutableStateOf(false) }
   var showXposedInfo by remember { mutableStateOf(false) }
   var showComponentMenu by remember { mutableStateOf(false) }
+  var showIconLayers by remember { mutableStateOf(false) }
   var showOnlineAnalysis by remember { mutableStateOf(false) }
   var permissionProviders by remember {
     mutableStateOf<List<com.absinthe.libchecker.domain.app.detail.action.ProviderPermissionItem>?>(null)
@@ -270,6 +273,52 @@ fun AppDetailScreen(
     onDismiss = { showXposedInfo = false }
   )
 
+  if (showIconLayers) {
+    val icon = remember(packageInfo.packageName) {
+      runCatching { packageInfo.applicationInfo?.loadIcon(context.packageManager) }.getOrNull()
+    }
+    val adaptive = icon as? android.graphics.drawable.AdaptiveIconDrawable
+
+    fun copyLayer(drawable: android.graphics.drawable.Drawable?) {
+      val bitmap = runCatching {
+        drawable!!.toBitmap(192, 192)
+      }.getOrNull() ?: return
+      context.copyBitmapToClipboard(bitmap)
+      showIconLayers = false
+    }
+
+    WindowBottomSheet(
+      show = true,
+      title = stringResource(R.string.app_icon_layers),
+      onDismissRequest = { showIconLayers = false }
+    ) {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp)
+          .padding(bottom = 16.dp)
+      ) {
+        SheetActionRow(text = stringResource(R.string.adaptive_icon_copy_full)) {
+          copyLayer(icon)
+        }
+        if (adaptive != null) {
+          SheetActionRow(text = stringResource(R.string.adaptive_icon_copy_background)) {
+            copyLayer(adaptive.background)
+          }
+          SheetActionRow(text = stringResource(R.string.adaptive_icon_copy_foreground)) {
+            copyLayer(adaptive.foreground)
+          }
+          if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (adaptive.monochrome != null) {
+              SheetActionRow(text = stringResource(R.string.dialog_themed)) {
+                copyLayer(adaptive.monochrome)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
   InstallSourceSheet(
     show = showInstallSource,
     viewModel = viewModel,
@@ -845,7 +894,8 @@ private fun ScrollableTabs(
 private fun DetailHeader(
   packageInfo: PackageInfo,
   is64Bit: Boolean?,
-  onIconClick: () -> Unit
+  onIconClick: () -> Unit,
+  onIconLongClick: (() -> Unit)? = null
 ) {
   val context = LocalContext.current
   val colorScheme = MiuixTheme.colorScheme
@@ -865,7 +915,7 @@ private fun DetailHeader(
         modifier = Modifier
           .padding(end = 14.dp)
           .size(56.dp)
-          .clickable(onClick = onIconClick)
+          .combinedClickable(onClick = onIconClick, onLongClick = onIconLongClick)
       )
       Column(Modifier.weight(1f)) {
         Text(
