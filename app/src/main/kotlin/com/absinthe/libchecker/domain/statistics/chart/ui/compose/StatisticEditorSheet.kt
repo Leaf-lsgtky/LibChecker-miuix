@@ -33,6 +33,7 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -202,7 +203,7 @@ private fun StatisticEditorRow(
   ) {
     if (draggable) {
       Icon(
-        imageVector = MiuixIcons.Sort,
+        painter = painterResource(R.drawable.ic_drag_indicator),
         contentDescription = stringResource(R.string.chart_statistics_drag),
         tint = colorScheme.onSurfaceVariantSummary,
         modifier = Modifier

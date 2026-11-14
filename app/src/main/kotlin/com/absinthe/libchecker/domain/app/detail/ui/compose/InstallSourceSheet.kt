@@ -2,6 +2,9 @@ package com.absinthe.libchecker.domain.app.detail.ui.compose
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import top.yukonga.miuix.kmp.squircle.squircleBackground
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -231,30 +234,79 @@ private fun InstalledTimeBlock(time: AppInstalledTimeDisplayData) {
 
 @Composable
 private fun DexoptBlock(info: DexOptimizationReader.DexFileOptimizationInfo) {
+  val context = LocalContext.current
   val colorScheme = MiuixTheme.colorScheme
+  val allText = buildString {
+    append(context.getString(R.string.lib_detail_app_dexopt_title))
+    append('\n')
+    append(context.getString(R.string.lib_detail_app_dexopt_status))
+    append(' ')
+    append(info.status)
+    append('\n')
+    append(context.getString(R.string.lib_detail_app_dexopt_reason))
+    append(' ')
+    append(info.reason)
+  }
   Column(modifier = Modifier.padding(vertical = 6.dp)) {
     Text(
       text = stringResource(R.string.lib_detail_app_dexopt_title),
       fontSize = 12.sp,
       color = colorScheme.onSurfaceVariantSummary
     )
-    Spacer(Modifier.height(4.dp))
-    Text(
-      text = stringResource(R.string.lib_detail_app_dexopt_status) + " " + info.status,
-      fontSize = 13.sp,
-      color = colorScheme.onSurface
-    )
-    Text(
-      text = stringResource(R.string.lib_detail_app_dexopt_reason) + " " + info.reason,
-      fontSize = 13.sp,
-      color = colorScheme.onSurface
-    )
+    Spacer(Modifier.height(6.dp))
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .combinedClickable(
+          onClick = {},
+          onLongClick = { context.copyTextWithToast(allText) }
+        )
+    ) {
+      DexoptValueCard(
+        label = stringResource(R.string.lib_detail_app_dexopt_status),
+        value = info.status,
+        modifier = Modifier.weight(1f)
+      )
+      Spacer(Modifier.width(8.dp))
+      DexoptValueCard(
+        label = stringResource(R.string.lib_detail_app_dexopt_reason),
+        value = info.reason,
+        modifier = Modifier.weight(1f)
+      )
+    }
     info.instructionSet?.let { instructionSet ->
+      Spacer(Modifier.height(6.dp))
       Text(
         text = instructionSet,
         fontSize = 12.sp,
         color = colorScheme.onSurfaceVariantSummary
       )
     }
+  }
+}
+
+@Composable
+private fun DexoptValueCard(
+  label: String,
+  value: String,
+  modifier: Modifier = Modifier
+) {
+  val colorScheme = MiuixTheme.colorScheme
+  Column(
+    modifier = modifier
+      .squircleBackground(colorScheme.surfaceContainerHigh, 12.dp)
+      .padding(horizontal = 12.dp, vertical = 8.dp)
+  ) {
+    Text(
+      text = label,
+      fontSize = 11.sp,
+      color = colorScheme.onSurfaceVariantSummary
+    )
+    Text(
+      text = value,
+      fontSize = 14.sp,
+      fontWeight = FontWeight(600),
+      color = colorScheme.onSurface
+    )
   }
 }

@@ -34,6 +34,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -291,7 +292,7 @@ fun SnapshotScreen(
           }
         ) {
           Icon(
-            imageVector = MiuixIcons.Add,
+            painter = painterResource(R.drawable.ic_outline_save),
             contentDescription = stringResource(R.string.channel_shoot),
             tint = if (isCapturing) {
               MiuixTheme.colorScheme.disabledOnSurface

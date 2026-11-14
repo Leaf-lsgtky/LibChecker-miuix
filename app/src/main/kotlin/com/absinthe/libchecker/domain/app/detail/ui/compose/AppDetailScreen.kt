@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
@@ -216,6 +217,14 @@ fun AppDetailScreen(
   LaunchedEffect(selectedType, nativeTabs) {
     if (selectedType == NATIVE) {
       nativeTabs?.firstOrNull()?.let(viewModel::loadSoAnalysisData)
+    }
+  }
+
+  LaunchedEffect(viewModel) {
+    viewModel.nativeLibraryExtractionResults.collect { result ->
+      result.result
+        .onSuccess { context.showToast(R.string.lib_detail_elf_extract_success) }
+        .onFailure { context.showToast(R.string.lib_detail_elf_extract_failed) }
     }
   }
 
@@ -453,11 +462,7 @@ fun AppDetailScreen(
               }
               IconButton(
                 onClick = {
-                  val clipboard =
-                    context.getSystemService(android.content.ClipboardManager::class.java)
-                  clipboard?.setPrimaryClip(
-                    android.content.ClipData.newPlainText("", item.content)
-                  )
+                  context.copyTextWithToast(item.content)
                 }
               ) {
                 Icon(
@@ -527,10 +532,7 @@ fun AppDetailScreen(
           .padding(bottom = 16.dp)
       ) {
         SheetActionRow(text = stringResource(android.R.string.copy)) {
-          val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
-          clipboard?.setPrimaryClip(
-            android.content.ClipData.newPlainText("", actions.copyText)
-          )
+          context.copyTextWithToast(actions.copyText)
           longPressChip = null
         }
         if (selectedType == PERMISSION) {
@@ -691,7 +693,7 @@ fun AppDetailScreen(
         if (onCompareWithInstalled != null) {
           IconButton(onClick = onCompareWithInstalled) {
             Icon(
-              imageVector = MiuixIcons.Sort,
+              painter = painterResource(R.drawable.ic_compare),
               contentDescription = stringResource(R.string.lib_detail_compare_with_installed)
             )
           }
@@ -709,13 +711,13 @@ fun AppDetailScreen(
         }
         IconButton(onClick = { showOnlineAnalysis = true }) {
           Icon(
-            imageVector = MiuixIcons.Search,
-            contentDescription = stringResource(R.string.chart_statistics_online_analysis)
+            painter = painterResource(R.drawable.ic_cloud_rules),
+            contentDescription = stringResource(R.string.app_detail_online_rules_action)
           )
         }
         IconButton(onClick = { showComponentMenu = true }) {
           Icon(
-            imageVector = MiuixIcons.More,
+            painter = painterResource(R.drawable.ic_menu),
             contentDescription = stringResource(R.string.advanced_menu)
           )
         }
@@ -800,7 +802,8 @@ fun AppDetailScreen(
             DetailHeader(
               packageInfo = packageInfo,
               is64Bit = is64Bit,
-              onIconClick = { showAppInfo = true }
+              onIconClick = { showAppInfo = true },
+              onIconLongClick = { showIconLayers = true }
             )
           }
           if (featureItems.isNotEmpty()) {
@@ -853,7 +856,7 @@ fun AppDetailScreen(
           }
         ) {
                 Icon(
-                  imageVector = MiuixIcons.Tune,
+                  painter = painterResource(R.drawable.ic_lib_sort),
                   contentDescription = stringResource(R.string.menu_sort),
                   tint = if (sortBySize) colorScheme.primary else colorScheme.onSurfaceVariantSummary,
                   modifier = Modifier.size(18.dp)

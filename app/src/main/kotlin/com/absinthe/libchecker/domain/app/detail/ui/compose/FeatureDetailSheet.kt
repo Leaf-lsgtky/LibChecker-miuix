@@ -3,6 +3,11 @@ package com.absinthe.libchecker.domain.app.detail.ui.compose
 import android.content.pm.PackageInfo
 import android.text.Html
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.foundation.layout.Arrangement
@@ -280,18 +285,31 @@ fun FeatureDetailSheet(
               }
               }
               Spacer(Modifier.height(8.dp))
-              Text(
-                text = stringResource(R.string.lib_detail_app_props_tip) + " ↗",
-                fontSize = 13.sp,
-                fontWeight = FontWeight(550),
-                color = MiuixTheme.colorScheme.primary,
+              Row(
                 modifier = Modifier
                   .fillMaxWidth()
+                  .clip(RoundedCornerShape(8.dp))
                   .clickable {
                     context.openUrlInBrowser(URLManager.ANDROID_DEV_MANIFEST_APPLICATION)
                   }
-                  .padding(vertical = 8.dp)
-              )
+                  .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                Text(
+                  text = stringResource(R.string.lib_detail_app_props_tip),
+                  fontSize = 13.sp,
+                  fontWeight = FontWeight(550),
+                  color = MiuixTheme.colorScheme.primary,
+                  textDecoration = TextDecoration.Underline
+                )
+                Spacer(Modifier.width(4.dp))
+                Icon(
+                  painter = painterResource(R.drawable.ic_open_in_new),
+                  contentDescription = null,
+                  tint = MiuixTheme.colorScheme.primary,
+                  modifier = Modifier.size(14.dp)
+                )
+              }
             }
           } else if (rows.isNotEmpty()) {
             LazyColumn(modifier = Modifier.heightIn(max = 480.dp)) {

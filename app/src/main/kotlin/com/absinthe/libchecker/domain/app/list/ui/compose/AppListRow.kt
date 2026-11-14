@@ -19,7 +19,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import com.absinthe.libchecker.R
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
@@ -134,7 +136,7 @@ fun AppListRow(
           tags.take(2).forEach { tag ->
             when (tag) {
               "Frozen" -> Icon(
-                imageVector = MiuixIcons.Lock,
+                painter = painterResource(R.drawable.ic_disabled_package),
                 contentDescription = null,
                 tint = colorScheme.onSurfaceVariantSummary,
                 modifier = Modifier.size(16.dp)

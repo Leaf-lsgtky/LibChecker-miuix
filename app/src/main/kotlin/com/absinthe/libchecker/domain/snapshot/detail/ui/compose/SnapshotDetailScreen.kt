@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -79,7 +80,7 @@ fun SnapshotDetailScreen(
       actions = {
         IconButton(onClick = onShare) {
           Icon(
-            imageVector = MiuixIcons.UploadCloud,
+            painter = painterResource(R.drawable.ic_report),
             contentDescription = stringResource(R.string.snapshot_generate_text_report)
           )
         }

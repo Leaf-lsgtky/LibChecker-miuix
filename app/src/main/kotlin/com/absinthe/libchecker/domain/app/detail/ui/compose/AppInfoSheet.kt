@@ -193,8 +193,7 @@ fun AppInfoSheet(
           onClick = ::launchApp,
           onLongClick = {
             state.launcherActivityCopyText?.let { text ->
-              val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
-              clipboard?.setPrimaryClip(android.content.ClipData.newPlainText("", text))
+              context.copyTextWithToast(text)
             }
           },
           modifier = Modifier.weight(1f)

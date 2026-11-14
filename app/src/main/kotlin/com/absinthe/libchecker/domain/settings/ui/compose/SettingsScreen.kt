@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -202,7 +203,7 @@ private fun SettingsMainPage(
               },
               title = stringResource(R.string.apk_analytics),
               summary = stringResource(R.string.apk_analytics_summary),
-              startAction = { SettingsIcon(MiuixIcons.Notes) }
+              startAction = { SettingsIcon(R.drawable.ic_apk_analytics) }
             )
             WindowDropdownPreference(
               items = keepLabels.toList(),
@@ -217,13 +218,13 @@ private fun SettingsMainPage(
             ArrowPreference(
               title = stringResource(R.string.lib_ref_threshold),
               summary = threshold.toString(),
-              startAction = { SettingsIcon(MiuixIcons.Tune) },
+              startAction = { SettingsIcon(R.drawable.ic_floating_bar) },
               onClick = { showThresholdDialog = true }
             )
             ArrowPreference(
               title = stringResource(R.string.pref_group_appearance),
               summary = stringResource(R.string.pref_appearance_summary),
-              startAction = { SettingsIcon(MiuixIcons.Theme) },
+              startAction = { SettingsIcon(R.drawable.ic_blur) },
               onClick = onOpenAppearance
             )
           }
@@ -250,7 +251,7 @@ private fun SettingsMainPage(
                   R.string.settings_github_token_summary_set
                 }
               ),
-              startAction = { SettingsIcon(MiuixIcons.Lock) },
+              startAction = { SettingsIcon(R.drawable.ic_github) },
               onClick = { showTokenDialog = true }
             )
             ArrowPreference(
@@ -324,7 +325,7 @@ private fun SettingsMainPage(
             ArrowPreference(
               title = stringResource(R.string.settings_translate),
               summary = stringResource(R.string.settings_translate_summary),
-              startAction = { SettingsIcon(MiuixIcons.Translate) },
+              startAction = { SettingsIcon(R.drawable.ic_language) },
               onClick = { context.openUrlInBrowser(URLManager.CROWDIN_PAGE) }
             )
             ArrowPreference(
@@ -606,7 +607,7 @@ private fun AppearanceSettingsPage(
               items = darkModeLabels.toList(),
               selectedIndex = darkModeValues.indexOf(darkMode).coerceAtLeast(0),
               title = stringResource(R.string.dark_mode),
-              startAction = { SettingsIcon(MiuixIcons.Theme) },
+              startAction = { SettingsIcon(R.drawable.ic_blur) },
               onSelectedIndexChange = { index ->
                 darkMode = darkModeValues[index]
                 val nightMode = settingsViewModel.selectDarkMode(darkMode)
@@ -626,7 +627,7 @@ private fun AppearanceSettingsPage(
               },
               title = stringResource(R.string.amoled_theme),
               summary = stringResource(R.string.amoled_theme_summary),
-              startAction = { SettingsIcon(MiuixIcons.Theme) }
+              startAction = { SettingsIcon(R.drawable.ic_blur) }
             )
             if (!OsUtils.atLeastT()) {
               WindowDropdownPreference(
@@ -634,7 +635,7 @@ private fun AppearanceSettingsPage(
                 selectedIndex = languageValues.indexOf(SPUtils.getValue(Constants.PREF_LOCALE, "SYSTEM"))
                   .coerceAtLeast(0),
                 title = stringResource(R.string.languages),
-                startAction = { SettingsIcon(MiuixIcons.Translate) },
+                startAction = { SettingsIcon(R.drawable.ic_language) },
                 onSelectedIndexChange = { index ->
                   settingsViewModel.selectLocale(languageValues[index])
                   activity?.recreate()
@@ -649,7 +650,7 @@ private fun AppearanceSettingsPage(
               },
               title = stringResource(R.string.colorful_icon),
               summary = stringResource(R.string.colorful_icon_summary),
-              startAction = { SettingsIcon(MiuixIcons.Theme) }
+              startAction = { SettingsIcon(R.drawable.ic_blur) }
             )
             SwitchPreference(
               checked = floatingNavBar,
@@ -660,7 +661,7 @@ private fun AppearanceSettingsPage(
               },
               title = stringResource(R.string.floating_nav_bar),
               summary = stringResource(R.string.floating_nav_bar_summary),
-              startAction = { SettingsIcon(MiuixIcons.Tune) }
+              startAction = { SettingsIcon(R.drawable.ic_floating_bar) }
             )
             if (OsUtils.atLeastT()) {
               SwitchPreference(
@@ -672,7 +673,7 @@ private fun AppearanceSettingsPage(
                 },
                 title = stringResource(R.string.blur_design),
                 summary = stringResource(R.string.blur_design_summary),
-                startAction = { SettingsIcon(MiuixIcons.Theme) }
+                startAction = { SettingsIcon(R.drawable.ic_blur) }
               )
             }
             SwitchPreference(
@@ -697,6 +698,16 @@ private fun AppearanceSettingsPage(
       }
     }
   }
+}
+
+@Composable
+private fun SettingsIcon(@androidx.annotation.DrawableRes iconRes: Int) {
+  Icon(
+    painter = painterResource(iconRes),
+    contentDescription = null,
+    tint = MiuixTheme.colorScheme.onSurfaceContainer,
+    modifier = Modifier.size(22.dp)
+  )
 }
 
 @Composable
