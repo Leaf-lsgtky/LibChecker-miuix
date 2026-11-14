@@ -474,4 +474,5 @@
   <string name="snapshot_auto_remove_title">Auto remove old snapshots</string>
   <string name="snapshot_auto_remove_summary">Keep only the most recent %1$d snapshots</string>
   <string name="snapshot_contribution_total">%1$d updates in total</string>
+  <string name="recent_visits_pinned">Pinned</string>
 </resources>

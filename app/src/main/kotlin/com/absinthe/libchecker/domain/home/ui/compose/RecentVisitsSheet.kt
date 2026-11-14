@@ -70,6 +70,27 @@ fun RecentVisitsSheet(
       }
 
       LazyColumn(modifier = Modifier.heightIn(max = 460.dp)) {
+        val pinned = current.apps.pinned + current.libraries.pinned
+        if (pinned.isNotEmpty()) {
+          item(key = "pinned-title") {
+            RecentVisitsSectionTitle(stringResource(R.string.recent_visits_pinned))
+          }
+          items(pinned, key = { item -> "pinned-${item.visit.type}-${item.visit.name}" }) { item ->
+            RecentVisitRow(
+              item = item,
+              onOpen = {
+                if (item.visit.isLibrary) {
+                  onOpenLibrary(item.visit)
+                } else {
+                  onOpenApp(item.visit.name)
+                }
+                onDismiss()
+              },
+              onRemove = { viewModel.remove(item.visit) }
+            )
+          }
+        }
+
         if (current.apps.recent.isNotEmpty()) {
           item(key = "apps-title") {
             RecentVisitsSectionTitle(stringResource(R.string.recent_apps))
