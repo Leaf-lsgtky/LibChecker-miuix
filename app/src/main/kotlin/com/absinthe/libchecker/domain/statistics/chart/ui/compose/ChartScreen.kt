@@ -43,6 +43,7 @@ import com.absinthe.libchecker.domain.statistics.chart.model.ClassifyDialogState
 import com.absinthe.libchecker.domain.statistics.chart.presentation.ChartViewModel
 import com.absinthe.libchecker.domain.statistics.chart.ui.resolve
 import com.absinthe.libchecker.domain.statistics.chart.ui.resolveDrawable
+import com.absinthe.libchecker.domain.app.list.ui.compose.AppIcon
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
 import com.absinthe.libchecker.ui.compose.component.LcLoadingState
 import com.absinthe.libchecker.utils.extensions.launchDetailPage
@@ -220,6 +221,21 @@ fun ChartScreen(
                 .padding(vertical = 8.dp),
               verticalAlignment = Alignment.CenterVertically
             ) {
+              val packageInfo = remember(item.packageName) {
+                runCatching {
+                  com.absinthe.libchecker.compat.PackageManagerCompat.getPackageInfo(
+                    item.packageName,
+                    0
+                  )
+                }.getOrNull()
+              }
+              AppIcon(
+                packageInfo = packageInfo,
+                label = item.label,
+                modifier = Modifier
+                  .padding(end = 12.dp)
+                  .size(40.dp)
+              )
               Column(Modifier.weight(1f)) {
                 Text(
                   text = item.label,

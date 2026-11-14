@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -45,6 +46,7 @@ import com.absinthe.libchecker.domain.snapshot.comparison.presentation.SnapshotC
 import com.absinthe.libchecker.domain.snapshot.comparison.presentation.SnapshotComparisonViewModel.Effect
 import com.absinthe.libchecker.domain.snapshot.comparison.model.SnapshotComparisonPlan
 import com.absinthe.libchecker.domain.snapshot.model.SnapshotDiffItem
+import com.absinthe.libchecker.domain.app.list.ui.compose.AppIcon
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
 import com.absinthe.libchecker.ui.compose.component.LcEmptyState
 import com.absinthe.libchecker.ui.compose.component.LcLoadingState
@@ -379,6 +381,18 @@ private fun DiffRow(item: SnapshotDiffItem) {
     insideMargin = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
   ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
+      val packageInfo = remember(item.packageName) {
+        runCatching {
+          com.absinthe.libchecker.compat.PackageManagerCompat.getPackageInfo(item.packageName, 0)
+        }.getOrNull()
+      }
+      AppIcon(
+        packageInfo = packageInfo,
+        label = label,
+        modifier = Modifier
+          .padding(end = 12.dp)
+          .size(40.dp)
+      )
       Column(Modifier.weight(1f)) {
         Text(
           text = label,
