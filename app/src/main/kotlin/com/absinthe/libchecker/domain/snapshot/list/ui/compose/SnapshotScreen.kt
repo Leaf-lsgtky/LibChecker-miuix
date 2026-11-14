@@ -117,6 +117,7 @@ fun SnapshotScreen(
   var query by rememberSaveable { mutableStateOf("") }
   var searchExpanded by rememberSaveable { mutableStateOf(false) }
   var showDeleteDialog by remember { mutableStateOf(false) }
+  var showOptionsMenu by remember { mutableStateOf(false) }
   var showKeepPreviousDialog by remember { mutableStateOf(false) }
   var isCapturing by remember { mutableStateOf(false) }
   val comparingProgress by viewModel.comparingProgress.collectAsStateWithLifecycle(0)
@@ -188,6 +189,25 @@ fun SnapshotScreen(
 
   val formattedDates = remember(timeStamps) {
     timeStamps.associate { it.timestamp to viewModel.getFormatDateString(it.timestamp) }
+  }
+
+  if (showOptionsMenu) {
+    SnapshotMenuSheet(
+      show = true,
+      viewModel = viewModel,
+      onDismiss = {
+        showOptionsMenu = false
+        scope.launch {
+          val plan = viewModel.buildSnapshotListUpdatePlan(
+            currentItems = items,
+            highlightRefresh = true
+          )
+          items = plan.items
+          iconSources = plan.renderState.packageIconSources
+          highlight = plan.renderState.highlightText
+        }
+      }
+    )
   }
 
   if (showKeepPreviousDialog) {
@@ -268,6 +288,10 @@ fun SnapshotScreen(
             entries = listOf(
               DropdownEntry(
                 items = listOf(
+                  DropdownItem(
+                    text = stringResource(R.string.advanced_menu),
+                    onClick = { showOptionsMenu = true }
+                  ),
                   DropdownItem(
                     text = stringResource(R.string.dialog_action_delete),
                     onClick = { showDeleteDialog = true }
