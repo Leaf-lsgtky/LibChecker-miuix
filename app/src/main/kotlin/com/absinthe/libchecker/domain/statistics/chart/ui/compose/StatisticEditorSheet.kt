@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,6 +23,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -29,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
+import kotlin.math.roundToInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.absinthe.libchecker.R
 import com.absinthe.libchecker.domain.statistics.chart.model.StatisticDefinition
@@ -50,6 +56,9 @@ fun StatisticEditorSheet(
 ) {
   val context = LocalContext.current
   val state by viewModel.statisticCatalogEditorState.collectAsStateWithLifecycle()
+  var draggingId by remember { mutableStateOf<String?>(null) }
+  var dragOffset by remember { mutableStateOf(0f) }
+  val rowHeightPx = with(androidx.compose.ui.platform.LocalDensity.current) { 52.dp.toPx() }
 
   LaunchedEffect(show) {
     if (show) {
@@ -72,11 +81,42 @@ fun StatisticEditorSheet(
         item(key = "added-title") {
           SectionTitle(stringResource(R.string.chart_statistics_added))
         }
-        items(state.selectedStatistics, key = { "selected-${it.id}" }) { statistic ->
+        itemsIndexed(state.selectedStatistics, key = { _, it -> "selected-${it.id}" }) { index, statistic ->
           StatisticEditorRow(
             statistic = statistic,
             actionLabel = "−",
-            onAction = { viewModel.removeStatistic(statistic.id) }
+            onAction = { viewModel.removeStatistic(statistic.id) },
+            modifier = Modifier
+              .zIndex(if (draggingId == statistic.id) 1f else 0f)
+              .graphicsLayer {
+                translationY = if (draggingId == statistic.id) dragOffset else 0f
+              }
+              .pointerInput(statistic.id, state.selectedStatistics.size) {
+                detectDragGesturesAfterLongPress(
+                  onDragStart = {
+                    draggingId = statistic.id
+                    dragOffset = 0f
+                  },
+                  onDrag = { change, dragAmount ->
+                    change.consume()
+                    dragOffset += dragAmount.y
+                  },
+                  onDragEnd = {
+                    val from = state.selectedStatistics.indexOfFirst { it.id == statistic.id }
+                    val shift = (dragOffset / rowHeightPx).roundToInt()
+                    val to = (from + shift).coerceIn(0, state.selectedStatistics.lastIndex)
+                    if (from >= 0 && to != from) {
+                      viewModel.moveStatistic(from, to)
+                    }
+                    draggingId = null
+                    dragOffset = 0f
+                  },
+                  onDragCancel = {
+                    draggingId = null
+                    dragOffset = 0f
+                  }
+                )
+              }
           )
         }
         if (state.isRefreshing || state.refreshFailed) {
@@ -137,7 +177,8 @@ private fun SectionTitle(text: String) {
 private fun StatisticEditorRow(
   statistic: StatisticDefinition,
   actionLabel: String,
-  onAction: () -> Unit
+  onAction: () -> Unit,
+  modifier: Modifier = Modifier
 ) {
   val context = LocalContext.current
   val colorScheme = MiuixTheme.colorScheme
@@ -148,7 +189,7 @@ private fun StatisticEditorRow(
     }.getOrNull()
   }
   Row(
-    modifier = Modifier
+    modifier = modifier
       .fillMaxWidth()
       .padding(vertical = 4.dp),
     verticalAlignment = Alignment.CenterVertically
