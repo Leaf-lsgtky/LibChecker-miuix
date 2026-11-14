@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.absinthe.libchecker.R
 import com.absinthe.libchecker.database.entity.TimeStampItem
 import com.absinthe.libchecker.domain.snapshot.detail.ui.launchSnapshotDetail
+import com.absinthe.libchecker.domain.snapshot.detail.ui.model.shouldShowSnapshotNoDiffPopup
 import com.absinthe.libchecker.domain.snapshot.list.presentation.SnapshotViewModel
 import com.absinthe.libchecker.domain.snapshot.list.ui.SnapshotShootServiceController
 import com.absinthe.libchecker.domain.snapshot.model.SnapshotDiffItem
@@ -118,6 +119,9 @@ fun SnapshotScreen(
   var searchExpanded by rememberSaveable { mutableStateOf(false) }
   var showDeleteDialog by remember { mutableStateOf(false) }
   var showOptionsMenu by remember { mutableStateOf(false) }
+  var noDiffItem by remember {
+    mutableStateOf<com.absinthe.libchecker.domain.snapshot.model.SnapshotDiffItem?>(null)
+  }
   var showKeepPreviousDialog by remember { mutableStateOf(false) }
   var isCapturing by remember { mutableStateOf(false) }
   val comparingProgress by viewModel.comparingProgress.collectAsStateWithLifecycle(0)
@@ -393,8 +397,12 @@ fun SnapshotScreen(
                 iconSource = iconSources[item.packageName],
                 highlight = highlight,
                 onClick = {
-                  scope.launch {
-                    context.launchSnapshotDetail(lifecycleOwner, item)
+                  if (item.shouldShowSnapshotNoDiffPopup()) {
+                    noDiffItem = item
+                  } else {
+                    scope.launch {
+                      context.launchSnapshotDetail(lifecycleOwner, item)
+                    }
                   }
                 }
               )
@@ -446,6 +454,31 @@ fun SnapshotScreen(
           },
           modifier = Modifier.weight(1f),
           colors = ButtonDefaults.textButtonColorsPrimary()
+        )
+      }
+    }
+  }
+  noDiffItem?.let { item ->
+    val mode = when {
+      item.newInstalled -> R.string.snapshot_indicator_added
+      item.deleted -> R.string.snapshot_indicator_removed
+      else -> R.string.snapshot_indicator_changed
+    }
+    WindowDialog(
+      show = true,
+      title = item.labelDiff.new ?: item.packageName,
+      summary = stringResource(mode),
+      onDismissRequest = { noDiffItem = null }
+    ) {
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.End
+      ) {
+        TextButton(
+          text = stringResource(android.R.string.ok),
+          onClick = { noDiffItem = null }
         )
       }
     }
