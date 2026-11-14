@@ -439,4 +439,5 @@
   <string name="comparison_side_right">Right</string>
   <string name="comparison_side_archive">Choose file</string>
   <string name="comparison_start">Compare</string>
+  <string name="app_info_export">Export</string>
 </resources>

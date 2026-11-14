@@ -63,17 +63,14 @@ import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureIcon
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureItemData
 import com.absinthe.libchecker.domain.app.detail.model.DISABLED
 import com.absinthe.libchecker.domain.app.detail.model.LibStringItemChip
-import com.absinthe.libchecker.domain.app.detail.navigation.EXTRA_PACKAGE_NAME
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel
 import com.absinthe.libchecker.domain.app.detail.ui.DetailTabSpecBuilder
-import com.absinthe.libchecker.domain.app.detail.ui.dialog.AppInfoBottomSheetDialogFragment
 import com.absinthe.libchecker.domain.app.list.ui.compose.AppIcon
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
 import com.absinthe.libchecker.ui.compose.component.LcEmptyState
 import com.absinthe.libchecker.ui.compose.component.LcLoadingState
 import com.absinthe.libchecker.ui.compose.util.WideContentBox
 import com.absinthe.libchecker.ui.compose.util.horizontalCutoutPadding
-import com.absinthe.libchecker.utils.extensions.putArguments
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
@@ -119,6 +116,7 @@ fun AppDetailScreen(
   var nativeTabIndex by remember { mutableIntStateOf(0) }
   val featureItems = remember { mutableStateListOf<AppDetailFeatureItemData>() }
   var libDetailRequest by remember { mutableStateOf<LibDetailRequest?>(null) }
+  var showAppInfo by remember { mutableStateOf(false) }
   val is64Bit by viewModel.featureState.is64Bit.collectAsStateWithLifecycle()
 
   val nativeTabs by contentState.nativeLibTabs.collectAsStateWithLifecycle()
@@ -195,6 +193,15 @@ fun AppDetailScreen(
     } else {
       filteredItems.sortedBy { it.item.name.lowercase() }
     }
+  }
+
+  if (showAppInfo) {
+    AppInfoSheet(
+      show = true,
+      viewModel = viewModel,
+      packageInfo = packageInfo,
+      onDismiss = { showAppInfo = false }
+    )
   }
 
   libDetailRequest?.let { request ->
@@ -274,14 +281,7 @@ fun AppDetailScreen(
             DetailHeader(
               packageInfo = packageInfo,
               is64Bit = is64Bit,
-              onIconClick = {
-                val host = activity
-                if (host != null) {
-                  AppInfoBottomSheetDialogFragment()
-                    .putArguments(EXTRA_PACKAGE_NAME to packageInfo.packageName)
-                    .show(host.supportFragmentManager, AppInfoBottomSheetDialogFragment::class.java.name)
-                }
-              }
+              onIconClick = { showAppInfo = true }
             )
           }
           if (featureItems.isNotEmpty()) {
