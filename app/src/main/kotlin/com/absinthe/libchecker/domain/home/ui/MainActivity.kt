@@ -157,6 +157,7 @@ class MainActivity : BaseComposeActivity() {
         onTabSelected = { tab ->
           if (tab == selectedTab) {
             appViewModel.onAppListUserScrolled()
+            reselectSignal += 1
           }
           selectedTab = tab
         }
@@ -166,7 +167,8 @@ class MainActivity : BaseComposeActivity() {
             homeViewModel = appViewModel,
             detailViewModel = detailViewModel,
             onOpenDetail = { item -> launchDetailPage(item) },
-            listState = appListState
+            listState = appListState,
+            reselectSignal = reselectSignal
           )
 
           HomeTab.STATISTICS -> ReferenceScreen(

@@ -158,6 +158,12 @@ fun AppListScreen(
     }
   }
 
+  LaunchedEffect(reselectSignal) {
+    if (reselectSignal > 0) {
+      listState.animateScrollToItem(0)
+    }
+  }
+
   LaunchedEffect(Unit) {
     homeViewModel.effect.collect { effect ->
       when (effect) {
