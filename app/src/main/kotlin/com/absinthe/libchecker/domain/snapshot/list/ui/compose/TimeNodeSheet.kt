@@ -3,6 +3,11 @@ package com.absinthe.libchecker.domain.snapshot.list.ui.compose
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -54,6 +59,9 @@ fun TimeNodeSheet(
   var items by remember(timeStamps, currentTimestamp) {
     mutableStateOf<List<SnapshotTimeNodeItem>>(emptyList())
   }
+  var contributionData by remember(show) {
+    mutableStateOf<com.absinthe.libchecker.domain.snapshot.timenode.model.SnapshotContributionData?>(null)
+  }
   var autoRemoveThreshold by remember(show) {
     mutableIntStateOf(viewModel.getSnapshotAutoRemoveThreshold())
   }
@@ -64,6 +72,9 @@ fun TimeNodeSheet(
       viewModel.buildSnapshotTimeNodeListData(timeStamps).items
     }.getOrDefault(emptyList())
     autoRemoveThreshold = viewModel.getSnapshotAutoRemoveThreshold()
+    contributionData = runCatching {
+      viewModel.computeSnapshotContributions(timeStamps)
+    }.getOrNull()
   }
 
   WindowBottomSheet(
@@ -116,6 +127,15 @@ fun TimeNodeSheet(
         )
       }
 
+      contributionData?.let { data ->
+        ContributionGrid(
+          data = data,
+          onSelectSnapshot = { timestamp ->
+            onSelect(timestamp)
+          }
+        )
+        Spacer(Modifier.height(8.dp))
+      }
       if (items.isEmpty()) {
         Text(
           text = stringResource(R.string.empty_list),
@@ -182,3 +202,57 @@ fun TimeNodeSheet(
 }
 
 private const val DEFAULT_THRESHOLD = 3
+
+@Composable
+private fun ContributionGrid(
+  data: com.absinthe.libchecker.domain.snapshot.timenode.model.SnapshotContributionData,
+  onSelectSnapshot: (Long) -> Unit
+) {
+  val colorScheme = MiuixTheme.colorScheme
+  val weeks = remember(data) {
+    val firstMonday = data.startDate.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
+    val days = generateSequence(firstMonday) { it.plusDays(1) }
+      .takeWhile { !it.isAfter(data.endDate.plusDays(1)) }
+      .toList()
+    days.chunked(7)
+  }
+
+  Column(modifier = Modifier.padding(vertical = 4.dp)) {
+    Text(
+      text = stringResource(R.string.snapshot_contribution_total, data.totalUpdates),
+      fontSize = 11.sp,
+      color = colorScheme.onSurfaceVariantSummary
+    )
+    Spacer(Modifier.height(6.dp))
+    Row(
+      modifier = Modifier.horizontalScroll(rememberScrollState()),
+      horizontalArrangement = Arrangement.spacedBy(3.dp)
+    ) {
+        weeks.forEach { week ->
+          Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            week.forEach { date ->
+              val day = data.days[date]
+              val color = when {
+                day == null -> colorScheme.surfaceContainerHigh
+                day.snapshotColor != null -> Color(day.snapshotColor)
+                day.updateCount > 0 -> Color(
+                  com.absinthe.libchecker.domain.snapshot.timenode.model.SnapshotPalette
+                    .getColor(day.date.dayOfYear)
+                ).copy(alpha = 0.45f)
+
+                else -> colorScheme.surfaceContainerHigh
+              }
+              Box(
+                modifier = Modifier
+                  .size(11.dp)
+                  .squircleBackground(color, 3.dp)
+                  .clickable(enabled = day?.snapshotTimestamp != null) {
+                    day?.snapshotTimestamp?.let(onSelectSnapshot)
+                  }
+              )
+            }
+          }
+        }
+      }
+    }
+  }
