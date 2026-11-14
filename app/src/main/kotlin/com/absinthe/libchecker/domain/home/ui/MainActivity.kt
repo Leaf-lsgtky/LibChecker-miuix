@@ -149,6 +149,7 @@ class MainActivity : BaseComposeActivity() {
     val referenceState = rememberLazyListState()
     val snapshotState = rememberLazyListState()
     val appearanceState = rememberLazyListState()
+    var reselectSignal by androidx.compose.runtime.mutableIntStateOf(0)
 
     CompositionLocalProvider(LocalHomeAppearance provides appearance) {
       HomeScaffold(

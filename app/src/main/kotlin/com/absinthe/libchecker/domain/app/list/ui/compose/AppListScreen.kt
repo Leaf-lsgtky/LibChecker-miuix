@@ -97,6 +97,7 @@ import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 fun AppListScreen(
   homeViewModel: HomeViewModel,
   detailViewModel: com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel,
+  reselectSignal: Int = 0,
   onOpenDetail: (LCItem) -> Unit,
   modifier: Modifier = Modifier,
   listState: LazyListState = rememberLazyListState()
