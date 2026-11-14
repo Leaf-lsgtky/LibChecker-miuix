@@ -201,7 +201,7 @@ fun AppInfoSheet(
           )
         }
       }
-      Spacer(Modifier.height(14.dp))
+      Spacer(Modifier.height(16.dp))
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         PrimaryAction(
           label = stringResource(R.string.app_info_launch),
@@ -316,7 +316,7 @@ private fun PrimaryAction(
     modifier = modifier
       .squircleBackground(MiuixTheme.colorScheme.surfaceContainerHigh, 14.dp)
       .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-      .padding(vertical = 10.dp),
+      .padding(vertical = 12.dp),
     contentAlignment = Alignment.Center
   ) {
     Text(
@@ -336,7 +336,7 @@ private fun ExternalActionRow(item: AppInfoActionItem, onClick: () -> Unit) {
     modifier = Modifier
       .fillMaxWidth()
       .clickable(onClick = onClick)
-      .padding(vertical = 10.dp),
+      .padding(vertical = 12.dp),
     verticalAlignment = Alignment.CenterVertically
   ) {
     val icon = item.icon
@@ -359,4 +359,3 @@ private fun ExternalActionRow(item: AppInfoActionItem, onClick: () -> Unit) {
     )
   }
 }
-

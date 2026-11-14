@@ -83,6 +83,7 @@ import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Info
 import top.yukonga.miuix.kmp.icon.extended.Blocklist
 import top.yukonga.miuix.kmp.icon.extended.Tune
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -365,6 +366,7 @@ fun AppListScreen(
 
         items.isEmpty() -> LcEmptyState(
           title = stringResource(R.string.empty_list),
+          icon = MiuixIcons.Info,
           message = if (query.isNotEmpty()) stringResource(R.string.empty_list) else null
         )
 
@@ -534,7 +536,7 @@ private fun FastScrollRail(
         modifier = Modifier
           .padding(end = 24.dp)
           .squircleBackground(MiuixTheme.colorScheme.surfaceContainerHigh, 12.dp)
-          .padding(horizontal = 10.dp, vertical = 6.dp)
+          .padding(horizontal = 12.dp, vertical = 6.dp)
       ) {
         Text(
           text = letter.toString(),

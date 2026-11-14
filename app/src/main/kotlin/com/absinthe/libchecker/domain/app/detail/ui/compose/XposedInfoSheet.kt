@@ -119,7 +119,7 @@ fun XposedInfoSheet(
                   model = item.iconRes,
                   contentDescription = null,
                   modifier = Modifier
-                    .padding(end = 10.dp)
+                    .padding(end = 12.dp)
                     .size(18.dp)
                 )
                 Column(Modifier.weight(1f)) {

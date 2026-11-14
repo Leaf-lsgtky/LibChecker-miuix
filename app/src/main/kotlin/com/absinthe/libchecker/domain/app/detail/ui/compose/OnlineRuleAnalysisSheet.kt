@@ -156,7 +156,7 @@ fun OnlineRuleAnalysisSheet(
                   bitmap = icon!!,
                   contentDescription = null,
                   modifier = Modifier
-                    .padding(end = 10.dp)
+                    .padding(end = 12.dp)
                     .size(24.dp)
                 )
               }

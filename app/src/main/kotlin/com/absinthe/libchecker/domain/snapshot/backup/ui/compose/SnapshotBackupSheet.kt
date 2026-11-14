@@ -233,7 +233,7 @@ private fun ActionRow(
       .fillMaxWidth()
       .squircleBackground(colorScheme.surfaceContainerHigh, 16.dp)
       .clickable(onClick = onClick)
-      .padding(horizontal = 16.dp, vertical = 14.dp)
+      .padding(horizontal = 16.dp, vertical = 16.dp)
   ) {
     Text(
       text = title,

@@ -181,7 +181,7 @@ private fun ReferenceHeader(
         error = placeholder,
         contentScale = ContentScale.Fit,
         modifier = Modifier
-          .padding(end = 14.dp)
+          .padding(end = 16.dp)
           .size(48.dp)
           .clip(RoundedCornerShape(12.dp))
       )

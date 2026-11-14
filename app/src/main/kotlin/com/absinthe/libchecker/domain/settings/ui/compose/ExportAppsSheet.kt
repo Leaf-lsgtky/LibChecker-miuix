@@ -107,7 +107,7 @@ fun ExportAppsSheet(
         text = "WebUI",
         onClick = { context.openUrlInBrowser(URLManager.WEBUI_PAGE) }
       )
-      Spacer(Modifier.height(10.dp))
+      Spacer(Modifier.height(12.dp))
       AsyncImage(
         model = R.drawable.ic_webui_skeleton_preview,
         contentDescription = null,
@@ -118,7 +118,7 @@ fun ExportAppsSheet(
       )
       val current = state
       if (current is ExportAppsDialogState.Exporting || current == ExportAppsDialogState.Done) {
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(16.dp))
         val progress = when (current) {
           is ExportAppsDialogState.Exporting -> current.progress.coerceIn(0, 100)
           else -> 100

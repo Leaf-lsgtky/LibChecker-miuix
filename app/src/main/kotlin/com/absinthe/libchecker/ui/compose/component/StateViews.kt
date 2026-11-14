@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import top.yukonga.miuix.kmp.basic.Button
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.CircularProgressIndicator
+import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
@@ -52,9 +53,59 @@ fun LcLoadingState(
 fun LcEmptyState(
   title: String,
   modifier: Modifier = Modifier,
+  icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
   message: String? = null,
   actionLabel: String? = null,
   onAction: (() -> Unit)? = null
+) {
+  Column(
+    modifier = modifier
+      .fillMaxSize()
+      .padding(horizontal = 32.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
+    verticalArrangement = Arrangement.Center
+  ) {
+    if (icon != null) {
+      Icon(
+        imageVector = icon,
+        contentDescription = null,
+        tint = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+        modifier = Modifier.size(56.dp)
+      )
+      Spacer(Modifier.height(12.dp))
+    }
+    Text(
+      text = title,
+      style = MiuixTheme.textStyles.title4,
+      color = MiuixTheme.colorScheme.onSurface,
+      textAlign = TextAlign.Center
+    )
+    if (message != null) {
+      Spacer(Modifier.height(8.dp))
+      Text(
+        text = message,
+        style = MiuixTheme.textStyles.body2,
+        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+        textAlign = TextAlign.Center
+      )
+    }
+    if (actionLabel != null && onAction != null) {
+      Spacer(Modifier.height(20.dp))
+      Button(onClick = onAction, colors = ButtonDefaults.buttonColorsPrimary()) {
+        Text(text = actionLabel)
+      }
+    }
+  }
+}
+
+/** Centred error state with a retry action. */
+@Composable
+fun LcErrorState(
+  title: String,
+  modifier: Modifier = Modifier,
+  message: String? = null,
+  retryLabel: String? = null,
+  onRetry: (() -> Unit)? = null
 ) {
   Column(
     modifier = modifier
@@ -78,10 +129,10 @@ fun LcEmptyState(
         textAlign = TextAlign.Center
       )
     }
-    if (actionLabel != null && onAction != null) {
+    if (retryLabel != null && onRetry != null) {
       Spacer(Modifier.height(20.dp))
-      Button(onClick = onAction, colors = ButtonDefaults.buttonColorsPrimary()) {
-        Text(text = actionLabel)
+      Button(onClick = onRetry, colors = ButtonDefaults.buttonColorsPrimary()) {
+        Text(text = retryLabel)
       }
     }
   }

@@ -343,7 +343,7 @@ private fun ComparisonSideCard(
         modifier = Modifier
           .squircleBackground(colorScheme.surfaceContainerHigh, 10.dp)
           .clickable(onClick = onPickTime)
-          .padding(horizontal = 10.dp, vertical = 6.dp)
+          .padding(horizontal = 12.dp, vertical = 6.dp)
       ) {
         Text(
           text = formattedDates[timestamp] ?: stringResource(R.string.album_click_to_choose),
@@ -357,7 +357,7 @@ private fun ComparisonSideCard(
         modifier = Modifier
           .squircleBackground(colorScheme.surfaceContainerHigh, 10.dp)
           .clickable(onClick = onPickArchive)
-          .padding(horizontal = 10.dp, vertical = 6.dp)
+          .padding(horizontal = 12.dp, vertical = 6.dp)
       ) {
         Text(
           text = stringResource(R.string.comparison_side_archive),
@@ -421,7 +421,7 @@ private fun DiffRow(item: SnapshotDiffItem) {
       Box(
         modifier = Modifier
           .squircleBackground(colorScheme.tertiaryContainer, 8.dp)
-          .padding(horizontal = 8.dp, vertical = 3.dp)
+          .padding(horizontal = 8.dp, vertical = 4.dp)
       ) {
         Text(
           text = stateText,

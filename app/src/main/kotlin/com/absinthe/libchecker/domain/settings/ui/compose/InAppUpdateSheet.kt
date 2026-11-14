@@ -246,7 +246,7 @@ private fun ChannelChip(
         14.dp
       )
       .clickable(enabled = enabled, onClick = onClick)
-      .padding(horizontal = 14.dp, vertical = 7.dp)
+      .padding(horizontal = 16.dp, vertical = 8.dp)
   ) {
     Text(
       text = label,

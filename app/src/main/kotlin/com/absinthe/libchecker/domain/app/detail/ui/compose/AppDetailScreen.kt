@@ -103,7 +103,9 @@ import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.InputField
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.TabRow
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TabRow
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Sort
@@ -763,21 +765,23 @@ fun AppDetailScreen(
       }
     )
 
-    ScrollableTabs(
+    TabRow(
       tabs = tabSpec.items.map { it.title.toString() },
-      selectedIndex = selectedTab.coerceIn(0, (tabSpec.items.size - 1).coerceAtLeast(0)),
-      onSelected = { selectedTab = it }
+      selectedTabIndex = selectedTab.coerceIn(0, (tabSpec.items.size - 1).coerceAtLeast(0)),
+      onTabSelected = { selectedTab = it },
+      modifier = Modifier.padding(horizontal = 12.dp)
     )
 
     if (selectedType == NATIVE && (nativeTabs?.size ?: 0) > 1) {
       val tabs = nativeTabs.orEmpty().toList()
-      ScrollableTabs(
+      TabRow(
         tabs = tabs,
-        selectedIndex = nativeTabIndex.coerceIn(0, (tabs.size - 1).coerceAtLeast(0)),
-        onSelected = { index ->
+        selectedTabIndex = nativeTabIndex.coerceIn(0, (tabs.size - 1).coerceAtLeast(0)),
+        onTabSelected = { index ->
           nativeTabIndex = index
           tabs.getOrNull(index)?.let(viewModel::loadSoAnalysisData)
-        }
+        },
+        modifier = Modifier.padding(horizontal = 12.dp)
       )
     }
 
@@ -960,56 +964,6 @@ fun AppDetailScreen(
   }
 }
 
-@Composable
-private fun ScrollableTabs(
-  tabs: List<String>,
-  selectedIndex: Int,
-  onSelected: (Int) -> Unit
-) {
-  val colorScheme = MiuixTheme.colorScheme
-  LazyRow(
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(bottom = 4.dp),
-    contentPadding = PaddingValues(horizontal = 12.dp),
-    horizontalArrangement = Arrangement.spacedBy(4.dp)
-  ) {
-    itemsIndexed(tabs) { index, title ->
-      val selected = index == selectedIndex
-      val contentColor by animateColorAsState(
-        targetValue = if (selected) colorScheme.primary else colorScheme.onSurfaceVariantSummary,
-        animationSpec = tween(180),
-        label = "tab-color"
-      )
-      val indicatorColor by animateColorAsState(
-        targetValue = if (selected) colorScheme.primary else Color.Transparent,
-        animationSpec = tween(180),
-        label = "tab-indicator"
-      )
-      Column(
-        modifier = Modifier
-          .clickable { onSelected(index) }
-          .padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-      ) {
-        Text(
-          text = title,
-          style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
-          fontWeight = if (selected) FontWeight(600) else FontWeight(500),
-          color = contentColor,
-          maxLines = 1
-        )
-        Spacer(Modifier.height(5.dp))
-        Box(
-          modifier = Modifier
-            .width(16.dp)
-            .height(3.dp)
-            .squircleBackground(indicatorColor, 2.dp)
-        )
-      }
-    }
-  }
-}
 
 @Composable
 private fun DetailHeader(
@@ -1035,7 +989,7 @@ private fun DetailHeader(
         packageInfo = packageInfo,
         label = label,
         modifier = Modifier
-          .padding(end = 14.dp)
+          .padding(end = 16.dp)
           .size(56.dp)
           .combinedClickable(onClick = onIconClick, onLongClick = onIconLongClick)
       )
@@ -1131,7 +1085,7 @@ private fun AbiBadge(text: String) {
   Box(
     modifier = Modifier
       .squircleBackground(colorScheme.onSurface, 4.dp)
-      .padding(horizontal = 5.dp, vertical = 2.dp)
+      .padding(horizontal = 4.dp, vertical = 2.dp)
   ) {
     Text(
       text = text,
@@ -1274,7 +1228,7 @@ private fun SheetActionRow(text: String, onClick: () -> Unit) {
     modifier = Modifier
       .fillMaxWidth()
       .clickable(onClick = onClick)
-      .padding(vertical = 14.dp),
+      .padding(vertical = 16.dp),
     verticalAlignment = Alignment.CenterVertically
   ) {
     Text(
@@ -1317,7 +1271,7 @@ private fun ProcessChip(
         14.dp
       )
       .clickable(onClick = onClick)
-      .padding(horizontal = 10.dp, vertical = 5.dp),
+      .padding(horizontal = 12.dp, vertical = 4.dp),
     verticalAlignment = Alignment.CenterVertically
   ) {
     if (color != 0) {

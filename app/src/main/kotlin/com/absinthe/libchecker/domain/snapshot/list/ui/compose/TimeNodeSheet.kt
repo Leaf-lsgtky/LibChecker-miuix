@@ -160,7 +160,7 @@ fun TimeNodeSheet(
                   12.dp
                 )
                 .clickable { onSelect(node.timestamp) }
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(horizontal = 12.dp, vertical = 12.dp),
               verticalAlignment = Alignment.CenterVertically
             ) {
               Column(Modifier.weight(1f)) {
@@ -267,10 +267,10 @@ private fun ContributionGrid(
     Spacer(Modifier.height(6.dp))
     Row(
       modifier = Modifier.horizontalScroll(rememberScrollState()),
-      horizontalArrangement = Arrangement.spacedBy(3.dp)
+      horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         weeks.forEach { week ->
-          Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+          Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             week.forEach { date ->
               val day = data.days[date]
               val color = when {

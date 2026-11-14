@@ -138,7 +138,7 @@ fun AboutScreen(
               fontSize = 12.sp,
               color = colorScheme.onSurfaceVariantSummary
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(12.dp))
             Text(
               text = stringResource(R.string.about_info),
               style = MiuixTheme.textStyles.body2,

@@ -118,13 +118,13 @@ fun OverlayDetailSheet(
               )
             }
           }
-          Spacer(Modifier.height(10.dp))
+          Spacer(Modifier.height(12.dp))
           OverlayInfoRow(stringResource(R.string.overlay_detail_type), current.extraInfo.type)
           OverlayInfoRow("Target SDK", current.extraInfo.targetSdkInfo)
           OverlayInfoRow("Min SDK", current.extraInfo.minSdkInfo)
           OverlayInfoRow("Compile SDK", current.extraInfo.compileSdkInfo)
           OverlayInfoRow(stringResource(R.string.overlay_detail_size), current.extraInfo.sizeInfo)
-          Spacer(Modifier.height(10.dp))
+          Spacer(Modifier.height(12.dp))
           when (val target = current.target) {
             is OverlayTargetPackageDisplay.RelatedApp -> Row(
               modifier = Modifier
@@ -178,7 +178,7 @@ private fun OverlayInfoRow(label: String, value: String) {
   Row(
     modifier = Modifier
       .fillMaxWidth()
-      .padding(vertical = 3.dp),
+      .padding(vertical = 4.dp),
     verticalAlignment = Alignment.CenterVertically
   ) {
     Text(

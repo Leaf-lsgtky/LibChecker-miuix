@@ -243,7 +243,7 @@ private fun SectionCard(
       Spacer(Modifier.height(8.dp))
       section.items.forEachIndexed { index, item ->
         if (index > 0) {
-          Spacer(Modifier.height(10.dp))
+          Spacer(Modifier.height(12.dp))
         }
         DetailItem(item = item)
       }

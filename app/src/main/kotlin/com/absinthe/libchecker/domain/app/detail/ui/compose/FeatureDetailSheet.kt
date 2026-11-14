@@ -240,7 +240,7 @@ fun FeatureDetailSheet(
             Spacer(Modifier.height(8.dp))
           }
           if (appIcons.isNotEmpty()) {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
               itemsIndexed(appIcons) { index, icon ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                   androidx.compose.foundation.Image(
@@ -337,7 +337,7 @@ private fun FeatureRowItem(row: FeatureRow) {
         model = iconRes,
         contentDescription = null,
         modifier = Modifier
-          .padding(end = 10.dp)
+          .padding(end = 12.dp)
           .size(28.dp)
       )
     }

@@ -290,7 +290,7 @@ private fun AlbumRow(entry: AlbumEntry) {
     Row(verticalAlignment = Alignment.CenterVertically) {
       Box(
         modifier = Modifier
-          .padding(end = 14.dp)
+          .padding(end = 16.dp)
           .size(44.dp)
           .squircleBackground(entry.tint.copy(alpha = 0.15f), 12.dp),
         contentAlignment = Alignment.Center
