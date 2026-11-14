@@ -64,6 +64,8 @@ import com.absinthe.libchecker.annotation.SIGNATURES
 import com.absinthe.libchecker.annotation.STATIC
 import com.absinthe.libchecker.domain.app.detail.action.AppElfDetail
 import com.absinthe.libchecker.domain.app.detail.model.PermissionDetailContent
+import com.absinthe.libchecker.domain.app.detail.ui.AppDetailActivity
+import com.absinthe.libchecker.domain.app.detail.navigation.EXTRA_PACKAGE_NAME
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureAction
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureIcon
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureItemData
@@ -132,6 +134,9 @@ fun AppDetailScreen(
   var longPressChip by remember { mutableStateOf<LibStringItemChip?>(null) }
   var elfDetail by remember { mutableStateOf<AppElfDetail?>(null) }
   var permissionDetail by remember { mutableStateOf<PermissionDetailContent?>(null) }
+  var permissionProviders by remember {
+    mutableStateOf<List<com.absinthe.libchecker.domain.app.detail.action.ProviderPermissionItem>?>(null)
+  }
   val scope = rememberCoroutineScope()
   val is64Bit by viewModel.featureState.is64Bit.collectAsStateWithLifecycle()
 
@@ -232,6 +237,41 @@ fun AppDetailScreen(
     )
   }
 
+  permissionProviders?.let { providers ->
+    WindowBottomSheet(
+      show = true,
+      title = stringResource(R.string.lib_detail_permission_providers),
+      onDismissRequest = { permissionProviders = null }
+    ) {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp)
+          .padding(bottom = 16.dp)
+      ) {
+        if (providers.isEmpty()) {
+          Text(
+            text = stringResource(R.string.empty_list),
+            fontSize = 13.sp,
+            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+          )
+        } else {
+          providers.forEach { provider ->
+            SheetActionRow(text = "${provider.providerName} (${provider.packageName})") {
+              permissionProviders = null
+              runCatching {
+                context.startActivity(
+                  android.content.Intent(context, AppDetailActivity::class.java).apply {
+                    putExtra(EXTRA_PACKAGE_NAME, provider.packageName)
+                  }
+                )
+              }
+            }
+          }
+        }
+      }
+    }
+  }
   permissionDetail?.let { detail ->
     WindowBottomSheet(
       show = true,
@@ -319,6 +359,17 @@ fun AppDetailScreen(
             longPressChip = null
             scope.launch {
               permissionDetail = runCatching { viewModel.getPermissionDetail(name) }.getOrNull()
+            }
+          }
+        }
+        if (selectedType == PERMISSION) {
+          SheetActionRow(text = stringResource(R.string.lib_detail_permission_providers)) {
+            val name = chip.item.name
+            longPressChip = null
+            scope.launch {
+              permissionProviders = runCatching {
+                viewModel.getPermissionProviders(name)
+              }.getOrNull()
             }
           }
         }

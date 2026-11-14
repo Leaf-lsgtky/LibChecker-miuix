@@ -151,6 +151,9 @@ class DetailActionLoader(
 
   suspend fun getElfDetail(packageName: String, elfPath: String) = itemResolver.getElfDetail(packageName, elfPath)
 
+  suspend fun getPermissionProviders(permissionName: String) =
+    itemResolver.getPermissionProviders(permissionName)
+
   suspend fun getLibraryDetailDialogHeader(
     libName: String,
     @LibType type: Int,

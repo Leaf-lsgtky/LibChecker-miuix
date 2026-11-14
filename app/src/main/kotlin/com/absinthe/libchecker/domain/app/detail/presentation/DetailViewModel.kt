@@ -530,6 +530,9 @@ class DetailViewModel(
 
   suspend fun getPermissionDetail(permissionName: String) = detailActionLoader.getPermissionDetail(permissionName)
 
+  suspend fun getPermissionProviders(permissionName: String) =
+    detailActionLoader.getPermissionProviders(permissionName)
+
   fun initAbilities(packageName: String) {
     detailContentLoader.initAbilities(viewModelScope, packageName)
   }
