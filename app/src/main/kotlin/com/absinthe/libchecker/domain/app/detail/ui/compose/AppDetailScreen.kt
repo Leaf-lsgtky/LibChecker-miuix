@@ -96,6 +96,7 @@ import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Search
 import top.yukonga.miuix.kmp.icon.extended.More
 import top.yukonga.miuix.kmp.icon.extended.Copy
 import top.yukonga.miuix.kmp.icon.extended.Back
@@ -151,6 +152,7 @@ fun AppDetailScreen(
   var showInstallSource by remember { mutableStateOf(false) }
   var showXposedInfo by remember { mutableStateOf(false) }
   var showComponentMenu by remember { mutableStateOf(false) }
+  var showOnlineAnalysis by remember { mutableStateOf(false) }
   var permissionProviders by remember {
     mutableStateOf<List<com.absinthe.libchecker.domain.app.detail.action.ProviderPermissionItem>?>(null)
   }
@@ -236,6 +238,12 @@ fun AppDetailScreen(
       filteredItems.sortedBy { it.item.name.lowercase() }
     }
   }
+
+  OnlineRuleAnalysisSheet(
+    show = showOnlineAnalysis,
+    viewModel = viewModel,
+    onDismiss = { showOnlineAnalysis = false }
+  )
 
   ComponentMenuSheet(
     show = showComponentMenu,
@@ -534,6 +542,12 @@ fun AppDetailScreen(
         }
       },
       actions = {
+        IconButton(onClick = { showOnlineAnalysis = true }) {
+          Icon(
+            imageVector = MiuixIcons.Search,
+            contentDescription = stringResource(R.string.chart_statistics_online_analysis)
+          )
+        }
         IconButton(onClick = { showComponentMenu = true }) {
           Icon(
             imageVector = MiuixIcons.More,
