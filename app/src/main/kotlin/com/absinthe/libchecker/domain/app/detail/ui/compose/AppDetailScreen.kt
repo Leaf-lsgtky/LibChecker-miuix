@@ -16,6 +16,8 @@ import com.absinthe.libchecker.domain.app.detail.model.SignatureDetailItem
 import com.absinthe.libchecker.domain.app.detail.model.MODE_SORT_BY_SIZE
 import com.absinthe.libchecker.domain.app.detail.model.MODE_SORT_BY_LIB
 import com.absinthe.libchecker.constant.GlobalValues
+import com.absinthe.libchecker.constant.options.AdvancedOptions
+import com.absinthe.libchecker.domain.app.detail.header.AppDetailHeaderExtraInfo
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -185,6 +187,22 @@ fun AppDetailScreen(
   val activityItems by contentState.componentsMap.get(ACTIVITY)!!.collectAsStateWithLifecycle()
   val receiverItems by contentState.componentsMap.get(RECEIVER)!!.collectAsStateWithLifecycle()
   val providerItems by contentState.componentsMap.get(PROVIDER)!!.collectAsStateWithLifecycle()
+  var headerExtraInfo by remember {
+    mutableStateOf<AppDetailHeaderExtraInfo?>(null)
+  }
+  LaunchedEffect(packageInfo.packageName) {
+    val showAndroidVersion =
+      (GlobalValues.itemAdvancedOptions and AdvancedOptions.SHOW_ANDROID_VERSION) != 0
+    headerExtraInfo = runCatching {
+      viewModel.buildAppDetailHeaderExtraInfo(packageInfo, showAndroidVersion)
+    }.getOrNull()
+  }
+
+  val abilityItems by remember(isHarmonyMode, selectedType) {
+    contentState.abilitiesMap.get(selectedType)
+  }.let { flow ->
+    flow?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(null) }
+  }
 
   LaunchedEffect(packageInfo.packageName) {
     featureItems.clear()
@@ -203,7 +221,11 @@ fun AppDetailScreen(
     }
   }
 
-  LaunchedEffect(selectedType) {
+  LaunchedEffect(selectedType, isHarmonyMode) {
+    if (isHarmonyMode) {
+      viewModel.initAbilities(packageInfo.packageName)
+      return@LaunchedEffect
+    }
     when (selectedType) {
       NATIVE -> viewModel.initSoAnalysisData()
       SERVICE, ACTIVITY, RECEIVER, PROVIDER -> viewModel.initComponentsData()
@@ -228,7 +250,9 @@ fun AppDetailScreen(
     }
   }
 
-  val rawItems: List<LibStringItemChip>? = when (selectedType) {
+  val rawItems: List<LibStringItemChip>? = if (isHarmonyMode) {
+    abilityItems
+  } else when (selectedType) {
     NATIVE -> nativeItems
     SERVICE -> serviceItems
     ACTIVITY -> activityItems
@@ -802,6 +826,7 @@ fun AppDetailScreen(
             DetailHeader(
               packageInfo = packageInfo,
               is64Bit = is64Bit,
+              extraInfo = headerExtraInfo,
               onIconClick = { showAppInfo = true },
               onIconLongClick = { showIconLayers = true }
             )
@@ -989,6 +1014,7 @@ private fun ScrollableTabs(
 private fun DetailHeader(
   packageInfo: PackageInfo,
   is64Bit: Boolean?,
+  extraInfo: AppDetailHeaderExtraInfo?,
   onIconClick: () -> Unit,
   onIconLongClick: (() -> Unit)? = null
 ) {
@@ -1038,24 +1064,41 @@ private fun DetailHeader(
       }
     }
     Spacer(Modifier.height(8.dp))
-    val sizeText = remember(packageInfo.packageName) {
+    val fallbackSize = remember(packageInfo.packageName) {
       appInfo?.sourceDir?.takeIf(String::isNotBlank)?.let { dir ->
         android.text.format.Formatter.formatFileSize(context, java.io.File(dir).length())
       }
     }
-    val target = appInfo?.targetSdkVersion
-    val min = appInfo?.minSdkVersion
-    val compile = if (android.os.Build.VERSION.SDK_INT >= 31) appInfo?.compileSdkVersion else null
+    val infoLine = when {
+      extraInfo != null -> buildString {
+        append("Target: ${extraInfo.targetSdkInfo}")
+        if (extraInfo.minSdkInfo.isNotEmpty()) append("  Min: ${extraInfo.minSdkInfo}")
+        if (extraInfo.sizeInfo.isNotEmpty()) append("  Size: ${extraInfo.sizeInfo}")
+        if (extraInfo.compileSdkInfo.isNotEmpty()) append("  Compile: ${extraInfo.compileSdkInfo}")
+      }
+
+      else -> buildString {
+        append("Target: ${appInfo?.targetSdkVersion}")
+        fallbackSize?.let { append("  Size: $it") }
+      }
+    }
     Text(
-      text = buildString {
-        append("Target: $target")
-        if (min != null) append("  Min: $min")
-        if (sizeText != null) append("  Size: $sizeText")
-        if (compile != null) append("  Compile: $compile")
-      },
+      text = infoLine,
       fontSize = 12.sp,
-      color = colorScheme.onSurfaceVariantSummary
+      color = colorScheme.onSurfaceVariantSummary,
+      modifier = Modifier.combinedClickable(
+        onClick = {},
+        onLongClick = { context.copyTextWithToast(infoLine) }
+      )
     )
+    extraInfo?.sharedUserId?.let { sharedUserId ->
+      Spacer(Modifier.height(2.dp))
+      Text(
+        text = "sharedUserId: $sharedUserId",
+        fontSize = 12.sp,
+        color = colorScheme.onSurfaceVariantSummary
+      )
+    }
     val abi = appInfo?.nativeLibraryDir
       ?.substringAfterLast('/')
       ?.takeIf(String::isNotBlank)

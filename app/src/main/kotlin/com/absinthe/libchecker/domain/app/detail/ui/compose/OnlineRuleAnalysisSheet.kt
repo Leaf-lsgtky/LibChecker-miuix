@@ -1,6 +1,11 @@
 package com.absinthe.libchecker.domain.app.detail.ui.compose
 
 import androidx.compose.foundation.layout.Column
+import com.absinthe.libchecker.utils.extensions.openUrlInBrowser
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.window.WindowDialog
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,6 +52,9 @@ fun OnlineRuleAnalysisSheet(
 ) {
   val context = LocalContext.current
   val state by viewModel.appStatisticAnalysisState.collectAsStateWithLifecycle()
+  var detailAnalysis by remember {
+    mutableStateOf<com.absinthe.libchecker.domain.app.detail.statistics.AppStatisticRuleAnalysis?>(null)
+  }
 
   LaunchedEffect(show) {
     if (show) {
@@ -54,6 +62,36 @@ fun OnlineRuleAnalysisSheet(
     }
   }
 
+  detailAnalysis?.let { analysis ->
+    val details = analysis.definition.details
+    WindowDialog(
+      show = true,
+      title = analysis.definition.title.resolve(context),
+      summary = details?.description?.resolve(context) ?: "",
+      onDismissRequest = { detailAnalysis = null }
+    ) {
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+      ) {
+        if (details != null) {
+          TextButton(
+            text = stringResource(R.string.lib_detail_app_props_tip),
+            onClick = {
+              context.openUrlInBrowser(details.referenceUrl)
+              detailAnalysis = null
+            }
+          )
+        }
+        TextButton(
+          text = stringResource(android.R.string.ok),
+          onClick = { detailAnalysis = null }
+        )
+      }
+    }
+  }
   WindowBottomSheet(
     show = show,
     title = stringResource(R.string.chart_statistics_online_analysis),
@@ -97,6 +135,9 @@ fun OnlineRuleAnalysisSheet(
             Row(
               modifier = Modifier
                 .fillMaxWidth()
+                .clickable(enabled = analysis.definition.details != null) {
+                  detailAnalysis = analysis
+                }
                 .padding(vertical = 6.dp),
               verticalAlignment = Alignment.CenterVertically
             ) {
@@ -126,10 +167,13 @@ fun OnlineRuleAnalysisSheet(
                   fontWeight = FontWeight(550),
                   color = MiuixTheme.colorScheme.onSurface
                 )
-                if (analysis.matchedFacetIds.isNotEmpty()) {
+                val facetTitles = analysis.definition.calculation.facets?.items.orEmpty()
+                  .filter { it.id in analysis.matchedFacetIds }
+                  .map { it.summaryTitleOrTitle(context) }
+                if (facetTitles.isNotEmpty()) {
                   Spacer(Modifier.height(2.dp))
                   Text(
-                    text = analysis.matchedFacetIds.joinToString(),
+                    text = facetTitles.joinToString(),
                     fontSize = 11.sp,
                     color = MiuixTheme.colorScheme.onSurfaceVariantSummary
                   )
@@ -138,9 +182,9 @@ fun OnlineRuleAnalysisSheet(
               Text(
                 text = stringResource(
                   if (analysis.matched) {
-                    R.string.chart_statistics_added
+                    R.string.app_detail_online_rules_matched
                   } else {
-                    R.string.chart_item_not_support
+                    R.string.app_detail_online_rules_unmatched
                   }
                 ),
                 fontSize = 11.sp,
@@ -156,4 +200,9 @@ fun OnlineRuleAnalysisSheet(
       }
     }
   }
+}
+
+private fun com.absinthe.libchecker.domain.statistics.chart.model.StatisticFacetSpec
+  .summaryTitleOrTitle(context: android.content.Context): String {
+  return (shortTitle ?: title).resolve(context)
 }
