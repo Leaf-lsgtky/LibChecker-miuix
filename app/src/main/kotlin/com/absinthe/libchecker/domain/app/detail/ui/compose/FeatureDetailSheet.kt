@@ -2,6 +2,7 @@ package com.absinthe.libchecker.domain.app.detail.ui.compose
 
 import android.content.pm.PackageInfo
 import android.text.Html
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -21,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -29,10 +31,18 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.absinthe.libchecker.R
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureAction
+import com.absinthe.libchecker.domain.app.detail.model.AppPropItem
+import com.absinthe.libchecker.domain.app.detail.resource.AppResourcePreview
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureItemData
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel
 import com.absinthe.libchecker.ui.compose.component.LcLoadingState
+import top.yukonga.miuix.kmp.basic.Icon
+import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.ConvertFile
+import top.yukonga.miuix.kmp.icon.extended.Undo
+import top.yukonga.miuix.kmp.squircle.squircleBackground
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
 
@@ -55,11 +65,13 @@ fun FeatureDetailSheet(
   var rows by remember { mutableStateOf<List<FeatureRow>>(emptyList()) }
   var description by remember { mutableStateOf<String?>(null) }
   var loading by remember { mutableStateOf(false) }
+  var propItems by remember { mutableStateOf<List<AppPropItem>>(emptyList()) }
 
   LaunchedEffect(show, item) {
     if (!show || item == null) return@LaunchedEffect
     loading = true
     rows = emptyList()
+    propItems = emptyList()
     description = null
     when (val action = item.action) {
       is AppDetailFeatureAction.Kotlin -> {
@@ -96,9 +108,8 @@ fun FeatureDetailSheet(
       }
 
       AppDetailFeatureAction.AppProp -> {
-        rows = runCatching { viewModel.getAppManifestProperties(packageInfo, null) }
+        propItems = runCatching { viewModel.getAppManifestProperties(packageInfo, null) }
           .getOrDefault(emptyList())
-          .map { FeatureRow(it.key, it.visibleValue.toString()) }
       }
 
       AppDetailFeatureAction.InstallSource -> {
@@ -177,7 +188,28 @@ fun FeatureDetailSheet(
             )
             Spacer(Modifier.height(8.dp))
           }
-          if (rows.isNotEmpty()) {
+          if (propItems.isNotEmpty()) {
+            LazyColumn(modifier = Modifier.heightIn(max = 480.dp)) {
+              items(propItems, key = { it.key }) { item ->
+                AppPropRow(
+                  item = item,
+                  onTogglePreview = {
+                    propItems = propItems.map { current ->
+                      if (current.key != item.key) {
+                        current
+                      } else if (current.isTransformed) {
+                        current.restore()
+                      } else {
+                        viewModel.resolveAppPropPreview(packageInfo, current)
+                          ?.let { preview -> current.copy(preview = preview) }
+                          ?: current
+                      }
+                    }
+                  }
+                )
+              }
+            }
+          } else if (rows.isNotEmpty()) {
             LazyColumn(modifier = Modifier.heightIn(max = 480.dp)) {
               items(rows) { row ->
                 FeatureRowItem(row)
@@ -221,6 +253,66 @@ private fun FeatureRowItem(row: FeatureRow) {
           text = subtitle,
           fontSize = 12.sp,
           color = colorScheme.onSurfaceVariantSummary
+        )
+      }
+    }
+  }
+}
+
+@Composable
+private fun AppPropRow(item: AppPropItem, onTogglePreview: () -> Unit) {
+  val colorScheme = MiuixTheme.colorScheme
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(vertical = 6.dp),
+    verticalAlignment = Alignment.CenterVertically
+  ) {
+    Column(Modifier.weight(1f)) {
+      Text(
+        text = item.key,
+        fontSize = 13.sp,
+        fontWeight = FontWeight(550),
+        color = colorScheme.onSurface
+      )
+      Spacer(Modifier.height(2.dp))
+      when (val preview = item.preview) {
+        is AppResourcePreview.DrawableValue -> AsyncImage(
+          model = preview.drawable,
+          contentDescription = null,
+          modifier = Modifier.size(28.dp)
+        )
+
+        is AppResourcePreview.ColorValue -> Row(verticalAlignment = Alignment.CenterVertically) {
+          Box(
+            modifier = Modifier
+              .padding(end = 6.dp)
+              .size(16.dp)
+              .squircleBackground(Color(preview.color), 4.dp)
+          )
+          Text(
+            text = "#%08X".format(preview.color),
+            fontSize = 12.sp,
+            color = colorScheme.onSurfaceVariantSummary
+          )
+        }
+
+        else -> Text(
+          text = item.visibleValue.toString(),
+          fontSize = 12.sp,
+          color = colorScheme.onSurfaceVariantSummary
+        )
+      }
+    }
+    if (item.resource != null) {
+      IconButton(onClick = onTogglePreview) {
+        Icon(
+          imageVector = if (item.isTransformed) MiuixIcons.Undo else MiuixIcons.ConvertFile,
+          contentDescription = stringResource(
+            if (item.isTransformed) R.string.app_prop_restore else R.string.app_prop_transform
+          ),
+          tint = colorScheme.onSurfaceVariantSummary,
+          modifier = Modifier.size(18.dp)
         )
       }
     }

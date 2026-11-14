@@ -81,7 +81,8 @@ val appDetailModule = module {
       itemResolver = get(),
       extractNativeLibraryUseCase = get(),
       prepareAppPackageShareActionUseCase = get(),
-      exportAppPackageShareFileUseCase = get()
+      exportAppPackageShareFileUseCase = get(),
+      resolveAppResourceValueUseCase = get()
     )
   }
   factory {

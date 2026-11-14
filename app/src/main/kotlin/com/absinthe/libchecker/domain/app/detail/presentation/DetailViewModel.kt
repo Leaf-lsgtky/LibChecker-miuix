@@ -22,6 +22,7 @@ import com.absinthe.libchecker.domain.app.detail.model.AppBundleItem
 import com.absinthe.libchecker.domain.app.detail.model.AppInstallSourceBottomSheetDisplay
 import com.absinthe.libchecker.domain.app.detail.model.AppInstallSourceRequesterAccess
 import com.absinthe.libchecker.domain.app.detail.model.AppPropItem
+import com.absinthe.libchecker.domain.app.detail.resource.AppResourcePreview
 import com.absinthe.libchecker.domain.app.detail.model.LibStringItem
 import com.absinthe.libchecker.domain.app.detail.model.LibStringItemChip
 import com.absinthe.libchecker.domain.app.detail.model.buildComponentMenuState
@@ -427,6 +428,10 @@ class DetailViewModel(
   suspend fun getAlternativeLaunchItems(packageName: String) = detailActionLoader.getAlternativeLaunchItems(packageName)
 
   suspend fun getXposedInfoBottomSheetDisplay(packageName: String) = detailActionLoader.getXposedInfoBottomSheetDisplay(packageName)
+
+  fun resolveAppPropPreview(packageInfo: PackageInfo?, item: AppPropItem): AppResourcePreview? {
+    return detailActionLoader.resolveAppPropPreview(packageInfo, item)
+  }
 
   suspend fun getAppManifestProperties(
     packageInfo: PackageInfo?,

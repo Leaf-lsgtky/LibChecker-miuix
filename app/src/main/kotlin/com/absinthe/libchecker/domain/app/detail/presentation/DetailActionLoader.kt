@@ -21,6 +21,8 @@ import com.absinthe.libchecker.domain.app.detail.action.DetailItemElfInfoAction
 import com.absinthe.libchecker.domain.app.detail.action.DetailItemLongClickActions
 import com.absinthe.libchecker.domain.app.detail.action.DetailItemReferenceAction
 import com.absinthe.libchecker.domain.app.detail.action.DetailItemResolver
+import com.absinthe.libchecker.domain.app.detail.resource.AppResourcePreview
+import com.absinthe.libchecker.domain.app.detail.resource.ResolveAppResourceValueUseCase
 import com.absinthe.libchecker.domain.app.detail.action.ExportAppPackageShareFileUseCase
 import com.absinthe.libchecker.domain.app.detail.action.ExtractNativeLibraryUseCase
 import com.absinthe.libchecker.domain.app.detail.action.OverlayDetailResult
@@ -55,8 +57,34 @@ class DetailActionLoader(
   private val itemResolver: DetailItemResolver,
   private val extractNativeLibraryUseCase: ExtractNativeLibraryUseCase,
   private val prepareAppPackageShareActionUseCase: PrepareAppPackageShareActionUseCase,
-  private val exportAppPackageShareFileUseCase: ExportAppPackageShareFileUseCase
+  private val exportAppPackageShareFileUseCase: ExportAppPackageShareFileUseCase,
+  private val resolveAppResourceValueUseCase: ResolveAppResourceValueUseCase
 ) {
+
+  fun resolveAppPropPreview(packageInfo: PackageInfo?, item: AppPropItem): AppResourcePreview? {
+    val reference = item.resource ?: return null
+    val value = resolveAppResourceValueUseCase(
+      ResolveAppResourceValueUseCase.Request(
+        applicationInfo = packageInfo?.applicationInfo,
+        packageName = packageInfo?.packageName,
+        resourceId = reference.id,
+        resourceType = reference.type
+      )
+    ) ?: return null
+    return when (value) {
+      is ResolveAppResourceValueUseCase.AppResourceValue.Text ->
+        AppResourcePreview.Text(value.value)
+
+      is ResolveAppResourceValueUseCase.AppResourceValue.Xml ->
+        AppResourcePreview.Text(value.value)
+
+      is ResolveAppResourceValueUseCase.AppResourceValue.DrawablePreview ->
+        AppResourcePreview.DrawableValue(value.drawable)
+
+      is ResolveAppResourceValueUseCase.AppResourceValue.ColorPreview ->
+        AppResourcePreview.ColorValue(value.color)
+    }
+  }
   suspend fun getAppBundleItems(packageInfo: PackageInfo): List<AppBundleItem> {
     return buildAppBundleItemDisplayData(context, getAppBundleSplitItems(packageInfo))
   }

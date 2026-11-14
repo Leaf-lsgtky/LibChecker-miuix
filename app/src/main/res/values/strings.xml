@@ -453,4 +453,6 @@
   <string name="lib_detail_elf_stripped">Stripped</string>
   <string name="lib_detail_permission_detail">Permission details</string>
   <string name="lib_detail_permission_provider">Defined by</string>
+  <string name="app_prop_transform">Show resolved value</string>
+  <string name="app_prop_restore">Show original value</string>
 </resources>
