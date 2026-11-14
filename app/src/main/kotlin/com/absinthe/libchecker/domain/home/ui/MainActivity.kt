@@ -168,7 +168,33 @@ class MainActivity : BaseComposeActivity() {
             detailViewModel = detailViewModel,
             onOpenDetail = { item -> launchDetailPage(item) },
             listState = appListState,
-            reselectSignal = reselectSignal
+            reselectSignal = reselectSignal,
+            recentVisitsViewModel = recentVisitsViewModel,
+            onOpenRecentApp = { targetPackage ->
+              launchDetailPage(
+                com.absinthe.libchecker.database.entity.LCItem(
+                  packageName = targetPackage,
+                  label = targetPackage,
+                  versionName = "",
+                  versionCode = 0L,
+                  installedTime = 0L,
+                  lastUpdatedTime = 0L,
+                  isSystem = false,
+                  abi = 0,
+                  features = 0,
+                  targetApi = 0,
+                  variant = 0
+                )
+              )
+            },
+            onOpenRecentLibrary = { visit ->
+              launchLibReferencePage(
+                refName = visit.name,
+                refLabel = visit.label ?: visit.name,
+                refType = visit.type ?: com.absinthe.libchecker.annotation.NATIVE,
+                refList = visit.referredList?.toTypedArray()
+              )
+            }
           )
 
           HomeTab.STATISTICS -> ReferenceScreen(
