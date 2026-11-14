@@ -39,6 +39,8 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.squircle.squircleBackground
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.window.WindowDialog
 
 /**
  * Time node sheet: switch the snapshot the list is showing and manage the automatic removal rule.
@@ -61,6 +63,9 @@ fun TimeNodeSheet(
   }
   var contributionData by remember(show) {
     mutableStateOf<com.absinthe.libchecker.domain.snapshot.timenode.model.SnapshotContributionData?>(null)
+  }
+  var dayDetail by remember(show) {
+    mutableStateOf<com.absinthe.libchecker.domain.snapshot.timenode.model.DayContribution?>(null)
   }
   var autoRemoveThreshold by remember(show) {
     mutableIntStateOf(viewModel.getSnapshotAutoRemoveThreshold())
@@ -130,9 +135,7 @@ fun TimeNodeSheet(
       contributionData?.let { data ->
         ContributionGrid(
           data = data,
-          onSelectSnapshot = { timestamp ->
-            onSelect(timestamp)
-          }
+          onTileClick = { day -> dayDetail = day }
         )
         Spacer(Modifier.height(8.dp))
       }
@@ -199,6 +202,40 @@ fun TimeNodeSheet(
       }
     }
   }
+
+  dayDetail?.let { day ->
+    WindowDialog(
+      show = true,
+      title = day.date.toString(),
+      summary = if (day.updatedApps.isEmpty()) {
+        stringResource(R.string.snapshot_contribution_no_updates)
+      } else {
+        day.updatedApps.joinToString("\n") { it.label }
+      },
+      onDismissRequest = { dayDetail = null }
+    ) {
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+      ) {
+        day.snapshotTimestamp?.let { timestamp ->
+          TextButton(
+            text = stringResource(R.string.snapshot_time_node_current),
+            onClick = {
+              dayDetail = null
+              onSelect(timestamp)
+            }
+          )
+        }
+        TextButton(
+          text = stringResource(android.R.string.ok),
+          onClick = { dayDetail = null }
+        )
+      }
+    }
+  }
 }
 
 private const val DEFAULT_THRESHOLD = 3
@@ -206,7 +243,7 @@ private const val DEFAULT_THRESHOLD = 3
 @Composable
 private fun ContributionGrid(
   data: com.absinthe.libchecker.domain.snapshot.timenode.model.SnapshotContributionData,
-  onSelectSnapshot: (Long) -> Unit
+  onTileClick: (com.absinthe.libchecker.domain.snapshot.timenode.model.DayContribution) -> Unit
 ) {
   val colorScheme = MiuixTheme.colorScheme
   val weeks = remember(data) {
@@ -221,6 +258,12 @@ private fun ContributionGrid(
     Text(
       text = stringResource(R.string.snapshot_contribution_total, data.totalUpdates),
       fontSize = 11.sp,
+      color = colorScheme.onSurfaceVariantSummary
+    )
+    Spacer(Modifier.height(2.dp))
+    Text(
+      text = stringResource(R.string.snapshot_contribution_hint),
+      fontSize = 10.sp,
       color = colorScheme.onSurfaceVariantSummary
     )
     Spacer(Modifier.height(6.dp))
@@ -246,8 +289,8 @@ private fun ContributionGrid(
                 modifier = Modifier
                   .size(11.dp)
                   .squircleBackground(color, 3.dp)
-                  .clickable(enabled = day?.snapshotTimestamp != null) {
-                    day?.snapshotTimestamp?.let(onSelectSnapshot)
+                  .clickable(enabled = day != null) {
+                    day?.let(onTileClick)
                   }
               )
             }
