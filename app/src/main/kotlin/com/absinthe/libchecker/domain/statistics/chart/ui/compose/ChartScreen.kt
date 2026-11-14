@@ -45,6 +45,7 @@ import com.absinthe.libchecker.domain.statistics.chart.ui.resolve
 import com.absinthe.libchecker.domain.statistics.chart.ui.resolveDrawable
 import com.absinthe.libchecker.domain.app.list.ui.compose.AppIcon
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
+import com.absinthe.libchecker.ui.compose.component.LcEmptyState
 import com.absinthe.libchecker.ui.compose.component.LcLoadingState
 import com.absinthe.libchecker.utils.extensions.launchDetailPage
 import top.yukonga.miuix.kmp.basic.Icon
@@ -77,6 +78,7 @@ fun ChartScreen(
   var legend by remember { mutableStateOf<List<ChartLegendEntry>>(emptyList()) }
   var classifyState by remember { mutableStateOf<ClassifyDialogState?>(null) }
   var showEditor by remember { mutableStateOf(false) }
+  var empty by remember { mutableStateOf(false) }
   val scope = rememberCoroutineScope()
 
   val controller = remember(viewModel) {
@@ -86,6 +88,7 @@ fun ChartScreen(
       viewModel = viewModel,
       onProgress = { viewModel.setLoadingProgress(it) },
       onLegend = { legend = it },
+      onEmpty = { empty = it },
       onSliceSelected = { source, x ->
         scope.launch {
           classifyState = runCatching {
@@ -195,7 +198,14 @@ fun ChartScreen(
           FrameLayout(ctx).also { controller.attach(it) }
         }
       )
-      if (loadingProgress in 0..99 && loadingProgress == 0) {
+      if (empty && loadingProgress !in 0..99) {
+        Box(
+          modifier = Modifier.fillMaxSize(),
+          contentAlignment = Alignment.Center
+        ) {
+          LcEmptyState(title = stringResource(R.string.chart_no_data))
+        }
+      } else if (loadingProgress in 0..99 && loadingProgress == 0) {
         Box(
           modifier = Modifier.fillMaxSize(),
           contentAlignment = Alignment.Center

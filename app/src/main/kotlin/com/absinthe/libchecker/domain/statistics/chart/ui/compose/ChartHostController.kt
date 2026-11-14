@@ -30,7 +30,8 @@ internal class ChartHostController(
   private val viewModel: ChartViewModel,
   private val onProgress: (Int) -> Unit,
   private val onLegend: (List<ChartLegendEntry>) -> Unit = {},
-  private val onSliceSelected: (com.absinthe.libchecker.domain.statistics.chart.source.IChartDataSource<*>, Int) -> Unit = { _, _ -> }
+  private val onSliceSelected: (com.absinthe.libchecker.domain.statistics.chart.source.IChartDataSource<*>, Int) -> Unit = { _, _ -> },
+  private val onEmpty: (Boolean) -> Unit = {}
 ) {
 
   var currentSource: com.absinthe.libchecker.domain.statistics.chart.source.IChartDataSource<*>? = null
@@ -63,6 +64,7 @@ internal class ChartHostController(
             host.addView(committed)
           }
           onLegend(buildLegend(plan))
+          onEmpty(request.items.isEmpty())
         }
       }
 
@@ -77,6 +79,7 @@ internal class ChartHostController(
             host.addView(committed)
           }
           onLegend(buildLegend(plan))
+          onEmpty(request.items.isEmpty())
         }
       }
     }
