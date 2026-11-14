@@ -18,6 +18,8 @@ import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel.ApkAnalysisPackageResult
 import com.absinthe.libchecker.database.entity.Features
 import com.absinthe.libchecker.domain.app.detail.ui.compose.AppDetailScreen
+import com.absinthe.libchecker.domain.snapshot.detail.ui.launchSnapshotDetail
+import androidx.compose.runtime.LaunchedEffect
 import com.absinthe.libchecker.domain.app.model.VersionedFeature
 import com.absinthe.libchecker.domain.app.packageinfo.PrepareApkAnalysisPackageUseCase
 import com.absinthe.libchecker.ui.base.BaseComposeActivity
@@ -33,6 +35,7 @@ class ApkDetailActivity : BaseComposeActivity() {
 
   private val viewModel: DetailViewModel by viewModel()
   private var packageInfoState by mutableStateOf<PackageInfo?>(null)
+  private var canCompareWithInstalled by mutableStateOf(false)
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -114,9 +117,31 @@ class ApkDetailActivity : BaseComposeActivity() {
         LcLoadingState()
       }
     } else {
+      LaunchedEffect(packageInfo.packageName) {
+        canCompareWithInstalled = runCatching {
+          viewModel.isInstalledAppComparisonAvailable(packageInfo.packageName)
+        }.getOrDefault(false)
+      }
       AppDetailScreen(
         viewModel = viewModel,
         packageInfo = packageInfo,
+        onCompareWithInstalled = if (canCompareWithInstalled) {
+          {
+            lifecycleScope.launch {
+              val base = viewModel.loadInstalledAppComparisonPackage(packageInfo.packageName)
+              if (base == null) {
+                showToast(R.string.toast_cant_open_app)
+                return@launch
+              }
+              val diff = viewModel.buildPackageComparisonSnapshotItem(base, packageInfo)
+              if (diff != null) {
+                launchSnapshotDetail(this@ApkDetailActivity, diff)
+              }
+            }
+          }
+        } else {
+          null
+        },
         onBack = { onBackPressedDispatcher.onBackPressed() }
       )
     }

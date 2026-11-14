@@ -101,6 +101,7 @@ import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Sort
 import top.yukonga.miuix.kmp.icon.extended.Search
 import top.yukonga.miuix.kmp.icon.extended.More
 import top.yukonga.miuix.kmp.icon.extended.Copy
@@ -126,6 +127,7 @@ fun AppDetailScreen(
   modifier: Modifier = Modifier,
   isHarmonyVariant: Boolean = false,
   insightViewModel: com.absinthe.libchecker.domain.app.detail.presentation.LibraryInsightViewModel? = null,
+  onCompareWithInstalled: (() -> Unit)? = null,
   listState: LazyListState = rememberLazyListState()
 ) {
   val context = LocalContext.current
@@ -604,6 +606,14 @@ fun AppDetailScreen(
         }
       },
       actions = {
+        if (onCompareWithInstalled != null) {
+          IconButton(onClick = onCompareWithInstalled) {
+            Icon(
+              imageVector = MiuixIcons.Sort,
+              contentDescription = stringResource(R.string.lib_detail_compare_with_installed)
+            )
+          }
+        }
         if (isHarmonyVariant) {
           IconButton(onClick = { isHarmonyMode = !isHarmonyMode }) {
             AsyncImage(

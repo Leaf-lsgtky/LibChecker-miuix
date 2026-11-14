@@ -468,4 +468,5 @@
   <string name="lib_insight_title">SDK details</string>
   <string name="adv_app_appearance_preview">Preview appearance</string>
   <string name="app_icon_layers">App icon layers</string>
+  <string name="lib_detail_compare_with_installed">Compare with the installed app</string>
 </resources>
