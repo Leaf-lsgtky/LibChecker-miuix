@@ -31,7 +31,6 @@
   <string name="chart_statistics_no_available">没有更多可添加的统计项。</string>
   <string name="chart_statistics_source_builtin">内置</string>
   <string name="chart_statistics_source_online">在线</string>
-  <string name="chart_statistics_drag">拖动排序</string>
   <string name="chart_statistics_drag_hint">拖动以调整排序</string>
   <string name="chart_statistics_remove_description">移除 %1$s</string>
   <string name="chart_statistics_add_description">添加 %1$s</string>
@@ -405,4 +404,21 @@
   <string name="legacy_snapshot_detail">旧式快照详情页面</string>
   <string name="legacy_snapshot_detail_summary">使用经典卡片布局显示快照详情</string>
   <string name="app_function_details">AppFunctions 是 Android 平台 API，并提供配套的 Jetpack 库，用于简化 Android 的 MCP 集成。</string>
+  <string name="app_prop_transform">显示解析后的值</string>
+  <string name="app_prop_restore">显示原始值</string>
+  <string name="app_info_alternative_launch">备选启动方式</string>
+  <string name="app_info_launch_self_hint">为什么呢…</string>
+  <string name="library_declaration_title">库声明</string>
+  <string name="library_declaration_summary">标记库信息的来源说明</string>
+  <string name="chart_statistics_online_analysis">检测在线规则</string>
+  <string name="lib_detail_component_demo">组件行预览</string>
+  <string name="lib_detail_compare_with_installed">与已安装应用比较</string>
+  <string name="lib_insight_title">SDK 详情</string>
+  <string name="process_all">全部</string>
+  <string name="adv_app_appearance_preview">预览外观</string>
+  <string name="app_icon_layers">应用图标图层</string>
+  <string name="overlay_detail_title">覆盖层详情</string>
+  <string name="overlay_detail_type">类型</string>
+  <string name="overlay_detail_size">大小</string>
+  <string name="overlay_detail_target">目标包名</string>
 </resources>
