@@ -6,7 +6,7 @@ import com.absinthe.libchecker.annotation.NATIVE
 import com.absinthe.libchecker.annotation.PERMISSION
 import com.absinthe.libchecker.annotation.isComponentType
 import com.absinthe.libchecker.domain.app.detail.model.LibStringItemChip
-import com.absinthe.libchecker.domain.app.detail.ui.MODE_SORT_BY_LIB
+import com.absinthe.libchecker.domain.app.detail.model.MODE_SORT_BY_LIB
 import com.absinthe.libchecker.domain.app.repository.AppDetailSettingsRepository
 
 class DetailFilterController(

@@ -19,7 +19,6 @@ import com.absinthe.libchecker.domain.app.detail.navigation.EXTRA_DETAIL_BEAN
 import com.absinthe.libchecker.domain.app.detail.navigation.EXTRA_LC_ITEM
 import com.absinthe.libchecker.domain.app.detail.navigation.EXTRA_PACKAGE_NAME
 import com.absinthe.libchecker.domain.app.detail.ui.AppDetailActivity
-import com.absinthe.libchecker.domain.app.detail.ui.dialog.OverlayDetailBottomSheetDialogFragment
 import com.absinthe.libchecker.domain.statistics.reference.ui.EXTRA_REF_LABEL
 import com.absinthe.libchecker.domain.statistics.reference.ui.EXTRA_REF_LIST
 import com.absinthe.libchecker.domain.statistics.reference.ui.EXTRA_REF_NAME
@@ -45,14 +44,7 @@ fun FragmentActivity.launchDetailPage(item: LCItem, refName: String? = null, ref
     return
   }
   findViewById<View>(androidx.appcompat.R.id.search_src_text)?.clearFocus()
-  if (item.abi.toInt() == Constants.OVERLAY && !forceDetail) {
-    OverlayDetailBottomSheetDialogFragment()
-      .putArguments(EXTRA_LC_ITEM to item)
-      .show(
-        supportFragmentManager,
-        OverlayDetailBottomSheetDialogFragment::class.java.name
-      )
-  } else {
+  run {
     val intent = Intent(this, AppDetailActivity::class.java)
       .putExtras(
         Bundle().apply {

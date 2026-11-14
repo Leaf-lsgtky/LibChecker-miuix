@@ -9,7 +9,7 @@ import com.absinthe.libchecker.domain.app.detail.presentation.DetailLoadJobsStat
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailPackageState
 import com.absinthe.libchecker.domain.app.detail.trace.TRACE_DETAIL_NATIVE_INIT_USE_CASE
 import com.absinthe.libchecker.domain.app.detail.trace.traceDetailSection
-import com.absinthe.libchecker.domain.app.detail.ui.MODE_SORT_BY_SIZE
+import com.absinthe.libchecker.domain.app.detail.model.MODE_SORT_BY_SIZE
 import com.absinthe.libchecker.domain.app.model.VersionedFeature
 import com.absinthe.libchecker.domain.app.repository.AppDetailSettingsRepository
 import com.absinthe.libchecker.utils.UiUtils
