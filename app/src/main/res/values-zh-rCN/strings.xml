@@ -421,4 +421,7 @@
   <string name="overlay_detail_type">类型</string>
   <string name="overlay_detail_size">大小</string>
   <string name="overlay_detail_target">目标包名</string>
+  <string name="snapshot_time_node_title">时间节点</string>
+  <string name="snapshot_auto_remove_title">自动清理旧快照</string>
+  <string name="snapshot_auto_remove_summary">仅保留最近 %1$d 个快照</string>
 </resources>

@@ -470,4 +470,7 @@
   <string name="app_icon_layers">App icon layers</string>
   <string name="lib_detail_compare_with_installed">Compare with the installed app</string>
   <string name="app_info_launch_self_hint">But why…</string>
+  <string name="snapshot_time_node_title">Time nodes</string>
+  <string name="snapshot_auto_remove_title">Auto remove old snapshots</string>
+  <string name="snapshot_auto_remove_summary">Keep only the most recent %1$d snapshots</string>
 </resources>

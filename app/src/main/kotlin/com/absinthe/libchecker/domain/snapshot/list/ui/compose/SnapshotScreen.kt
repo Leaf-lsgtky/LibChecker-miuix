@@ -120,6 +120,7 @@ fun SnapshotScreen(
   var searchExpanded by rememberSaveable { mutableStateOf(false) }
   var showDeleteDialog by remember { mutableStateOf(false) }
   var showOptionsMenu by remember { mutableStateOf(false) }
+  var showTimeNode by remember { mutableStateOf(false) }
   var systemProps by remember {
     mutableStateOf<List<com.absinthe.libchecker.domain.snapshot.list.model.SnapshotSystemPropDisplayData>>(emptyList())
   }
@@ -208,6 +209,27 @@ fun SnapshotScreen(
       }.getOrDefault(emptyList())
     }
   }
+
+  TimeNodeSheet(
+    show = showTimeNode,
+    viewModel = viewModel,
+    timeStamps = timeStamps,
+    currentTimestamp = selectedTimestamp.takeIf { it != 0L },
+    onSelect = { timestamp ->
+      showTimeNode = false
+      selectedTimestamp = timestamp
+      scope.launch {
+        val plan = viewModel.buildSnapshotListUpdatePlan(
+          currentItems = items,
+          highlightRefresh = true
+        )
+        items = plan.items
+        iconSources = plan.renderState.packageIconSources
+        highlight = plan.renderState.highlightText
+      }
+    },
+    onDismiss = { showTimeNode = false }
+  )
 
   if (showOptionsMenu) {
     SnapshotMenuSheet(
@@ -306,6 +328,10 @@ fun SnapshotScreen(
             entries = listOf(
               DropdownEntry(
                 items = listOf(
+                  DropdownItem(
+                    text = stringResource(R.string.snapshot_time_node_title),
+                    onClick = { showTimeNode = true }
+                  ),
                   DropdownItem(
                     text = stringResource(R.string.advanced_menu),
                     onClick = { showOptionsMenu = true }
