@@ -6,42 +6,52 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewModelScope
+import coil.compose.AsyncImage
 import com.absinthe.libchecker.R
 import com.absinthe.libchecker.domain.statistics.chart.presentation.ChartViewModel
 import com.absinthe.libchecker.domain.statistics.chart.ui.resolve
+import com.absinthe.libchecker.domain.statistics.chart.ui.resolveDrawable
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
 import com.absinthe.libchecker.ui.compose.component.LcLoadingState
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.LinearProgressIndicator
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.Switch
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.squircle.squircleBackground
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
-/** Statistics chart page: statistic selector plus the hosted MPAndroidChart view. */
+/** Statistics chart page: count legend, statistic selector and the hosted chart view. */
 @Composable
 fun ChartScreen(
   viewModel: ChartViewModel,
@@ -53,13 +63,17 @@ fun ChartScreen(
   val colorScheme = MiuixTheme.colorScheme
   val selectorPlan by viewModel.statisticSelectorPlan.collectAsStateWithLifecycle()
   val loadingProgress by viewModel.loadingProgress.collectAsStateWithLifecycle()
+  val detailedAbi by viewModel.detailAbiSwitch.collectAsStateWithLifecycle()
+  val abiSwitchVisible by viewModel.detailAbiSwitchVisibility.collectAsStateWithLifecycle()
+  var legend by remember { mutableStateOf<List<ChartLegendEntry>>(emptyList()) }
 
   val controller = remember(viewModel) {
     ChartHostController(
       context = context,
       scope = viewModel.viewModelScope,
       viewModel = viewModel,
-      onProgress = { viewModel.setLoadingProgress(it) }
+      onProgress = { viewModel.setLoadingProgress(it) },
+      onLegend = { legend = it }
     )
   }
 
@@ -75,8 +89,40 @@ fun ChartScreen(
         IconButton(onClick = onBack) {
           Icon(MiuixIcons.Back, contentDescription = null)
         }
+      },
+      actions = {
+        if (abiSwitchVisible) {
+          Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+              text = stringResource(
+                if (detailedAbi) R.string.chart_abi_detailed else R.string.chart_abi_concise
+              ),
+              fontSize = 13.sp,
+              color = colorScheme.onSurfaceVariantSummary
+            )
+            Spacer(Modifier.size(6.dp))
+            Switch(
+              checked = detailedAbi,
+              onCheckedChange = { viewModel.setDetailAbiSwitch(it) }
+            )
+            Spacer(Modifier.size(12.dp))
+          }
+        }
       }
     )
+
+    if (legend.isNotEmpty()) {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 12.dp)
+      ) {
+        legend.forEach { entry ->
+          ChartLegendRow(entry = entry)
+        }
+      }
+      Spacer(Modifier.height(4.dp))
+    }
 
     LazyRow(
       modifier = Modifier
@@ -86,24 +132,11 @@ fun ChartScreen(
       horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
       items(items = selectorPlan.visibleStatistics, key = { it.id }) { statistic ->
-        val selected = statistic.id == selectorPlan.selectedStatistic?.id
-        Box(
-          modifier = Modifier
-            .squircleBackground(
-              if (selected) colorScheme.primary else colorScheme.surfaceContainer,
-              14.dp
-            )
-            .clickable { viewModel.selectStatistic(statistic.id) }
-            .padding(horizontal = 12.dp, vertical = 7.dp)
-        ) {
-          Text(
-            text = statistic.title.resolve(context),
-            fontSize = 13.sp,
-            fontWeight = FontWeight(550),
-            color = if (selected) colorScheme.onPrimary else colorScheme.onSurface,
-            maxLines = 1
-          )
-        }
+        StatisticChip(
+          statistic = statistic,
+          selected = statistic.id == selectorPlan.selectedStatistic?.id,
+          onClick = { viewModel.selectStatistic(statistic.id) }
+        )
       }
     }
 
@@ -131,6 +164,92 @@ fun ChartScreen(
           LcLoadingState()
         }
       }
+    }
+  }
+}
+
+@Composable
+private fun ChartLegendRow(entry: ChartLegendEntry) {
+  val colorScheme = MiuixTheme.colorScheme
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(vertical = 6.dp),
+    verticalAlignment = Alignment.CenterVertically
+  ) {
+    Box(
+      modifier = Modifier
+        .padding(end = 12.dp)
+        .size(40.dp)
+        .squircleBackground(colorScheme.surfaceContainerHigh, 20.dp),
+      contentAlignment = Alignment.Center
+    ) {
+      AsyncImage(
+        model = entry.iconRes,
+        contentDescription = null,
+        modifier = Modifier.size(24.dp)
+      )
+    }
+    Text(
+      text = entry.label,
+      modifier = Modifier.weight(1f),
+      fontSize = 14.sp,
+      fontWeight = FontWeight(500),
+      color = colorScheme.onSurface
+    )
+    Text(
+      text = entry.count.toString(),
+      fontSize = 28.sp,
+      fontWeight = FontWeight(600),
+      color = colorScheme.onSurface
+    )
+  }
+}
+
+@Composable
+private fun StatisticChip(
+  statistic: com.absinthe.libchecker.domain.statistics.chart.model.StatisticDefinition,
+  selected: Boolean,
+  onClick: () -> Unit
+) {
+  val context = LocalContext.current
+  val colorScheme = MiuixTheme.colorScheme
+  var icon by remember(statistic.id) {
+    mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)
+  }
+  LaunchedEffect(statistic.id) {
+    icon = runCatching {
+      statistic.icon.resolveDrawable(context)
+        ?.toBitmap(48, 48)
+        ?.asImageBitmap()
+    }.getOrNull()
+  }
+  Row(
+    modifier = Modifier
+      .squircleBackground(
+        if (selected) colorScheme.surfaceContainerHigh else colorScheme.surfaceContainer,
+        20.dp
+      )
+      .clickable(onClick = onClick)
+      .padding(horizontal = if (selected) 12.dp else 8.dp, vertical = 8.dp),
+    verticalAlignment = Alignment.CenterVertically
+  ) {
+    if (icon != null) {
+      androidx.compose.foundation.Image(
+        bitmap = icon!!,
+        contentDescription = null,
+        modifier = Modifier.size(24.dp)
+      )
+    }
+    if (selected) {
+      Spacer(Modifier.size(6.dp))
+      Text(
+        text = statistic.title.resolve(context),
+        fontSize = 13.sp,
+        fontWeight = FontWeight(550),
+        color = colorScheme.onSurface,
+        maxLines = 1
+      )
     }
   }
 }

@@ -59,6 +59,7 @@ import com.absinthe.libchecker.annotation.RECEIVER
 import com.absinthe.libchecker.annotation.SERVICE
 import com.absinthe.libchecker.annotation.SIGNATURES
 import com.absinthe.libchecker.annotation.STATIC
+import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureAction
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureIcon
 import com.absinthe.libchecker.domain.app.detail.feature.AppDetailFeatureItemData
 import com.absinthe.libchecker.domain.app.detail.model.DISABLED
@@ -77,6 +78,7 @@ import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.InputField
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.extended.Tune
@@ -85,6 +87,7 @@ import top.yukonga.miuix.kmp.squircle.squircleClip
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import top.yukonga.miuix.kmp.window.WindowDialog
 
 /**
  * App detail page: header card with feature badges, category tabs and the component/library list of
@@ -117,6 +120,7 @@ fun AppDetailScreen(
   val featureItems = remember { mutableStateListOf<AppDetailFeatureItemData>() }
   var libDetailRequest by remember { mutableStateOf<LibDetailRequest?>(null) }
   var showAppInfo by remember { mutableStateOf(false) }
+  var featureDetail by remember { mutableStateOf<AppDetailFeatureItemData?>(null) }
   val is64Bit by viewModel.featureState.is64Bit.collectAsStateWithLifecycle()
 
   val nativeTabs by contentState.nativeLibTabs.collectAsStateWithLifecycle()
@@ -139,7 +143,11 @@ fun AppDetailScreen(
         apkAnalyticsMode = false,
         canShowInstallSource = true,
         canShowAppIcons = viewModel.featureState.appIcons.isNotEmpty()
-      )?.let(featureItems::add)
+      )?.let { item ->
+        if (featureItems.none { it.titleRes == item.titleRes }) {
+          featureItems.add(item)
+        }
+      }
     }
   }
 
@@ -192,6 +200,27 @@ fun AppDetailScreen(
       filteredItems.sortedByDescending { it.item.size }
     } else {
       filteredItems.sortedBy { it.item.name.lowercase() }
+    }
+  }
+
+  featureDetail?.let { item ->
+    WindowDialog(
+      show = true,
+      title = stringResource(item.titleRes),
+      summary = featureDetailText(item.action),
+      onDismissRequest = { featureDetail = null }
+    ) {
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.End
+      ) {
+        TextButton(
+          text = stringResource(android.R.string.ok),
+          onClick = { featureDetail = null }
+        )
+      }
     }
   }
 
@@ -294,7 +323,11 @@ fun AppDetailScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
               ) {
                 featureItems.forEach { item ->
-                  FeatureChip(item = item, packageInfo = packageInfo)
+                  FeatureChip(
+                    item = item,
+                    packageInfo = packageInfo,
+                    onClick = { featureDetail = item }
+                  )
                 }
               }
             }
@@ -619,12 +652,17 @@ private fun RuleChip(iconRes: Int, label: String) {
 }
 
 @Composable
-private fun FeatureChip(item: AppDetailFeatureItemData, packageInfo: PackageInfo) {
+private fun FeatureChip(
+  item: AppDetailFeatureItemData,
+  packageInfo: PackageInfo,
+  onClick: () -> Unit
+) {
   val colorScheme = MiuixTheme.colorScheme
   Box(
     modifier = Modifier
       .size(40.dp)
-      .squircleBackground(colorScheme.surfaceContainer, 20.dp),
+      .squircleBackground(colorScheme.surfaceContainer, 20.dp)
+      .clickable(onClick = onClick),
     contentAlignment = Alignment.Center
   ) {
     when (val icon = item.icon) {
@@ -651,3 +689,41 @@ private data class LibDetailRequest(
   val type: Int,
   val isValid: Boolean
 )
+@Composable
+private fun featureDetailText(action: AppDetailFeatureAction): String {
+  return when (action) {
+    is AppDetailFeatureAction.Kotlin ->
+      action.extras?.values?.firstOrNull { !it.isNullOrBlank() } ?: "Kotlin"
+
+    is AppDetailFeatureAction.Agp ->
+      action.version ?: "AGP"
+
+    is AppDetailFeatureAction.JetpackCompose ->
+      action.version ?: stringResource(R.string.jetpack_compose)
+
+    is AppDetailFeatureAction.ComposeMultiplatformResources ->
+      action.version ?: stringResource(R.string.compose_multiplatform_resources)
+
+    is AppDetailFeatureAction.AppFunction ->
+      action.functions.joinToString("\n") { it.toString() }
+
+    AppDetailFeatureAction.SplitApks -> stringResource(R.string.app_bundle)
+    AppDetailFeatureAction.XposedModule -> stringResource(R.string.xposed_module)
+    AppDetailFeatureAction.PlaySigning -> stringResource(R.string.play_app_signing)
+    AppDetailFeatureAction.Pwa -> stringResource(R.string.pwa)
+    AppDetailFeatureAction.LiveUpdateNotification ->
+      stringResource(R.string.feature_live_update_notification)
+
+    AppDetailFeatureAction.AppProp -> stringResource(R.string.lib_detail_app_props_title)
+    AppDetailFeatureAction.InstallSource ->
+      stringResource(R.string.lib_detail_app_install_source_title)
+
+    AppDetailFeatureAction.ElfPageSize16Kb ->
+      stringResource(R.string.lib_detail_dialog_title_16kb_page_size)
+
+    AppDetailFeatureAction.ElfPageSize16KbCompat ->
+      stringResource(R.string.lib_detail_dialog_title_16kb_page_size_compat)
+
+    is AppDetailFeatureAction.AppIcons -> stringResource(R.string.app_info_export)
+  }
+}

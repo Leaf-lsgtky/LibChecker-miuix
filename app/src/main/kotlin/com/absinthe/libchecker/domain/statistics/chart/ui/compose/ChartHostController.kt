@@ -28,7 +28,8 @@ internal class ChartHostController(
   private val context: Context,
   private val scope: CoroutineScope,
   private val viewModel: ChartViewModel,
-  private val onProgress: (Int) -> Unit
+  private val onProgress: (Int) -> Unit,
+  private val onLegend: (List<ChartLegendEntry>) -> Unit = {}
 ) {
 
   private var host: ViewGroup? = null
@@ -57,6 +58,7 @@ internal class ChartHostController(
           if (committed.parent == null) {
             host.addView(committed)
           }
+          onLegend(buildLegend(plan))
         }
       }
 
@@ -70,6 +72,7 @@ internal class ChartHostController(
           if (committed.parent == null) {
             host.addView(committed)
           }
+          onLegend(buildLegend(plan))
         }
       }
     }
@@ -139,4 +142,29 @@ internal class ChartHostController(
       isDrawMarkersEnabled = false
     }
   }
+
+  private fun buildLegend(plan: ChartDataSourcePlan): List<ChartLegendEntry> {
+    val source = when (plan) {
+      is ChartDataSourcePlan.Pie -> plan.dataSource
+      is ChartDataSourcePlan.Bar -> plan.dataSource
+    }
+    if (source !is com.absinthe.libchecker.domain.statistics.chart.source.BaseChartDataSource<*>) {
+      return emptyList()
+    }
+    return source.getChartSourceItems()
+      .map { (x, item) ->
+        ChartLegendEntry(
+          iconRes = item.iconRes,
+          label = source.getLabelByXValue(context, x),
+          count = item.data.size
+        )
+      }
+      .filter { it.label.isNotBlank() }
+  }
 }
+
+internal data class ChartLegendEntry(
+  val iconRes: Int,
+  val label: String,
+  val count: Int
+)
