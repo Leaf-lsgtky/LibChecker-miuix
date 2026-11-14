@@ -3,6 +3,12 @@ package com.absinthe.libchecker.domain.app.detail.ui.compose
 import android.content.pm.PackageInfo
 import android.text.Html
 import androidx.compose.foundation.layout.Box
+import top.yukonga.miuix.kmp.icon.extended.File
+import com.absinthe.libchecker.utils.extensions.openUrlInBrowser
+import com.absinthe.libchecker.constant.URLManager
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -66,6 +72,7 @@ fun FeatureDetailSheet(
   var description by remember { mutableStateOf<String?>(null) }
   var loading by remember { mutableStateOf(false) }
   var propItems by remember { mutableStateOf<List<AppPropItem>>(emptyList()) }
+  var xmlText by remember { mutableStateOf<String?>(null) }
 
   LaunchedEffect(show, item) {
     if (!show || item == null) return@LaunchedEffect
@@ -162,6 +169,33 @@ fun FeatureDetailSheet(
     loading = false
   }
 
+
+  xmlText?.let { text ->
+    WindowBottomSheet(
+      show = true,
+      title = stringResource(R.string.xml_detail),
+      onDismissRequest = { xmlText = null }
+    ) {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp)
+          .padding(bottom = 16.dp)
+          .heightIn(max = 520.dp)
+          .verticalScroll(rememberScrollState())
+      ) {
+        androidx.compose.foundation.text.selection.SelectionContainer {
+          Text(
+            text = text,
+            fontSize = 11.sp,
+            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+            color = MiuixTheme.colorScheme.onSurface
+          )
+        }
+      }
+    }
+  }
+
   WindowBottomSheet(
     show = show,
     title = item?.let { context.getString(it.titleRes) } ?: "",
@@ -189,10 +223,12 @@ fun FeatureDetailSheet(
             Spacer(Modifier.height(8.dp))
           }
           if (propItems.isNotEmpty()) {
-            LazyColumn(modifier = Modifier.heightIn(max = 480.dp)) {
+            Column {
+              LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
               items(propItems, key = { it.key }) { item ->
                 AppPropRow(
                   item = item,
+                  onShowXml = { xmlText = it },
                   onTogglePreview = {
                     propItems = propItems.map { current ->
                       if (current.key != item.key) {
@@ -208,6 +244,20 @@ fun FeatureDetailSheet(
                   }
                 )
               }
+              }
+              Spacer(Modifier.height(8.dp))
+              Text(
+                text = stringResource(R.string.lib_detail_app_props_tip) + " ↗",
+                fontSize = 13.sp,
+                fontWeight = FontWeight(550),
+                color = MiuixTheme.colorScheme.primary,
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .clickable {
+                    context.openUrlInBrowser(URLManager.ANDROID_DEV_MANIFEST_APPLICATION)
+                  }
+                  .padding(vertical = 8.dp)
+              )
             }
           } else if (rows.isNotEmpty()) {
             LazyColumn(modifier = Modifier.heightIn(max = 480.dp)) {
@@ -260,7 +310,11 @@ private fun FeatureRowItem(row: FeatureRow) {
 }
 
 @Composable
-private fun AppPropRow(item: AppPropItem, onTogglePreview: () -> Unit) {
+private fun AppPropRow(
+  item: AppPropItem,
+  onShowXml: (String) -> Unit,
+  onTogglePreview: () -> Unit
+) {
   val colorScheme = MiuixTheme.colorScheme
   Row(
     modifier = Modifier
@@ -301,6 +355,16 @@ private fun AppPropRow(item: AppPropItem, onTogglePreview: () -> Unit) {
           text = item.visibleValue.toString(),
           fontSize = 12.sp,
           color = colorScheme.onSurfaceVariantSummary
+        )
+      }
+    }
+    if (item.resource?.type == "xml" && item.isTransformed) {
+      IconButton(onClick = { onShowXml(item.visibleValue.toString()) }) {
+        Icon(
+          imageVector = MiuixIcons.File,
+          contentDescription = stringResource(R.string.xml_detail),
+          tint = colorScheme.onSurfaceVariantSummary,
+          modifier = Modifier.size(18.dp)
         )
       }
     }

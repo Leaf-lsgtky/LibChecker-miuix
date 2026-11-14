@@ -50,6 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -697,6 +698,7 @@ fun AppDetailScreen(
             ) { index, chip ->
               DetailItemRow(
                 chip = chip,
+                highlight = query,
                 showDivider = index < displayItems.lastIndex,
                 onClick = {
                   if (chip.item.name.isNotBlank()) {
@@ -896,6 +898,7 @@ private fun AbiBadge(text: String) {
 @Composable
 private fun DetailItemRow(
   chip: LibStringItemChip,
+  highlight: String,
   showDivider: Boolean,
   onClick: () -> Unit,
   onLongClick: () -> Unit
@@ -912,7 +915,7 @@ private fun DetailItemRow(
     ) {
       Column(Modifier.weight(1f)) {
         Text(
-          text = chip.item.name,
+          text = highlightText(chip.item.name, highlight),
           fontSize = 14.sp,
           fontWeight = FontWeight(500),
           color = colorScheme.onSurface,
@@ -1052,5 +1055,28 @@ private fun SheetInfoBlock(label: String, value: String) {
       fontSize = 13.sp,
       color = MiuixTheme.colorScheme.onSurface
     )
+  }
+}
+
+@Composable
+private fun highlightText(text: String, query: String): androidx.compose.ui.text.AnnotatedString {
+  if (query.isBlank()) {
+    return androidx.compose.ui.text.AnnotatedString(text)
+  }
+  val accent = MiuixTheme.colorScheme.primary
+  return androidx.compose.ui.text.buildAnnotatedString {
+    var index = 0
+    while (index < text.length) {
+      val match = text.indexOf(query, index, ignoreCase = true)
+      if (match < 0) {
+        append(text.substring(index))
+        break
+      }
+      append(text.substring(index, match))
+      withStyle(androidx.compose.ui.text.SpanStyle(color = accent)) {
+        append(text.substring(match, match + query.length))
+      }
+      index = match + query.length
+    }
   }
 }

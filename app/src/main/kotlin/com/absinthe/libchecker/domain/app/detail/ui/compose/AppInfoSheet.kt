@@ -67,6 +67,8 @@ fun AppInfoSheet(
   val packageName = packageInfo.packageName
   var state by remember { mutableStateOf<AppInfoBottomSheetState>(AppInfoBottomSheetState.Loading(packageName)) }
 
+  var alternatives by remember { mutableStateOf<List<com.absinthe.libchecker.domain.app.detail.model.AlternativeLaunchItem>?>(null) }
+
   var pendingExportFile by remember { mutableStateOf<com.absinthe.libchecker.domain.app.detail.action.AppPackageShareFile?>(null) }
 
   val exportLauncher = rememberLauncherForActivityResult(
@@ -115,10 +117,22 @@ fun AppInfoSheet(
     val intent = context.packageManager.getLaunchIntentForPackage(packageName)
     if (intent == null) {
       context.showToast(R.string.toast_cant_open_app)
+      scope.launch {
+        alternatives = runCatching { viewModel.getAlternativeLaunchItems(packageName) }
+          .getOrNull()
+          .orEmpty()
+      }
       return
     }
     runCatching { context.startActivity(intent) }
-      .onFailure { context.showToast(R.string.toast_cant_open_app) }
+      .onFailure {
+        context.showToast(R.string.toast_cant_open_app)
+        scope.launch {
+          alternatives = runCatching { viewModel.getAlternativeLaunchItems(packageName) }
+            .getOrNull()
+            .orEmpty()
+        }
+      }
   }
 
   fun openSettings() {
@@ -232,6 +246,49 @@ fun AppInfoSheet(
       }
     }
   }
+
+  alternatives?.let { items ->
+    WindowBottomSheet(
+      show = true,
+      title = stringResource(R.string.app_info_alternative_launch),
+      onDismissRequest = { alternatives = null }
+    ) {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp)
+          .padding(bottom = 16.dp)
+      ) {
+        items.forEach { item ->
+          Column(
+            modifier = Modifier
+              .fillMaxWidth()
+              .clickable {
+                alternatives = null
+                runCatching {
+                  context.startActivity(
+                    Intent().setClassName(packageName, item.className)
+                  )
+                }.onFailure { context.showToast(R.string.toast_cant_open_app) }
+              }
+              .padding(vertical = 8.dp)
+          ) {
+            Text(
+              text = item.label,
+              fontSize = 14.sp,
+              fontWeight = FontWeight(550),
+              color = MiuixTheme.colorScheme.onSurface
+            )
+            Text(
+              text = item.className,
+              fontSize = 12.sp,
+              color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+            )
+          }
+        }
+      }
+    }
+  }
 }
 
 @Composable
@@ -288,3 +345,4 @@ private fun ExternalActionRow(item: AppInfoActionItem, onClick: () -> Unit) {
     )
   }
 }
+

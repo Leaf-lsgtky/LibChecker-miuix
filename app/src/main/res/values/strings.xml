@@ -457,4 +457,5 @@
   <string name="app_prop_restore">Show original value</string>
   <string name="lib_detail_component_demo">Component row preview</string>
   <string name="chart_statistics_online_analysis">Detect online rules</string>
+  <string name="app_info_alternative_launch">Alternative launch</string>
 </resources>
