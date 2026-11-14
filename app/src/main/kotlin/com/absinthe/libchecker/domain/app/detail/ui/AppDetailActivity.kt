@@ -152,6 +152,7 @@ class AppDetailActivity : BaseComposeActivity() {
         AppDetailScreen(
           viewModel = viewModel,
           packageInfo = packageInfo,
+          isHarmonyVariant = extraBean?.variant == com.absinthe.libchecker.constant.Constants.VARIANT_HAP,
           onBack = { onBackPressedDispatcher.onBackPressed() }
         )
       }

@@ -43,6 +43,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -120,6 +121,7 @@ fun AppDetailScreen(
   packageInfo: PackageInfo,
   onBack: () -> Unit,
   modifier: Modifier = Modifier,
+  isHarmonyVariant: Boolean = false,
   listState: LazyListState = rememberLazyListState()
 ) {
   val context = LocalContext.current
@@ -127,8 +129,12 @@ fun AppDetailScreen(
   val activity = context as? FragmentActivity
   val scrollBehavior = MiuixScrollBehavior()
   val colorScheme = MiuixTheme.colorScheme
-  val tabSpec = remember(packageInfo.packageName) {
-    DetailTabSpecBuilder(context).build(isHarmonyMode = false, isApkPreview = false)
+  var isHarmonyMode by rememberSaveable { mutableStateOf(false) }
+  val tabSpec = remember(packageInfo.packageName, isHarmonyMode) {
+    DetailTabSpecBuilder(context).build(
+      isHarmonyMode = isHarmonyMode,
+      isApkPreview = false
+    )
   }
   var selectedTab by rememberSaveable { mutableIntStateOf(0) }
   val selectedType = tabSpec.itemAt(selectedTab)?.type ?: NATIVE
@@ -543,6 +549,17 @@ fun AppDetailScreen(
         }
       },
       actions = {
+        if (isHarmonyVariant) {
+          IconButton(onClick = { isHarmonyMode = !isHarmonyMode }) {
+            AsyncImage(
+              model = R.drawable.ic_harmonyos_logo,
+              contentDescription = stringResource(R.string.ability),
+              modifier = Modifier
+                .size(20.dp)
+                .alpha(if (isHarmonyMode) 1f else 0.4f)
+            )
+          }
+        }
         IconButton(onClick = { showOnlineAnalysis = true }) {
           Icon(
             imageVector = MiuixIcons.Search,
