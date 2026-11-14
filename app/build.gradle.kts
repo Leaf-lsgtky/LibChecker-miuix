@@ -3,6 +3,7 @@ import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.parcelize)
+  alias(libs.plugins.compose.compiler)
   alias(libs.plugins.protobuf)
   alias(libs.plugins.hiddenApiRefine)
   alias(libs.plugins.ksp)
@@ -160,6 +161,7 @@ dependencies {
   implementation(libs.bundles.androidX.room3)
   implementation(libs.google.material)
   implementation(libs.coil)
+  implementation(libs.coil.compose)
   implementation(libs.coil.svg)
   implementation(libs.square.okHttp)
   implementation(libs.square.okio)
@@ -197,6 +199,19 @@ dependencies {
   implementation(libs.bundles.rikkax)
 
   implementation(libs.bundles.shizuku)
+
+  implementation(libs.androidX.activity.compose)
+  implementation(libs.androidX.compose.animation)
+  implementation(libs.androidX.compose.foundation)
+  implementation(libs.androidX.compose.runtime)
+  implementation(libs.androidX.compose.ui)
+  implementation(libs.androidX.compose.ui.tooling.preview)
+  implementation(libs.androidX.lifecycle.runtime.compose)
+  implementation(libs.androidX.lifecycle.viewmodel.compose)
+  implementation(libs.miuix.icons)
+  implementation(libs.miuix.preference)
+  implementation(libs.miuix.ui)
+  debugImplementation(libs.androidX.compose.ui.tooling)
 
   "marketCompileOnly"(fileTree("ohos"))
   "marketImplementation"(platform(libs.firebase.bom))

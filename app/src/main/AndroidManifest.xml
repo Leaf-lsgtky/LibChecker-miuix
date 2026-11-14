@@ -112,6 +112,9 @@
       </intent-filter>
     </activity>
     <activity
+      android:name=".domain.about.ui.AboutActivity"
+      android:label="@string/settings_about" />
+    <activity
       android:name=".domain.snapshot.track.ui.TrackActivity"
       android:label="@string/album_item_track_title" />
     <activity

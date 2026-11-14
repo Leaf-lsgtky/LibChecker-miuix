@@ -10,8 +10,8 @@ import androidx.core.text.buildSpannedString
 import androidx.core.text.toSpannable
 import com.absinthe.libchecker.BuildConfig
 import com.absinthe.libchecker.R
-import com.absinthe.libchecker.domain.snapshot.list.ui.adapter.ARROW
-import com.absinthe.libchecker.domain.snapshot.list.ui.adapter.ARROW_REVERT
+import com.absinthe.libchecker.domain.snapshot.model.ARROW
+import com.absinthe.libchecker.domain.snapshot.model.ARROW_REVERT
 import com.absinthe.libchecker.domain.snapshot.model.SnapshotDiffItem
 import com.absinthe.libchecker.utils.extensions.getDrawable
 import com.absinthe.libchecker.view.span.CenterAlignImageSpan

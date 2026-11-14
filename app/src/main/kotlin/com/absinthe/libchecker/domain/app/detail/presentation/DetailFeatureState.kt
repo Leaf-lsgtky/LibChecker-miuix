@@ -9,7 +9,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class DetailFeatureState {
-  private val _featuresFlow = MutableSharedFlow<VersionedFeature>()
+  private val _featuresFlow = MutableSharedFlow<VersionedFeature>(
+    replay = FEATURE_REPLAY_CACHE,
+    extraBufferCapacity = FEATURE_REPLAY_CACHE
+  )
   val featuresFlow = _featuresFlow.asSharedFlow()
 
   private val _abiBundleStateFlow = MutableStateFlow<AppDetailAbi?>(null)
@@ -45,9 +48,14 @@ class DetailFeatureState {
   }
 
   fun reset() {
+    _featuresFlow.resetReplayCache()
     appIcons = emptyList()
     _abiBundleStateFlow.value = null
     _is64Bit.value = null
     _isLoading.value = false
+  }
+
+  private companion object {
+    const val FEATURE_REPLAY_CACHE = 32
   }
 }

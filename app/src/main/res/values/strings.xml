@@ -433,4 +433,10 @@
   <string name="legacy_snapshot_detail">Legacy snapshot detail page</string>
   <string name="legacy_snapshot_detail_summary">Use the classic card layout for snapshot details</string>
   <string name="app_function_details">AppFunctions is an Android platform API with an accompanying Jetpack library to simplify Android MCP integration.</string>
+  <string name="about_open_source_licenses">Open source licenses</string>
+  <string name="about_open_source_licenses_summary">Third-party libraries used by this app</string>
+  <string name="comparison_side_left">Left</string>
+  <string name="comparison_side_right">Right</string>
+  <string name="comparison_side_archive">Choose file</string>
+  <string name="comparison_start">Compare</string>
 </resources>

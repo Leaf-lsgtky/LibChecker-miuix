@@ -4,45 +4,50 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageInfo
 import android.os.Bundle
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.absinthe.libchecker.R
-import com.absinthe.libchecker.annotation.ALL
 import com.absinthe.libchecker.compat.IntentCompat
 import com.absinthe.libchecker.domain.app.detail.model.DetailExtraBean
-import com.absinthe.libchecker.domain.app.detail.navigation.DetailReferenceNavigation
 import com.absinthe.libchecker.domain.app.detail.navigation.EXTRA_DETAIL_BEAN
 import com.absinthe.libchecker.domain.app.detail.navigation.EXTRA_PACKAGE_NAME
 import com.absinthe.libchecker.domain.app.detail.packageinfo.GetAppDetailPackageUseCase
+import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel.PackageLoadResult
+import com.absinthe.libchecker.database.entity.Features
+import com.absinthe.libchecker.domain.app.detail.ui.compose.AppDetailScreen
+import com.absinthe.libchecker.domain.app.model.VersionedFeature
 import com.absinthe.libchecker.domain.home.presentation.RecentVisitsViewModel
 import com.absinthe.libchecker.domain.home.recent.RecentVisit
-import com.absinthe.libchecker.domain.statistics.reference.ui.EXTRA_REF_NAME
-import com.absinthe.libchecker.domain.statistics.reference.ui.EXTRA_REF_TYPE
+import com.absinthe.libchecker.ui.base.BaseComposeActivity
+import com.absinthe.libchecker.ui.compose.component.LcLoadingState
 import com.absinthe.libchecker.utils.Toasty
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
 
-class AppDetailActivity :
-  BaseAppDetailActivity(),
-  IDetailContainer {
+class AppDetailActivity : BaseComposeActivity() {
+
+  private val viewModel: DetailViewModel by viewModel()
+  private val recentVisitsViewModel: RecentVisitsViewModel by viewModel()
 
   private var pkgName: String? = null
-  private var refName: String? = null
-  private var refType: Int? = null
-  private var extraBean: DetailExtraBean? = null
-  private val recentVisitsViewModel: RecentVisitsViewModel by viewModel()
   private var recordVisit = true
-
-  override val apkAnalyticsMode: Boolean = false
-  override fun requirePackageName() = pkgName
-  override fun getToolbar() = binding.toolbar
+  private var extraBean: DetailExtraBean? = null
+  private var packageInfoState by mutableStateOf<PackageInfo?>(null)
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     recordVisit = savedInstanceState == null
-    isPackageReady = true
     lifecycleScope.launch {
       viewModel.packageLoadResults.collect(::handlePackageLoadResult)
     }
@@ -53,11 +58,8 @@ class AppDetailActivity :
     super.onNewIntent(intent)
     setIntent(intent)
     recordVisit = true
+    packageInfoState = null
     initPackage(intent)
-  }
-
-  override fun onPostPackageInfoAvailable() {
-    resolveReferenceExtras()
   }
 
   override fun onStart() {
@@ -76,11 +78,8 @@ class AppDetailActivity :
         uri.getQueryParameter("id").takeIf { uri.scheme == "market" && uri.host == "details" }
       }
     }
-    refName = intent.getStringExtra(EXTRA_REF_NAME)
-    refType = intent.getIntExtra(EXTRA_REF_TYPE, ALL)
     extraBean = IntentCompat.getParcelableExtra<DetailExtraBean>(intent, EXTRA_DETAIL_BEAN)
-
-    Timber.d("packageName: $pkgName")
+    Timber.d("packageName: $pkgName, extraBean: $extraBean")
     val packageName = pkgName ?: return
     viewModel.loadAppDetailPackage(packageName)
   }
@@ -89,10 +88,15 @@ class AppDetailActivity :
     if (loadResult.packageName != pkgName) {
       return
     }
-
     when (val result = loadResult.result) {
       is GetAppDetailPackageUseCase.Result.Available -> {
-        onPackageInfoAvailable(result.packageInfo, extraBean)
+        viewModel.reset()
+        viewModel.initPackageInfo(result.packageInfo)
+        viewModel.initAbiInfo(result.packageInfo, apkAnalyticsMode = false)
+        viewModel.emitFeature(VersionedFeature(Features.Ext.APPLICATION_PROP))
+        viewModel.setFeatureLoading(true)
+        viewModel.initFeatures(result.packageInfo, extraBean?.features ?: -1)
+        packageInfoState = result.packageInfo
         if (recordVisit) {
           recordVisit = false
           recentVisitsViewModel.record(RecentVisit(loadResult.packageName))
@@ -114,36 +118,14 @@ class AppDetailActivity :
     }
   }
 
-  private fun resolveReferenceExtras() {
-    val navigation = viewModel.buildDetailReferenceNavigation(
-      packageName = pkgName,
-      refName = refName,
-      refType = refType ?: ALL,
-      visibleTypes = typeList
-    ) ?: return
-
-    navigateToReferenceComponentPosition(navigation)
-  }
-
-  private fun navigateToReferenceComponentPosition(navigation: DetailReferenceNavigation) {
-    binding.viewpager.currentItem = navigation.tabPosition
-    binding.tabLayout.post {
-      val targetTab = binding.tabLayout.getTabAt(navigation.tabPosition)
-      if (targetTab?.isSelected == false) {
-        targetTab.select()
-      }
-    }
-
-    detailFragmentManager.navigateToComponent(navigation.type, navigation.targetName)
-  }
-
   private val requestPackageReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
       if (intent.data?.schemeSpecificPart.orEmpty() == pkgName) {
         if (intent.action == Intent.ACTION_PACKAGE_REMOVED) {
           finish()
         } else {
-          recreate()
+          packageInfoState = null
+          pkgName?.let(viewModel::loadAppDetailPackage)
         }
       }
     }
@@ -155,7 +137,24 @@ class AppDetailActivity :
       addAction(Intent.ACTION_PACKAGE_REMOVED)
       addDataScheme("package")
     }
-
     registerReceiver(requestPackageReceiver, intentFilter)
+  }
+
+  @Composable
+  override fun Content() {
+    val packageInfo = packageInfoState
+    if (packageInfo == null) {
+      Box(Modifier.fillMaxSize()) {
+        LcLoadingState()
+      }
+    } else {
+      key(packageInfo.packageName) {
+        AppDetailScreen(
+          viewModel = viewModel,
+          packageInfo = packageInfo,
+          onBack = { onBackPressedDispatcher.onBackPressed() }
+        )
+      }
+    }
   }
 }
