@@ -112,6 +112,9 @@
       </intent-filter>
     </activity>
     <activity
+      android:name=".domain.about.ui.LicensesActivity"
+      android:label="@string/about_open_source_licenses" />
+    <activity
       android:name=".domain.about.ui.AboutActivity"
       android:label="@string/settings_about" />
     <activity

@@ -1,5 +1,6 @@
 package com.absinthe.libchecker.domain.about.ui
 
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import com.absinthe.libchecker.domain.about.ui.compose.AboutScreen
 import com.absinthe.libchecker.ui.base.BaseComposeActivity
@@ -11,7 +12,9 @@ class AboutActivity : BaseComposeActivity() {
   override fun Content() {
     AboutScreen(
       onBack = { onBackPressedDispatcher.onBackPressed() },
-      onOpenLicenses = { AboutPageBuilder.start(this) }
+      onOpenLicenses = {
+        startActivity(Intent(this@AboutActivity, LicensesActivity::class.java))
+      }
     )
   }
 }

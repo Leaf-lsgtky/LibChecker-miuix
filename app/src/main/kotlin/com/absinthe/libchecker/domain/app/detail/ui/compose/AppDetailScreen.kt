@@ -67,7 +67,6 @@ import com.absinthe.libchecker.domain.app.detail.navigation.EXTRA_PACKAGE_NAME
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel
 import com.absinthe.libchecker.domain.app.detail.ui.DetailTabSpecBuilder
 import com.absinthe.libchecker.domain.app.detail.ui.dialog.AppInfoBottomSheetDialogFragment
-import com.absinthe.libchecker.domain.app.detail.ui.dialog.LibDetailDialogFragment
 import com.absinthe.libchecker.domain.app.list.ui.compose.AppIcon
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
 import com.absinthe.libchecker.ui.compose.component.LcEmptyState
@@ -119,6 +118,7 @@ fun AppDetailScreen(
   var sortBySize by rememberSaveable { mutableStateOf(false) }
   var nativeTabIndex by remember { mutableIntStateOf(0) }
   val featureItems = remember { mutableStateListOf<AppDetailFeatureItemData>() }
+  var libDetailRequest by remember { mutableStateOf<LibDetailRequest?>(null) }
   val is64Bit by viewModel.featureState.is64Bit.collectAsStateWithLifecycle()
 
   val nativeTabs by contentState.nativeLibTabs.collectAsStateWithLifecycle()
@@ -195,6 +195,18 @@ fun AppDetailScreen(
     } else {
       filteredItems.sortedBy { it.item.name.lowercase() }
     }
+  }
+
+  libDetailRequest?.let { request ->
+    LibDetailSheet(
+      show = true,
+      viewModel = viewModel,
+      libName = request.name,
+      type = request.type,
+      regexName = null,
+      isValidLib = request.isValid,
+      onDismiss = { libDetailRequest = null }
+    )
   }
 
   Column(modifier = modifier.fillMaxSize()) {
@@ -340,15 +352,12 @@ fun AppDetailScreen(
                 chip = chip,
                 showDivider = index < displayItems.lastIndex,
                 onClick = {
-                  val host = activity
-                  if (chip.item.name.isNotBlank() && host != null) {
-                    LibDetailDialogFragment
-                      .newInstance(
-                        libName = chip.item.name,
-                        type = selectedType,
-                        isValidLib = chip.rule != null
-                      )
-                      .show(host.supportFragmentManager, LibDetailDialogFragment::class.java.name)
+                  if (chip.item.name.isNotBlank()) {
+                    libDetailRequest = LibDetailRequest(
+                      name = chip.item.name,
+                      type = selectedType,
+                      isValid = chip.rule != null
+                    )
                   }
                 }
               )
@@ -636,3 +645,9 @@ private fun FeatureChip(item: AppDetailFeatureItemData, packageInfo: PackageInfo
     }
   }
 }
+
+private data class LibDetailRequest(
+  val name: String,
+  val type: Int,
+  val isValid: Boolean
+)
