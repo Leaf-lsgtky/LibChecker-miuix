@@ -51,6 +51,7 @@ import com.absinthe.libchecker.annotation.STATUS_START_INIT
 import com.absinthe.libchecker.constant.Constants
 import com.absinthe.libchecker.constant.OnceTag
 import com.absinthe.libchecker.database.entity.LCItem
+import com.absinthe.libchecker.domain.app.detail.ui.compose.OverlayDetailSheet
 import com.absinthe.libchecker.domain.app.list.model.AppListItemViewState
 import com.absinthe.libchecker.domain.home.presentation.HomeViewModel
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
@@ -87,6 +88,7 @@ import top.yukonga.miuix.kmp.utils.scrollEndHaptic
 @Composable
 fun AppListScreen(
   homeViewModel: HomeViewModel,
+  detailViewModel: com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel,
   onOpenDetail: (LCItem) -> Unit,
   modifier: Modifier = Modifier,
   listState: LazyListState = rememberLazyListState()
@@ -101,6 +103,7 @@ fun AppListScreen(
   var chips by remember { mutableStateOf<Map<String, List<String>>>(emptyMap()) }
   var highlight by remember { mutableStateOf("") }
   var status by remember { mutableIntStateOf(STATUS_NOT_START) }
+  var overlayItem by remember { mutableStateOf<LCItem?>(null) }
   var loading by remember { mutableStateOf(true) }
   var initProgress by remember { mutableIntStateOf(0) }
   var reject by remember { mutableStateOf(false) }
@@ -348,7 +351,13 @@ fun AppListScreen(
                   packageInfo = iconPackageInfos[item.packageName],
                   chips = chips[item.packageName].orEmpty(),
                   highlight = highlight,
-                  onClick = { onOpenDetail(item) }
+                  onClick = {
+                if (item.abi.toInt() == com.absinthe.libchecker.constant.Constants.OVERLAY) {
+                  overlayItem = item
+                } else {
+                  onOpenDetail(item)
+                }
+              }
                 )
               }
               item {

@@ -460,4 +460,8 @@
   <string name="app_info_alternative_launch">Alternative launch</string>
   <string name="library_declaration_title">Library declaration</string>
   <string name="library_declaration_summary">Where the marked library information comes from</string>
+  <string name="overlay_detail_title">Overlay detail</string>
+  <string name="overlay_detail_type">Type</string>
+  <string name="overlay_detail_size">Size</string>
+  <string name="overlay_detail_target">Target package</string>
 </resources>

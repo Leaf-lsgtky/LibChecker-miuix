@@ -54,6 +54,8 @@ class MainActivity : BaseComposeActivity() {
   private val recentVisitsViewModel: RecentVisitsViewModel by viewModel()
   private val settingsViewModel: SettingsViewModel by viewModel()
   private val referenceViewModel: LibReferenceViewModel by viewModel()
+  private val detailViewModel: com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel by
+    viewModel()
   private val snapshotViewModel: SnapshotViewModel by viewModel()
   private val cloudRulesRepository: CloudRulesRepository by inject()
 
@@ -161,6 +163,7 @@ class MainActivity : BaseComposeActivity() {
         when (tab) {
           HomeTab.APP_LIST -> AppListScreen(
             homeViewModel = appViewModel,
+            detailViewModel = detailViewModel,
             onOpenDetail = { item -> launchDetailPage(item) },
             listState = appListState
           )
