@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import com.absinthe.libchecker.R
 import com.absinthe.libchecker.domain.statistics.chart.presentation.ChartRenderRequest
 import com.absinthe.libchecker.domain.statistics.chart.presentation.ChartViewModel
 import com.absinthe.libchecker.domain.statistics.chart.source.ChartDataSourcePlan
@@ -31,7 +32,8 @@ internal class ChartHostController(
   private val onProgress: (Int) -> Unit,
   private val onLegend: (List<ChartLegendEntry>) -> Unit = {},
   private val onSliceSelected: (com.absinthe.libchecker.domain.statistics.chart.source.IChartDataSource<*>, Int) -> Unit = { _, _ -> },
-  private val onEmpty: (Boolean) -> Unit = {}
+  private val onEmpty: (Boolean) -> Unit = {},
+  private val onSubtitle: (String?) -> Unit = {}
 ) {
 
   var currentSource: com.absinthe.libchecker.domain.statistics.chart.source.IChartDataSource<*>? = null
@@ -171,6 +173,15 @@ internal class ChartHostController(
       is ChartDataSourcePlan.Bar -> plan.dataSource
     }
     currentSource = source
+    onSubtitle(
+      (source as? com.absinthe.libchecker.domain.statistics.chart.source.impl.MarketDistributionChartDataSource)
+        ?.let { distribution ->
+          context.getString(
+            R.string.android_dist_subtitle_format,
+            distribution.lastUpdateTime
+          ) + "\n" + "API ${android.os.Build.VERSION.SDK_INT} (Android ${android.os.Build.VERSION.RELEASE})"
+        }
+    )
     if (source !is com.absinthe.libchecker.domain.statistics.chart.source.BaseChartDataSource<*>) {
       return emptyList()
     }

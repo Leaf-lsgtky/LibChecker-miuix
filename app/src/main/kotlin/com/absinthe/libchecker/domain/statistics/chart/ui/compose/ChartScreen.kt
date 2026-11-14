@@ -79,6 +79,7 @@ fun ChartScreen(
   var classifyState by remember { mutableStateOf<ClassifyDialogState?>(null) }
   var showEditor by remember { mutableStateOf(false) }
   var empty by remember { mutableStateOf(false) }
+  var subtitle by remember { mutableStateOf<String?>(null) }
   val scope = rememberCoroutineScope()
 
   val controller = remember(viewModel) {
@@ -89,6 +90,7 @@ fun ChartScreen(
       onProgress = { viewModel.setLoadingProgress(it) },
       onLegend = { legend = it },
       onEmpty = { empty = it },
+      onSubtitle = { subtitle = it },
       onSliceSelected = { source, x ->
         scope.launch {
           classifyState = runCatching {
@@ -137,6 +139,15 @@ fun ChartScreen(
         }
       }
     )
+
+    subtitle?.let { text ->
+      Text(
+        text = text,
+        fontSize = 12.sp,
+        color = colorScheme.onSurfaceVariantSummary,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+      )
+    }
 
     if (legend.isNotEmpty()) {
       Column(
