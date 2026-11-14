@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
@@ -20,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,13 +36,16 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
 import com.absinthe.libchecker.R
+import com.absinthe.libchecker.domain.statistics.chart.model.ClassifyDialogState
 import com.absinthe.libchecker.domain.statistics.chart.presentation.ChartViewModel
 import com.absinthe.libchecker.domain.statistics.chart.ui.resolve
 import com.absinthe.libchecker.domain.statistics.chart.ui.resolveDrawable
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
 import com.absinthe.libchecker.ui.compose.component.LcLoadingState
+import com.absinthe.libchecker.utils.extensions.launchDetailPage
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
 import top.yukonga.miuix.kmp.basic.LinearProgressIndicator
@@ -50,6 +56,7 @@ import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.squircle.squircleBackground
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.window.WindowBottomSheet
 
 /** Statistics chart page: count legend, statistic selector and the hosted chart view. */
 @Composable
@@ -66,6 +73,8 @@ fun ChartScreen(
   val detailedAbi by viewModel.detailAbiSwitch.collectAsStateWithLifecycle()
   val abiSwitchVisible by viewModel.detailAbiSwitchVisibility.collectAsStateWithLifecycle()
   var legend by remember { mutableStateOf<List<ChartLegendEntry>>(emptyList()) }
+  var classifyState by remember { mutableStateOf<ClassifyDialogState?>(null) }
+  val scope = rememberCoroutineScope()
 
   val controller = remember(viewModel) {
     ChartHostController(
@@ -73,7 +82,19 @@ fun ChartScreen(
       scope = viewModel.viewModelScope,
       viewModel = viewModel,
       onProgress = { viewModel.setLoadingProgress(it) },
-      onLegend = { legend = it }
+      onLegend = { legend = it },
+      onSliceSelected = { source, x ->
+        scope.launch {
+          classifyState = runCatching {
+            viewModel.buildClassifyDialogState(
+              source = source,
+              x = x,
+              title = source.getLabelByXValue(context, x),
+              subtitle = null
+            )
+          }.getOrNull()
+        }
+      }
     )
   }
 
@@ -162,6 +183,72 @@ fun ChartScreen(
           contentAlignment = Alignment.Center
         ) {
           LcLoadingState()
+        }
+      }
+    }
+  }
+
+  classifyState?.let { state ->
+    WindowBottomSheet(
+      show = true,
+      title = state.title,
+      onDismissRequest = { classifyState = null }
+    ) {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp)
+          .padding(bottom = 16.dp)
+      ) {
+        state.subtitle?.let { subtitle ->
+          Text(
+            text = subtitle,
+            fontSize = 12.sp,
+            color = colorScheme.onSurfaceVariantSummary
+          )
+          Spacer(Modifier.height(8.dp))
+        }
+        LazyColumn(modifier = Modifier.heightIn(max = 480.dp)) {
+          items(state.items, key = { it.packageName }) { item ->
+            Row(
+              modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                  (context as? androidx.fragment.app.FragmentActivity)?.launchDetailPage(item)
+                  classifyState = null
+                }
+                .padding(vertical = 8.dp),
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+              Column(Modifier.weight(1f)) {
+                Text(
+                  text = item.label,
+                  fontSize = 14.sp,
+                  fontWeight = FontWeight(550),
+                  color = colorScheme.onSurface
+                )
+                Text(
+                  text = item.packageName,
+                  fontSize = 12.sp,
+                  color = colorScheme.onSurfaceVariantSummary
+                )
+              }
+              state.itemChips[item.packageName]?.firstOrNull()?.let { chip ->
+                Box(
+                  modifier = Modifier
+                    .squircleBackground(colorScheme.tertiaryContainer, 6.dp)
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                  Text(
+                    text = chip,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight(550),
+                    color = colorScheme.onTertiaryContainer
+                  )
+                }
+              }
+            }
+          }
         }
       }
     }

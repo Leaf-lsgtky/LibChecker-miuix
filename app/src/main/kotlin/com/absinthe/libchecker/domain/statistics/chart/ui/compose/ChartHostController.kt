@@ -30,7 +30,7 @@ internal class ChartHostController(
   private val viewModel: ChartViewModel,
   private val onProgress: (Int) -> Unit,
   private val onLegend: (List<ChartLegendEntry>) -> Unit = {},
-  private val onSliceSelected: (Int) -> Unit = {}
+  private val onSliceSelected: (com.absinthe.libchecker.domain.statistics.chart.source.IChartDataSource<*>, Int) -> Unit = { _, _ -> }
 ) {
 
   var currentSource: com.absinthe.libchecker.domain.statistics.chart.source.IChartDataSource<*>? = null
@@ -155,7 +155,8 @@ internal class ChartHostController(
       e: com.github.mikephil.charting.data.Entry<*>,
       h: com.github.mikephil.charting.highlight.Highlight
     ) {
-      onSliceSelected(e.x.toInt())
+      val source = currentSource ?: return
+      onSliceSelected(source, e.x.toInt())
     }
 
     override fun onNothingSelected() = Unit
