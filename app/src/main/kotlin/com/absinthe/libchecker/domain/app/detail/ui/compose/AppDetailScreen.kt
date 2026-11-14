@@ -147,6 +147,8 @@ fun AppDetailScreen(
   var signatureDetail by remember { mutableStateOf<List<SignatureDetailItem>?>(null) }
   var elfInfoIcon by remember { mutableStateOf<Int?>(null) }
   var elfDetailName by remember { mutableStateOf<String?>(null) }
+  var showInstallSource by remember { mutableStateOf(false) }
+  var showXposedInfo by remember { mutableStateOf(false) }
   var permissionProviders by remember {
     mutableStateOf<List<com.absinthe.libchecker.domain.app.detail.action.ProviderPermissionItem>?>(null)
   }
@@ -232,6 +234,30 @@ fun AppDetailScreen(
       filteredItems.sortedBy { it.item.name.lowercase() }
     }
   }
+
+  XposedInfoSheet(
+    show = showXposedInfo,
+    viewModel = viewModel,
+    packageName = packageInfo.packageName,
+    onDismiss = { showXposedInfo = false }
+  )
+
+  InstallSourceSheet(
+    show = showInstallSource,
+    viewModel = viewModel,
+    packageName = packageInfo.packageName,
+    onOpenApp = { target ->
+      showInstallSource = false
+      runCatching {
+        context.startActivity(
+          android.content.Intent(context, AppDetailActivity::class.java).apply {
+            putExtra(EXTRA_PACKAGE_NAME, target)
+          }
+        )
+      }
+    },
+    onDismiss = { showInstallSource = false }
+  )
 
   FeatureDetailSheet(
     show = featureDetail != null,
@@ -568,7 +594,13 @@ fun AppDetailScreen(
                   FeatureChip(
                     item = item,
                     packageInfo = packageInfo,
-                    onClick = { featureDetail = item }
+                    onClick = {
+                      when (item.action) {
+                        AppDetailFeatureAction.InstallSource -> showInstallSource = true
+                        AppDetailFeatureAction.XposedModule -> showXposedInfo = true
+                        else -> featureDetail = item
+                      }
+                    }
                   )
                 }
               }

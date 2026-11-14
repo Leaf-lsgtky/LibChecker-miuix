@@ -1,0 +1,260 @@
+package com.absinthe.libchecker.domain.app.detail.ui.compose
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.absinthe.libchecker.R
+import com.absinthe.libchecker.domain.app.detail.action.AppInstalledTimeDisplayData
+import com.absinthe.libchecker.domain.app.detail.model.AppInstallSourceBottomSheetDisplay
+import com.absinthe.libchecker.domain.app.detail.model.AppInstallSourceItemContent
+import com.absinthe.libchecker.domain.app.detail.model.AppInstallSourceRequesterAccess
+import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel
+import com.absinthe.libchecker.domain.app.list.ui.compose.AppIcon
+import com.absinthe.libchecker.ui.compose.component.LcLoadingState
+import com.absinthe.libchecker.utils.dex.DexOptimizationReader
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.window.WindowBottomSheet
+
+/** Install source sheet: originating/installing packages, install times and dexopt state. */
+@Composable
+fun InstallSourceSheet(
+  show: Boolean,
+  viewModel: DetailViewModel,
+  packageName: String,
+  onOpenApp: (String) -> Unit,
+  onDismiss: () -> Unit
+) {
+  var display by remember { mutableStateOf<AppInstallSourceBottomSheetDisplay?>(null) }
+  var loading by remember { mutableStateOf(false) }
+
+  LaunchedEffect(show, packageName) {
+    if (!show) return@LaunchedEffect
+    loading = true
+    display = null
+    viewModel.loadAppInstallSourceDetails(
+      packageName = packageName,
+      requesterAccess = AppInstallSourceRequesterAccess.Available
+    )
+  }
+
+  LaunchedEffect(viewModel) {
+    viewModel.appInstallSourceDetailsResults.collect { result ->
+      if (result.packageName == packageName) {
+        display = result.display
+        loading = false
+      }
+    }
+  }
+
+  WindowBottomSheet(
+    show = show,
+    title = stringResource(R.string.lib_detail_app_install_source_title),
+    onDismissRequest = onDismiss
+  ) {
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp)
+        .padding(bottom = 16.dp)
+        .heightIn(max = 520.dp)
+        .verticalScroll(rememberScrollState())
+    ) {
+      when {
+        loading -> LcLoadingState(
+          modifier = Modifier.height(140.dp),
+          message = stringResource(R.string.loading)
+        )
+
+        display == null -> Text(
+          text = stringResource(R.string.empty_list),
+          fontSize = 13.sp,
+          color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+        )
+
+        else -> {
+          val content = display ?: return@Column
+          content.originatingApp?.let { item ->
+            InstallSourceAppRow(
+              title = stringResource(R.string.lib_detail_app_install_source_originating_package),
+              item = item,
+              onOpenApp = onOpenApp
+            )
+          }
+          content.installingApp?.let { item ->
+            InstallSourceAppRow(
+              title = stringResource(R.string.lib_detail_app_install_source_installing_package),
+              item = item,
+              onOpenApp = onOpenApp
+            )
+          }
+          content.installedTime?.let { time ->
+            InstalledTimeBlock(time)
+          }
+          content.dexoptInfo?.let { info ->
+            DexoptBlock(info)
+          }
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun InstallSourceAppRow(
+  title: String,
+  item: com.absinthe.libchecker.domain.app.detail.model.AppInstallSourceItemDisplay,
+  onOpenApp: (String) -> Unit
+) {
+  val colorScheme = MiuixTheme.colorScheme
+  Column(modifier = Modifier.padding(vertical = 6.dp)) {
+    Text(
+      text = title,
+      fontSize = 12.sp,
+      color = colorScheme.onSurfaceVariantSummary
+    )
+    Spacer(Modifier.height(4.dp))
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .clickable(enabled = item.action != null) {
+          when (val action = item.action) {
+            is com.absinthe.libchecker.domain.app.detail.model.AppInstallSourceAction.OpenApp ->
+              onOpenApp(action.item.packageName)
+
+            else -> Unit
+          }
+        },
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      when (val content = item.content) {
+        is AppInstallSourceItemContent.RelatedApp -> {
+          AppIcon(
+            packageInfo = content.data.packageInfo,
+            label = content.data.label,
+            modifier = Modifier
+              .padding(end = 12.dp)
+              .size(40.dp)
+          )
+          Column(Modifier.weight(1f)) {
+            Text(
+              text = content.data.label,
+              fontSize = 14.sp,
+              fontWeight = FontWeight(550),
+              color = colorScheme.onSurface
+            )
+            Text(
+              text = content.data.packageName,
+              fontSize = 12.sp,
+              color = colorScheme.onSurfaceVariantSummary
+            )
+            Text(
+              text = content.data.versionInfo,
+              fontSize = 12.sp,
+              color = colorScheme.onSurfaceVariantSummary
+            )
+          }
+        }
+
+        is AppInstallSourceItemContent.Message -> {
+          if (content.iconRes != 0) {
+            AsyncImage(
+              model = content.iconRes,
+              contentDescription = null,
+              modifier = Modifier
+                .padding(end = 12.dp)
+                .size(40.dp)
+            )
+          }
+          Column(Modifier.weight(1f)) {
+            Text(
+              text = content.appName,
+              fontSize = 14.sp,
+              fontWeight = FontWeight(550),
+              color = colorScheme.onSurface
+            )
+            Text(
+              text = content.packageName,
+              fontSize = 12.sp,
+              color = colorScheme.onSurfaceVariantSummary
+            )
+            Text(
+              text = content.versionInfo,
+              fontSize = 12.sp,
+              color = colorScheme.onSurfaceVariantSummary
+            )
+          }
+        }
+      }
+    }
+  }
+}
+
+@Composable
+private fun InstalledTimeBlock(time: AppInstalledTimeDisplayData) {
+  val colorScheme = MiuixTheme.colorScheme
+  Column(modifier = Modifier.padding(vertical = 6.dp)) {
+    Text(
+      text = stringResource(R.string.lib_detail_app_first_installed_time) + " " + time.firstInstalledTime,
+      fontSize = 13.sp,
+      color = colorScheme.onSurface
+    )
+    Text(
+      text = stringResource(R.string.lib_detail_app_last_updated_time) + " " + time.lastUpdatedTime,
+      fontSize = 13.sp,
+      color = colorScheme.onSurface
+    )
+  }
+}
+
+@Composable
+private fun DexoptBlock(info: DexOptimizationReader.DexFileOptimizationInfo) {
+  val colorScheme = MiuixTheme.colorScheme
+  Column(modifier = Modifier.padding(vertical = 6.dp)) {
+    Text(
+      text = stringResource(R.string.lib_detail_app_dexopt_title),
+      fontSize = 12.sp,
+      color = colorScheme.onSurfaceVariantSummary
+    )
+    Spacer(Modifier.height(4.dp))
+    Text(
+      text = stringResource(R.string.lib_detail_app_dexopt_status) + " " + info.status,
+      fontSize = 13.sp,
+      color = colorScheme.onSurface
+    )
+    Text(
+      text = stringResource(R.string.lib_detail_app_dexopt_reason) + " " + info.reason,
+      fontSize = 13.sp,
+      color = colorScheme.onSurface
+    )
+    info.instructionSet?.let { instructionSet ->
+      Text(
+        text = instructionSet,
+        fontSize = 12.sp,
+        color = colorScheme.onSurfaceVariantSummary
+      )
+    }
+  }
+}
