@@ -5,6 +5,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,6 +70,7 @@ import com.absinthe.libchecker.domain.app.detail.ui.DetailTabSpecBuilder
 import com.absinthe.libchecker.domain.app.list.ui.compose.AppIcon
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
 import com.absinthe.libchecker.ui.compose.component.LcEmptyState
+import com.absinthe.libchecker.utils.extensions.launchLibReferencePage
 import com.absinthe.libchecker.ui.compose.component.LcLoadingState
 import com.absinthe.libchecker.ui.compose.util.WideContentBox
 import com.absinthe.libchecker.ui.compose.util.horizontalCutoutPadding
@@ -87,6 +89,7 @@ import top.yukonga.miuix.kmp.squircle.squircleClip
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
+import top.yukonga.miuix.kmp.window.WindowBottomSheet
 import top.yukonga.miuix.kmp.window.WindowDialog
 
 /**
@@ -121,6 +124,7 @@ fun AppDetailScreen(
   var libDetailRequest by remember { mutableStateOf<LibDetailRequest?>(null) }
   var showAppInfo by remember { mutableStateOf(false) }
   var featureDetail by remember { mutableStateOf<AppDetailFeatureItemData?>(null) }
+  var longPressChip by remember { mutableStateOf<LibStringItemChip?>(null) }
   val is64Bit by viewModel.featureState.is64Bit.collectAsStateWithLifecycle()
 
   val nativeTabs by contentState.nativeLibTabs.collectAsStateWithLifecycle()
@@ -220,6 +224,47 @@ fun AppDetailScreen(
     )
   }
 
+  longPressChip?.let { chip ->
+    val actions = remember(chip) {
+      viewModel.buildDetailItemLongClickActions(
+        item = chip,
+        packageName = packageInfo.packageName,
+        detailType = selectedType,
+        canReference = true
+      )
+    }
+    WindowBottomSheet(
+      show = true,
+      title = chip.item.name,
+      onDismissRequest = { longPressChip = null }
+    ) {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 16.dp)
+          .padding(bottom = 16.dp)
+      ) {
+        SheetActionRow(text = stringResource(android.R.string.copy)) {
+          val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
+          clipboard?.setPrimaryClip(
+            android.content.ClipData.newPlainText("", actions.copyText)
+          )
+          longPressChip = null
+        }
+        actions.reference?.let { reference ->
+          SheetActionRow(text = stringResource(R.string.lib_detail_view_reference)) {
+            (context as? androidx.fragment.app.FragmentActivity)?.launchLibReferencePage(
+              refName = reference.refName,
+              refLabel = reference.label,
+              refType = reference.type,
+              refList = null
+            )
+            longPressChip = null
+          }
+        }
+      }
+    }
+  }
   libDetailRequest?.let { request ->
     LibDetailSheet(
       show = true,
@@ -379,7 +424,8 @@ fun AppDetailScreen(
                       isValid = chip.rule != null
                     )
                   }
-                }
+                },
+                onLongClick = { longPressChip = chip }
               )
             }
           }
@@ -554,7 +600,8 @@ private fun AbiBadge(text: String) {
 private fun DetailItemRow(
   chip: LibStringItemChip,
   showDivider: Boolean,
-  onClick: () -> Unit
+  onClick: () -> Unit,
+  onLongClick: () -> Unit
 ) {
   val colorScheme = MiuixTheme.colorScheme
   Column {
@@ -562,7 +609,7 @@ private fun DetailItemRow(
       modifier = Modifier
         .fillMaxWidth()
         .background(colorScheme.surfaceContainer)
-        .clickable(onClick = onClick)
+        .combinedClickable(onClick = onClick, onLongClick = onLongClick)
         .padding(horizontal = 16.dp, vertical = 12.dp),
       verticalAlignment = Alignment.CenterVertically
     ) {
@@ -676,3 +723,20 @@ private data class LibDetailRequest(
   val type: Int,
   val isValid: Boolean
 )
+
+@Composable
+private fun SheetActionRow(text: String, onClick: () -> Unit) {
+  Row(
+    modifier = Modifier
+      .fillMaxWidth()
+      .clickable(onClick = onClick)
+      .padding(vertical = 14.dp),
+    verticalAlignment = Alignment.CenterVertically
+  ) {
+    Text(
+      text = text,
+      fontSize = 14.sp,
+      color = MiuixTheme.colorScheme.onSurface
+    )
+  }
+}

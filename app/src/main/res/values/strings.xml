@@ -447,4 +447,5 @@
   <string name="feature_app_icons_description">This app provides additional app icons.</string>
   <string name="about_developers">Contributors</string>
   <string name="about_developers_summary">Maintainers and contributors of this project</string>
+  <string name="lib_detail_view_reference">View references</string>
 </resources>
