@@ -54,6 +54,7 @@ import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Switch
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.extended.Add
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.squircle.squircleBackground
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -75,6 +76,7 @@ fun ChartScreen(
   val abiSwitchVisible by viewModel.detailAbiSwitchVisibility.collectAsStateWithLifecycle()
   var legend by remember { mutableStateOf<List<ChartLegendEntry>>(emptyList()) }
   var classifyState by remember { mutableStateOf<ClassifyDialogState?>(null) }
+  var showEditor by remember { mutableStateOf(false) }
   val scope = rememberCoroutineScope()
 
   val controller = remember(viewModel) {
@@ -160,6 +162,21 @@ fun ChartScreen(
           onClick = { viewModel.selectStatistic(statistic.id) }
         )
       }
+      item(key = "add-statistic") {
+        Box(
+          modifier = Modifier
+            .squircleBackground(colorScheme.surfaceContainer, 20.dp)
+            .clickable { showEditor = true }
+            .padding(horizontal = 10.dp, vertical = 8.dp)
+        ) {
+          Icon(
+            imageVector = MiuixIcons.Add,
+            contentDescription = stringResource(R.string.chart_statistics_add),
+            tint = colorScheme.onSurfaceVariantSummary,
+            modifier = Modifier.size(20.dp)
+          )
+        }
+      }
     }
 
     if (loadingProgress in 0..99) {
@@ -188,6 +205,12 @@ fun ChartScreen(
       }
     }
   }
+
+  StatisticEditorSheet(
+    show = showEditor,
+    viewModel = viewModel,
+    onDismiss = { showEditor = false }
+  )
 
   classifyState?.let { state ->
     WindowBottomSheet(
