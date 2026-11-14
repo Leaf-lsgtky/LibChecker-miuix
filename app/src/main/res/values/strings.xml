@@ -466,4 +466,5 @@
   <string name="overlay_detail_target">Target package</string>
   <string name="process_all">All</string>
   <string name="lib_insight_title">SDK details</string>
+  <string name="adv_app_appearance_preview">Preview appearance</string>
 </resources>
