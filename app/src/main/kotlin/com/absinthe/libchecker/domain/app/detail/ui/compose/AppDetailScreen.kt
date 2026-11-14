@@ -577,7 +577,89 @@ fun AppDetailScreen(
             longPressChip = null
           }
         }
-      }
+        if (
+          selectedType == ACTIVITY ||
+          selectedType == SERVICE ||
+          selectedType == RECEIVER ||
+          selectedType == PROVIDER
+        ) {
+          val componentName = chip.item.name
+          if (com.absinthe.libchecker.integrations.blocker.BlockerManager.isSupportInteraction) {
+            val blocked = remember(componentName) {
+              runCatching {
+                com.absinthe.libchecker.integrations.blocker.BlockerManager()
+                  .queryBlockedComponent(context, packageInfo.packageName)
+                  .any { it.name == componentName || it.name == packageInfo.packageName + componentName }
+              }.getOrDefault(false)
+            }
+            SheetActionRow(
+              text = stringResource(
+                if (blocked) {
+                  R.string.integration_blocker_menu_unblock
+                } else {
+                  R.string.integration_blocker_menu_block
+                }
+              )
+            ) {
+              runCatching {
+                com.absinthe.libchecker.integrations.blocker.BlockerManager().addBlockedComponent(
+                  context = context,
+                  packageName = packageInfo.packageName,
+                  componentName = componentName,
+                  type = selectedType,
+                  shouldBlock = !blocked
+                )
+              }
+              longPressChip = null
+            }
+          }
+          if (com.absinthe.libchecker.integrations.monkeyking.MonkeyKingManager.isSupportInteraction) {
+            val blocked = remember(componentName) {
+              runCatching {
+                com.absinthe.libchecker.integrations.monkeyking.MonkeyKingManager()
+                  .queryBlockedComponent(context, packageInfo.packageName)
+                  .any { it.name == componentName || it.name == packageInfo.packageName + componentName }
+              }.getOrDefault(false)
+            }
+            SheetActionRow(
+              text = stringResource(
+                if (blocked) {
+                  R.string.integration_monkey_king_menu_unblock
+                } else {
+                  R.string.integration_monkey_king_menu_block
+                }
+              )
+            ) {
+              runCatching {
+                com.absinthe.libchecker.integrations.monkeyking.MonkeyKingManager().addBlockedComponent(
+                  context = context,
+                  packageName = packageInfo.packageName,
+                  componentName = componentName,
+                  type = selectedType,
+                  shouldBlock = !blocked
+                )
+              }
+              longPressChip = null
+            }
+          }
+          if (
+            selectedType == ACTIVITY &&
+            com.absinthe.libchecker.integrations.anywhere.AnywhereManager.isSupportInteraction
+          ) {
+            SheetActionRow(
+              text = stringResource(R.string.integration_anywhere_menu_editor)
+            ) {
+              runCatching {
+                com.absinthe.libchecker.integrations.anywhere.AnywhereManager.launchActivityEditor(
+                  context,
+                  packageInfo.packageName,
+                  componentName
+                )
+              }
+              longPressChip = null
+            }
+          }
+        }      }
     }
   }
   libDetailRequest?.let { request ->
