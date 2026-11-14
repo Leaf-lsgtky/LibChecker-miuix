@@ -12,6 +12,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.input.pointer.pointerInput
+import top.yukonga.miuix.kmp.squircle.squircleBackground
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -331,6 +339,14 @@ fun AppListScreen(
           modifier = Modifier.fillMaxSize()
         ) {
           WideContentBox { sidePadding ->
+            FastScrollRail(
+              items = items,
+              listState = listState,
+              modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .zIndex(1f)
+                .padding(end = 2.dp, top = 60.dp, bottom = 60.dp)
+            )
             LazyColumn(
               state = listState,
               modifier = Modifier
@@ -409,3 +425,86 @@ private fun rememberAppTitle(context: Context): String {
     }.getOrDefault(context.getString(R.string.app_name))
   }
 }
+
+@Composable
+private fun FastScrollRail(
+  items: List<LCItem>,
+  listState: LazyListState,
+  modifier: Modifier = Modifier
+) {
+  val letters = remember(items) {
+    items.mapIndexedNotNull { index, item ->
+      item.label.firstOrNull()?.uppercaseChar()?.takeIf { it in 'A'..'Z' }?.let { it to index }
+    }.distinctBy { it.first }
+  }
+  if (letters.size < 6) {
+    return
+  }
+  val scope = rememberCoroutineScope()
+  val density = LocalDensity.current
+  var showBubble by remember { mutableStateOf<Char?>(null) }
+
+  fun letterAt(y: Float, height: Int): ByteLetter? {
+    if (height <= 0) return null
+    val index = ((y / height) * letters.size).toInt().coerceIn(0, letters.lastIndex)
+    return letters[index]
+  }
+
+  Box(
+    modifier = modifier
+      .pointerInput(letters) {
+        detectVerticalDragGestures(
+          onDragStart = { offset ->
+            letterAt(offset.y, size.height)?.let { letter ->
+              showBubble = letter.first
+              scope.launch { listState.scrollToItem(letter.second) }
+            }
+          },
+          onDragEnd = { showBubble = null },
+          onDragCancel = { showBubble = null }
+        ) { change, _ ->
+          change.consume()
+          letterAt(change.position.y, size.height)?.let { letter ->
+            showBubble = letter.first
+            scope.launch { listState.scrollToItem(letter.second) }
+          }
+        }
+      }
+      .pointerInput(letters) {
+        detectTapGestures { offset ->
+          letterAt(offset.y, size.height)?.let { letter ->
+            scope.launch { listState.scrollToItem(letter.second) }
+          }
+        }
+      },
+    contentAlignment = Alignment.Center
+  ) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+      letters.forEach { letter ->
+        Text(
+          text = letter.first.toString(),
+          fontSize = 9.sp,
+          fontWeight = FontWeight(600),
+          color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+        )
+      }
+    }
+    showBubble?.let { letter ->
+      Box(
+        modifier = Modifier
+          .padding(end = 24.dp)
+          .squircleBackground(MiuixTheme.colorScheme.surfaceContainerHigh, 12.dp)
+          .padding(horizontal = 10.dp, vertical = 6.dp)
+      ) {
+        Text(
+          text = letter.toString(),
+          fontSize = 16.sp,
+          fontWeight = FontWeight(600),
+          color = MiuixTheme.colorScheme.onSurface
+        )
+      }
+    }
+  }
+}
+
+private typealias ByteLetter = Pair<Char, Int>
