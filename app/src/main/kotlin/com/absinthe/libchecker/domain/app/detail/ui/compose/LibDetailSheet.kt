@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -57,6 +58,8 @@ fun LibDetailSheet(
   @LibType type: Int,
   regexName: String?,
   isValidLib: Boolean,
+  packageInfo: android.content.pm.PackageInfo? = null,
+  insightViewModel: com.absinthe.libchecker.domain.app.detail.presentation.LibraryInsightViewModel? = null,
   onDismiss: () -> Unit
 ) {
   val context = LocalContext.current
@@ -69,6 +72,17 @@ fun LibDetailSheet(
     )
   }
   var selectedLocale by remember { mutableStateOf(GlobalValues.preferredRuleLanguage) }
+  var libraryUuid by remember(dialogTitle) { mutableStateOf<String?>(null) }
+  val insightState = insightViewModel?.state?.collectAsStateWithLifecycle()?.value
+
+  LaunchedEffect(libraryUuid, packageInfo, selectedLocale) {
+    val uuid = libraryUuid
+    val info = packageInfo
+    if (insightViewModel != null && uuid != null && info != null) {
+      insightViewModel.preload()
+      insightViewModel.load(uuid, info, selectedLocale)
+    }
+  }
 
   LaunchedEffect(show, libName, type, regexName, isValidLib) {
     if (!show) return@LaunchedEffect
@@ -97,6 +111,7 @@ fun LibDetailSheet(
       val displayHeader = header ?: FALLBACK_HEADER
       when (result) {
         is DetailItemResolver.Result.Found -> {
+          libraryUuid = result.libraryUuid
           state = LibraryDetailBottomSheetState.Content(
             title = dialogTitle,
             header = displayHeader,
@@ -122,6 +137,9 @@ fun LibDetailSheet(
         .fillMaxWidth()
         .padding(bottom = 16.dp)
     ) {
+      if (insightState is com.absinthe.libchecker.domain.app.detail.insight.LibraryInsightUiState.Content) {
+        InsightCard(content = insightState.content)
+      }
       when (current) {
         is LibraryDetailBottomSheetState.Loading -> {
           LcLoadingState(
@@ -265,3 +283,45 @@ private val FALLBACK_HEADER = LibraryDetailHeaderDisplay(
   iconRes = com.absinthe.lc.rulesbundle.R.drawable.ic_sdk_placeholder,
   isSimpleColorIcon = false
 )
+
+@Composable
+private fun InsightCard(
+  content: com.absinthe.libchecker.domain.app.detail.insight.LibraryInsightContent
+) {
+  val colorScheme = MiuixTheme.colorScheme
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(horizontal = 16.dp)
+      .padding(bottom = 12.dp)
+      .squircleBackground(colorScheme.surfaceContainerHigh, 14.dp)
+      .padding(12.dp)
+  ) {
+    Text(
+      text = stringResource(R.string.lib_insight_title),
+      fontSize = 12.sp,
+      fontWeight = FontWeight(600),
+      color = colorScheme.onSurfaceVariantSummary
+    )
+    content.summary.forEach { field ->
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(top = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        Text(
+          text = field.label,
+          modifier = Modifier.weight(1f),
+          fontSize = 13.sp,
+          color = colorScheme.onSurface
+        )
+        Text(
+          text = field.values.joinToString(", "),
+          fontSize = 13.sp,
+          color = colorScheme.onSurfaceVariantSummary
+        )
+      }
+    }
+  }
+}

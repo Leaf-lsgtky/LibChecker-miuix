@@ -123,6 +123,7 @@ fun AppDetailScreen(
   onBack: () -> Unit,
   modifier: Modifier = Modifier,
   isHarmonyVariant: Boolean = false,
+  insightViewModel: com.absinthe.libchecker.domain.app.detail.presentation.LibraryInsightViewModel? = null,
   listState: LazyListState = rememberLazyListState()
 ) {
   val context = LocalContext.current
@@ -536,6 +537,8 @@ fun AppDetailScreen(
       type = request.type,
       regexName = null,
       isValidLib = request.isValid,
+      packageInfo = packageInfo,
+      insightViewModel = insightViewModel,
       onDismiss = { libDetailRequest = null }
     )
   }

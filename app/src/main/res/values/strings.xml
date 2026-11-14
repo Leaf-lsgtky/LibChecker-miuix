@@ -465,4 +465,5 @@
   <string name="overlay_detail_size">Size</string>
   <string name="overlay_detail_target">Target package</string>
   <string name="process_all">All</string>
+  <string name="lib_insight_title">SDK details</string>
 </resources>

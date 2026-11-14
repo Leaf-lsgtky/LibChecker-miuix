@@ -43,6 +43,9 @@ class AppDetailActivity : BaseComposeActivity() {
   private var pkgName: String? = null
   private var recordVisit = true
   private var extraBean: DetailExtraBean? = null
+
+  private val insightViewModel:
+    com.absinthe.libchecker.domain.app.detail.presentation.LibraryInsightViewModel by viewModel()
   private var packageInfoState by mutableStateOf<PackageInfo?>(null)
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -153,6 +156,7 @@ class AppDetailActivity : BaseComposeActivity() {
           viewModel = viewModel,
           packageInfo = packageInfo,
           isHarmonyVariant = extraBean?.variant == com.absinthe.libchecker.constant.Constants.VARIANT_HAP,
+          insightViewModel = insightViewModel,
           onBack = { onBackPressedDispatcher.onBackPressed() }
         )
       }
