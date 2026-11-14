@@ -123,6 +123,7 @@ class SnapshotViewModel(
     return snapshotListWorkflow.buildSnapshotCapturePlan()
   }
 
+
   fun getSnapshotOptions(): Int {
     return snapshotListWorkflow.getSnapshotOptions()
   }

@@ -119,6 +119,9 @@ fun SnapshotScreen(
   var searchExpanded by rememberSaveable { mutableStateOf(false) }
   var showDeleteDialog by remember { mutableStateOf(false) }
   var showOptionsMenu by remember { mutableStateOf(false) }
+  var systemProps by remember {
+    mutableStateOf<List<com.absinthe.libchecker.domain.snapshot.list.model.SnapshotSystemPropDisplayData>>(emptyList())
+  }
   var noDiffItem by remember {
     mutableStateOf<com.absinthe.libchecker.domain.snapshot.model.SnapshotDiffItem?>(null)
   }
@@ -193,6 +196,16 @@ fun SnapshotScreen(
 
   val formattedDates = remember(timeStamps) {
     timeStamps.associate { it.timestamp to viewModel.getFormatDateString(it.timestamp) }
+  }
+
+  LaunchedEffect(selectedTimestamp) {
+    systemProps = if (selectedTimestamp == 0L) {
+      emptyList()
+    } else {
+      runCatching<List<com.absinthe.libchecker.domain.snapshot.list.model.SnapshotSystemPropDisplayData>> {
+        viewModel.getSystemPropDisplayData(selectedTimestamp)
+      }.getOrDefault(emptyList())
+    }
   }
 
   if (showOptionsMenu) {
@@ -391,6 +404,38 @@ fun SnapshotScreen(
               end = sidePadding
             )
           ) {
+            if (systemProps.isNotEmpty()) {
+              item(key = "system_props") {
+                Column(
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .squircleBackground(MiuixTheme.colorScheme.surfaceContainerHigh, 12.dp)
+                    .padding(12.dp)
+                ) {
+                  systemProps.forEach { prop ->
+                    Row(
+                      modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp),
+                      verticalAlignment = Alignment.CenterVertically
+                    ) {
+                      Text(
+                        text = prop.label,
+                        modifier = Modifier.weight(1f),
+                        fontSize = 12.sp,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                      )
+                      Text(
+                        text = prop.displayValue,
+                        fontSize = 12.sp,
+                        color = MiuixTheme.colorScheme.onSurface
+                      )
+                    }
+                  }
+                }
+              }
+            }
             items(items = items, key = { it.packageName }) { item ->
               SnapshotDiffRow(
                 item = item,
