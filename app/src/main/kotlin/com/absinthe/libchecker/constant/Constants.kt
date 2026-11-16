@@ -110,6 +110,9 @@ object Constants {
 
   const val PREF_BLUR_DESIGN = "blurDesign"
   const val PREF_FLOATING_NAV_BAR = "floatingNavBar"
+  const val PREF_MIUIX_OS4 = "miuixOs4"
+  const val PREF_USE_CUSTOM_FONT = "useCustomFont"
+  const val PREF_BOTTOM_BAR_SEARCH = "bottomBarSearch"
 
   const val GET_INSTALLED_APPS = "com.android.permission.GET_INSTALLED_APPS"
 

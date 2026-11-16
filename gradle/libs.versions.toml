@@ -10,7 +10,7 @@ androidX-appfunctions = "1.0.0-rc01"
 androidX-compose = "1.12.1"
 appIconLoader = "1.5.0"
 coil = "2.7.0"
-miuix = "0.9.4"
+miuix = "0.9.4-19b5b831-SNAPSHOT"
 firebase-bom = "35.2.0"
 hiddenApiRefine = "4.4.0"
 kotlin = "2.4.21"
@@ -48,6 +48,7 @@ kotlinX-coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0"
 junit = "junit:junit:4.13.2"
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
 koin-android = { module = "io.insert-koin:koin-android" }
+koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
 
 androidX-activity = "androidx.activity:activity-ktx:1.13.0"
 androidX-annotation = { module = "androidx.annotation:annotation", version.ref = "androidX-annotation" }
@@ -81,7 +82,13 @@ androidX-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", versi
 androidX-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "androidX-compose" }
 androidX-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidX-lifecycle" }
 androidX-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidX-lifecycle" }
+miuix-blur = { module = "top.yukonga.miuix.kmp:miuix-blur-android", version.ref = "miuix" }
+miuix-core = { module = "top.yukonga.miuix.kmp:miuix-core-android", version.ref = "miuix" }
+miuix-glass = { module = "top.yukonga.miuix.kmp:miuix-glass-android", version.ref = "miuix" }
+miuix-glass-icons = { module = "top.yukonga.miuix.kmp:miuix-glass-icons-android", version.ref = "miuix" }
 miuix-icons = { module = "top.yukonga.miuix.kmp:miuix-icons-android", version.ref = "miuix" }
+miuix-nav = { module = "top.yukonga.miuix.kmp:miuix-nav-android", version = "0.9.4" }
+miuix-material = { module = "top.yukonga.miuix.kmp:miuix-material-android", version.ref = "miuix" }
 miuix-preference = { module = "top.yukonga.miuix.kmp:miuix-preference-android", version.ref = "miuix" }
 miuix-ui = { module = "top.yukonga.miuix.kmp:miuix-ui-android", version.ref = "miuix" }
 

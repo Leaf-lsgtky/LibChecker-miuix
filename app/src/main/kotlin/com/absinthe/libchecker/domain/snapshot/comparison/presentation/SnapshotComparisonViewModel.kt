@@ -13,9 +13,14 @@ import com.absinthe.libchecker.domain.snapshot.comparison.model.SnapshotComparis
 import com.absinthe.libchecker.domain.snapshot.comparison.model.SnapshotComparisonSide
 import com.absinthe.libchecker.domain.snapshot.comparison.usecase.CompareSnapshotDiffsUseCase
 import com.absinthe.libchecker.domain.snapshot.display.FormatSnapshotTimestampUseCase
+import com.absinthe.libchecker.domain.snapshot.list.model.SnapshotTimeNodeListData
+import com.absinthe.libchecker.domain.snapshot.list.usecase.BuildSnapshotTimeNodeListDataUseCase
 import com.absinthe.libchecker.domain.snapshot.model.SnapshotDiffItem
+import com.absinthe.libchecker.domain.snapshot.timenode.model.SnapshotContributionData
+import com.absinthe.libchecker.domain.snapshot.timenode.usecase.ComputeSnapshotContributionsUseCase
 import com.absinthe.libraries.utils.manager.TimeRecorder
 import java.io.File
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -28,7 +33,9 @@ class SnapshotComparisonViewModel(
   private val compareSnapshotDiffs: CompareSnapshotDiffsUseCase,
   private val snapshotRepository: SnapshotRepository,
   private val formatSnapshotTimestampUseCase: FormatSnapshotTimestampUseCase,
-  private val comparisonWorkflow: SnapshotComparisonWorkflow
+  private val comparisonWorkflow: SnapshotComparisonWorkflow,
+  private val buildSnapshotTimeNodeListDataUseCase: BuildSnapshotTimeNodeListDataUseCase,
+  private val computeSnapshotContributionsUseCase: ComputeSnapshotContributionsUseCase
 ) : ViewModel() {
 
   private val _snapshotDiffItemsFlow: MutableSharedFlow<List<SnapshotDiffItem>> = MutableSharedFlow()
@@ -38,6 +45,8 @@ class SnapshotComparisonViewModel(
   private val _effect: MutableSharedFlow<Effect> = MutableSharedFlow()
   val effect = _effect.asSharedFlow()
   private var compareDiffJob: Job? = null
+  internal var sharedIntentHandled = false
+  private var archiveCacheDirectory: File? = null
 
   fun compareDiff(
     previousTimestamp: Long,
@@ -91,6 +100,7 @@ class SnapshotComparisonViewModel(
     cacheDir: File,
     iconSize: Int
   ): CompareAction {
+    archiveCacheDirectory = cacheDir
     val currentInputs = inputs
     val archiveResult = if (currentInputs.hasArchiveInput) {
       comparisonWorkflow.prepareArchives(
@@ -123,14 +133,31 @@ class SnapshotComparisonViewModel(
     comparisonWorkflow.clearArchiveCache(cacheDir)
   }
 
+  override fun onCleared() {
+    val directory = archiveCacheDirectory
+    if (inputs.hasArchiveInput && directory != null) {
+      // viewModelScope has already been cancelled; finish this bounded cleanup off-main.
+      CoroutineScope(Dispatchers.IO).launch {
+        runCatching { comparisonWorkflow.clearArchiveCache(directory) }.onFailure(Timber::w)
+      }
+    }
+    super.onCleared()
+  }
+
   fun buildSnapshotPairDiff(left: SnapshotItem, right: SnapshotItem): SnapshotDiffItem {
     return comparisonWorkflow.buildPairDiff(left, right)
   }
 
   internal fun buildDashboardState(
-    labels: ComparisonDashboardLabels
+    labels: ComparisonDashboardLabels,
+    previousState: ComparisonDashboardState? = null
   ): ComparisonDashboardState {
-    return ComparisonDashboardStatePlanner.planState(inputs, labels, ::getFormatDateString)
+    return ComparisonDashboardStatePlanner.planState(
+      inputs = inputs,
+      labels = labels,
+      formatTimestamp = ::getFormatDateString,
+      previousState = previousState
+    )
   }
 
   internal fun selectSnapshot(side: SnapshotComparisonSide, timestamp: Long) {
@@ -139,6 +166,23 @@ class SnapshotComparisonViewModel(
 
   internal fun selectArchive(side: SnapshotComparisonSide, uri: Uri) {
     inputs = inputs.selectArchive(side, uri)
+  }
+
+  fun hasRightSide(): Boolean {
+    return inputs.right.isSelected
+  }
+
+  suspend fun buildSnapshotTimeNodeListData(
+    timeStamps: List<TimeStampItem>,
+    currentTimestamp: Long? = null
+  ): SnapshotTimeNodeListData {
+    return buildSnapshotTimeNodeListDataUseCase(timeStamps, currentTimestamp)
+  }
+
+  suspend fun computeSnapshotContributions(
+    timeStamps: List<TimeStampItem>
+  ): SnapshotContributionData {
+    return computeSnapshotContributionsUseCase(timeStamps)
   }
 
   suspend fun getTimeStamps(): List<TimeStampItem> {

@@ -35,6 +35,7 @@ class GlobalSnapshotSettingsRepository : SnapshotSettingsRepository {
       highlightDiffs = (GlobalValues.snapshotOptions and SnapshotOptions.DIFF_HIGHLIGHT) > 0,
       emphasizeDiffs = (GlobalValues.snapshotOptions and SnapshotOptions.DIFF_EMPHASIS) > 0,
       showUpdateTime = (GlobalValues.snapshotOptions and SnapshotOptions.SHOW_UPDATE_TIME) > 0,
-      tintAbiLabels = (GlobalValues.advancedOptions and AdvancedOptions.TINT_ABI_LABEL) > 0
+      tintAbiLabels = (GlobalValues.advancedOptions and AdvancedOptions.TINT_ABI_LABEL) > 0,
+      useIecUnits = (GlobalValues.snapshotOptions and SnapshotOptions.USE_IEC_UNITS) > 0
     )
 }

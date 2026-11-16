@@ -11,6 +11,7 @@ import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.LinearInterpolator
+import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.createBitmap
@@ -74,7 +75,10 @@ class RingDotsView(context: Context, attrs: AttributeSet? = null) : View(context
     isFilterBitmap = true
   }
   private val highlightDst = RectF()
-  private val highlightSurfaceColor = context.getColorByAttr(com.google.android.material.R.attr.colorSurface)
+  private var highlightSurfaceColor = runCatching {
+    context.getColorByAttr(com.google.android.material.R.attr.colorSurface)
+  }.getOrDefault(0xFFFFFFFF.toInt())
+  private var ruleCircleBackgroundColor: Int? = null
   private val gradientStops = intArrayOf(
     0xFF64D2FF.toInt(),
     0xFF0A84FF.toInt(),
@@ -145,6 +149,19 @@ class RingDotsView(context: Context, attrs: AttributeSet? = null) : View(context
     }
     drawHighlight(canvas, cx, cy, outgoingHighlightBitmap, outgoingHighlightIndex, outgoingHighlightProgress)
     drawHighlight(canvas, cx, cy)
+  }
+
+  fun setHighlightSurfaceColor(@ColorInt color: Int) {
+    if (highlightSurfaceColor != color) {
+      highlightSurfaceColor = color
+      invalidateOnAnimationFrame()
+    }
+  }
+
+  fun setRuleCircleBackgroundColor(@ColorInt color: Int?) {
+    if (ruleCircleBackgroundColor != color) {
+      ruleCircleBackgroundColor = color
+    }
   }
 
   fun setAppIconHighlightProvider(loadIcon: suspend () -> Drawable?) {
@@ -401,7 +418,7 @@ class RingDotsView(context: Context, attrs: AttributeSet? = null) : View(context
         UiUtils.addCircleBackground(
           context,
           drawable,
-          context.getColor(circleBackgroundColorRes)
+          ruleCircleBackgroundColor ?: context.getColor(circleBackgroundColorRes)
         )
       } else {
         drawable

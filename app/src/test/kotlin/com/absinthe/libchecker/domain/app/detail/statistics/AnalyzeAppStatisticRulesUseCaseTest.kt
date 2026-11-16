@@ -45,15 +45,21 @@ class AnalyzeAppStatisticRulesUseCaseTest {
     predicateDefinition("official.flutter", StatisticSource.OFFICIAL),
     facetsDefinition()
   )
+  private var availableStatistics: List<StatisticDefinition>? = null
+  private var refreshedStatistics: List<StatisticDefinition>? = null
   private var evidenceBatchCount = 0
   private var analyzedPackageName: String? = null
   private val useCase = AnalyzeAppStatisticRulesUseCase(
     catalogRepository = object : StatisticCatalogRepository {
       override suspend fun getSelectedStatistics(): List<StatisticDefinition> = selectedStatistics
 
-      override suspend fun getAvailableStatistics(): List<StatisticDefinition> = selectedStatistics
+      override suspend fun getAvailableStatistics(): List<StatisticDefinition> {
+        return availableStatistics ?: selectedStatistics
+      }
 
-      override suspend fun refreshAvailableStatistics(): List<StatisticDefinition>? = selectedStatistics
+      override suspend fun refreshAvailableStatistics(): List<StatisticDefinition>? {
+        return refreshedStatistics ?: availableStatistics ?: selectedStatistics
+      }
 
       override suspend fun setSelectedStatisticIds(ids: List<String>) = Unit
     },
@@ -167,6 +173,33 @@ class AnalyzeAppStatisticRulesUseCaseTest {
     selectedStatistics = listOf(predicateDefinition("builtin.local", StatisticSource.BUILTIN))
 
     assertFalse(useCase.hasSelectedRules())
+  }
+
+  @Test
+  fun `falls back to available cached official rules when chart selection only has builtin rules`() = runBlocking {
+    selectedStatistics = listOf(predicateDefinition("builtin.local", StatisticSource.BUILTIN))
+    availableStatistics = listOf(
+      predicateDefinition("builtin.local", StatisticSource.BUILTIN),
+      predicateDefinition("official.flutter", StatisticSource.OFFICIAL),
+      facetsDefinition()
+    )
+
+    assertTrue(useCase.hasSelectedRules())
+
+    val result = useCase(packageInfo())
+    assertEquals(listOf("official.flutter", "official.itgsa"), result.map { it.definition.id })
+  }
+
+  @Test
+  fun `refreshes remote official rules when neither chart selection nor cache contains them`() = runBlocking {
+    selectedStatistics = listOf(predicateDefinition("builtin.local", StatisticSource.BUILTIN))
+    availableStatistics = selectedStatistics
+    refreshedStatistics = listOf(predicateDefinition("official.flutter", StatisticSource.OFFICIAL))
+
+    assertTrue(useCase.hasSelectedRules())
+
+    val result = useCase(packageInfo())
+    assertEquals(listOf("official.flutter"), result.map { it.definition.id })
   }
 
   private fun packageInfo() = PackageInfo().apply {

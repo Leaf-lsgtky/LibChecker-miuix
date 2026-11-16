@@ -24,6 +24,9 @@ class DetailFeatureState {
   private val _isLoading = MutableStateFlow(false)
   val isLoading = _isLoading.asStateFlow()
 
+  private val _appIconsFlow = MutableStateFlow<List<AppIconItem>>(emptyList())
+  val appIconsFlow = _appIconsFlow.asStateFlow()
+
   var appIcons: List<AppIconItem> = emptyList()
     private set
 
@@ -33,6 +36,7 @@ class DetailFeatureState {
 
   suspend fun setAppIcons(appIcons: List<AppIconItem>) {
     this.appIcons = appIcons
+    _appIconsFlow.value = appIcons
   }
 
   suspend fun emitAbiBundle(abi: AppDetailAbi) {
@@ -50,6 +54,7 @@ class DetailFeatureState {
   fun reset() {
     _featuresFlow.resetReplayCache()
     appIcons = emptyList()
+    _appIconsFlow.value = emptyList()
     _abiBundleStateFlow.value = null
     _is64Bit.value = null
     _isLoading.value = false

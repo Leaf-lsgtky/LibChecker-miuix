@@ -1,5 +1,6 @@
 package com.absinthe.libchecker.domain.home.presentation
 
+import android.content.pm.PackageInfo
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,6 +9,8 @@ import com.absinthe.libchecker.annotation.STATUS_NOT_START
 import com.absinthe.libchecker.annotation.STATUS_START_INIT
 import com.absinthe.libchecker.annotation.STATUS_START_REQUEST_CHANGE
 import com.absinthe.libchecker.annotation.STATUS_START_REQUEST_CHANGE_END
+import com.absinthe.libchecker.constant.OnceTag
+import com.absinthe.libchecker.constant.options.AdvancedOptions
 import com.absinthe.libchecker.database.entity.LCItem
 import com.absinthe.libchecker.domain.app.list.export.ExportAppListToUriUseCase
 import com.absinthe.libchecker.domain.app.list.export.ExportAppListUseCase
@@ -28,16 +31,24 @@ import com.absinthe.libchecker.domain.app.search.HandleAppListSearchCommandUseCa
 import com.absinthe.libchecker.domain.app.sync.AppListChangeRequestQueue
 import com.absinthe.libchecker.domain.app.sync.SyncAppListChangesUseCase
 import com.absinthe.libchecker.services.IWorkerService
+import com.absinthe.libchecker.utils.harmony.HarmonyOsUtil
+import jonathanfinerty.once.Once
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
 class HomeViewModel(
@@ -68,6 +79,11 @@ class HomeViewModel(
   private val isRequestChangeRunning = _isRequestChangeRunning.asStateFlow()
   val toolbarLoading: Flow<Boolean> = observeAppListLoadingUseCase(isRequestChangeRunning, dbItemsFlow)
 
+  private val _appListUiState = MutableStateFlow(AppListUiState())
+  val appListUiState: StateFlow<AppListUiState> = _appListUiState.asStateFlow()
+  private val _appListSearchUiState = MutableStateFlow(AppListSearchUiState())
+  val appListSearchUiState: StateFlow<AppListSearchUiState> = _appListSearchUiState.asStateFlow()
+
   var appListStatus: Int = STATUS_NOT_START
 
   private var toolbarSearchMenuState = ToolbarSearchMenuState()
@@ -77,6 +93,16 @@ class HomeViewModel(
   private var appListSearchKeyword: String = ""
   private var workerBinder: IWorkerService? = null
   private var pendingFeatureInitializationRequest = false
+  private var hasStartedAppListObservers = false
+  private var hasCommittedInitialContent = false
+  private var isFirstRequestChange = true
+  private var currentIs64Bit = true
+  private var onBeforeFirstContent: (suspend (List<LCItem>, Map<String, PackageInfo>) -> Unit)? = null
+  private var refreshAppListJob: Job? = null
+  private var remainingViewStatesJob: Job? = null
+  private var appListSearchJob: Job? = null
+  private var appListSearchGeneration = 0
+  private var appListRefreshGeneration = 0
 
   private val appListChangeRequestQueue = AppListChangeRequestQueue()
 
@@ -85,6 +111,8 @@ class HomeViewModel(
       Timber.d("reloadApps: ignore, appListStatus: $appListStatus")
       return
     }
+    Once.clearDone(OnceTag.FIRST_LAUNCH)
+    initItems()
     setEffect {
       Effect.ReloadApps()
     }
@@ -92,12 +120,18 @@ class HomeViewModel(
 
   private fun refreshList() {
     pendingReturnTopAfterRequestChange = true
+    scheduleAppListRefresh(
+      highlightRefresh = false,
+      shouldReturnTop = false,
+      forceImmediate = true
+    )
     setEffect {
       Effect.RefreshList()
     }
   }
 
   fun packageChanged(packageChangeState: PackageChangeState) {
+    requestChange(packageChangeState)
     setEffect {
       Effect.PackageChanged(packageChangeState)
     }
@@ -132,6 +166,7 @@ class HomeViewModel(
   }
 
   private fun updateInitProgress(progress: Int) {
+    _appListUiState.update { it.copy(initProgress = progress) }
     setEffect {
       Effect.UpdateInitProgress(progress)
     }
@@ -154,13 +189,22 @@ class HomeViewModel(
   suspend fun buildAppListUpdate(
     isCurrentProcess64Bit: Boolean,
     currentItems: List<LCItem>,
-    highlightRefresh: Boolean
+    highlightRefresh: Boolean,
+    initialItemViewStateCount: Int? = null
   ): AppListUpdate {
     val content = getAppListContentUseCase(
-      GetAppListContentUseCase.Request(
-        keyword = appListSearchKeyword,
-        isCurrentProcess64Bit = isCurrentProcess64Bit
-      )
+      if (initialItemViewStateCount != null) {
+        GetAppListContentUseCase.Request(
+          keyword = "",
+          isCurrentProcess64Bit = isCurrentProcess64Bit,
+          initialItemViewStateCount = initialItemViewStateCount
+        )
+      } else {
+        GetAppListContentUseCase.Request(
+          keyword = "",
+          isCurrentProcess64Bit = isCurrentProcess64Bit
+        )
+      }
     )
     return when (content) {
       GetAppListContentUseCase.Result.OnlySelf -> AppListUpdate.OnlySelf
@@ -271,12 +315,238 @@ class HomeViewModel(
     )
   }
 
+  fun ensureAppListStarted(
+    isCurrentProcess64Bit: Boolean,
+    onBeforeFirstContent: suspend (List<LCItem>, Map<String, PackageInfo>) -> Unit
+  ) {
+    currentIs64Bit = isCurrentProcess64Bit
+    this.onBeforeFirstContent = onBeforeFirstContent
+    if (hasStartedAppListObservers) {
+      return
+    }
+    hasStartedAppListObservers = true
+    startAppListObservers()
+
+    val isFirstLaunch = !Once.beenDone(Once.THIS_APP_INSTALL, OnceTag.FIRST_LAUNCH)
+    val needsHarmonyInit = HarmonyOsUtil.isHarmonyOs() &&
+      !Once.beenDone(Once.THIS_APP_INSTALL, OnceTag.HARMONY_FIRST_INIT)
+    val needsReloadInit = !isFirstLaunch &&
+      !Once.beenDone(Once.THIS_APP_INSTALL, OnceTag.SHOULD_RELOAD_APP_LIST)
+    if (isFirstLaunch || needsHarmonyInit || needsReloadInit) {
+      if (needsHarmonyInit) {
+        Once.markDone(OnceTag.HARMONY_FIRST_INIT)
+      }
+      if (needsReloadInit) {
+        Once.markDone(OnceTag.SHOULD_RELOAD_APP_LIST)
+      }
+      initItems()
+    }
+  }
+
+  private fun startAppListObservers() {
+    displayItemsFlow.onEach { dbItems ->
+      if (dbItems.isEmpty()) {
+        if (appListStatus != STATUS_START_INIT && initJob?.isActive != true) {
+          initItems()
+        }
+      } else if (
+        appListStatus != STATUS_START_INIT &&
+        appListStatus != STATUS_START_REQUEST_CHANGE
+      ) {
+        scheduleAppListRefresh(highlightRefresh = false, shouldReturnTop = false)
+        if (isFirstRequestChange) {
+          isFirstRequestChange = false
+          requestChange()
+        }
+      }
+    }.launchIn(viewModelScope)
+
+    appListDisplayOptionsChanges.onEach { diff ->
+      if (appListStatus != STATUS_START_INIT) {
+        scheduleAppListRefresh(
+          highlightRefresh = false,
+          shouldReturnTop = (diff and APP_LIST_FILTER_AND_SORT_OPTIONS) != 0
+        )
+        if (appListSearchKeyword.isNotEmpty()) {
+          refreshAppListSearch(appListSearchKeyword)
+        }
+      }
+    }.launchIn(viewModelScope)
+  }
+
+  fun refreshAppListAfterSearch() {
+    refreshAppListSearch(appListSearchKeyword)
+  }
+
+  private fun refreshAppListSearch(keyword: String) {
+    val generation = ++appListSearchGeneration
+    appListSearchJob?.cancel()
+    if (keyword.isEmpty()) {
+      _appListSearchUiState.value = AppListSearchUiState()
+      return
+    }
+    _appListSearchUiState.update { current ->
+      current.copy(isLoading = current.query != keyword && current.items.isEmpty(), query = keyword)
+    }
+    appListSearchJob = viewModelScope.launch(Dispatchers.IO) {
+      val result = getAppListContentUseCase(
+        GetAppListContentUseCase.Request(
+          keyword = keyword,
+          isCurrentProcess64Bit = currentIs64Bit,
+          initialItemViewStateCount = Int.MAX_VALUE
+        )
+      )
+      if (!isActive || generation != appListSearchGeneration) return@launch
+      when (result) {
+        GetAppListContentUseCase.Result.OnlySelf -> {
+          _appListSearchUiState.value = AppListSearchUiState(
+            isLoading = false,
+            query = keyword
+          )
+        }
+
+        is GetAppListContentUseCase.Result.Content -> {
+          _appListSearchUiState.value = AppListSearchUiState(
+            isLoading = false,
+            query = keyword,
+            items = result.items,
+            iconPackageInfos = result.renderState.iconPackageInfos,
+            viewStates = result.renderState.itemViewStates,
+            chips = result.renderState.itemChips
+          )
+        }
+      }
+    }
+  }
+
+  private fun scheduleAppListRefresh(
+    highlightRefresh: Boolean,
+    shouldReturnTop: Boolean,
+    forceImmediate: Boolean = false
+  ) {
+    val generation = ++appListRefreshGeneration
+    val hasReadyContent = _appListUiState.value.mode == AppListScreenMode.Content ||
+      _appListUiState.value.mode == AppListScreenMode.Empty
+    val shouldDebounce = !forceImmediate && (highlightRefresh || hasReadyContent)
+    remainingViewStatesJob?.cancel()
+    refreshAppListJob?.cancel()
+    refreshAppListJob = viewModelScope.launch(Dispatchers.IO) {
+      if (shouldDebounce) {
+        delay(APP_LIST_REFRESH_DEBOUNCE_MS)
+      }
+      if (!isActive || generation != appListRefreshGeneration || appListStatus == STATUS_START_INIT) {
+        return@launch
+      }
+
+      val currentState = _appListUiState.value
+      val update = buildAppListUpdate(
+        isCurrentProcess64Bit = currentIs64Bit,
+        currentItems = currentState.items,
+        highlightRefresh = highlightRefresh,
+        initialItemViewStateCount = if (hasReadyContent) Int.MAX_VALUE else null
+      )
+      if (!isActive || generation != appListRefreshGeneration) {
+        return@launch
+      }
+
+      when (update) {
+        AppListUpdate.OnlySelf -> {
+          if (appListStatus == STATUS_NOT_START) {
+            Once.clearDone(OnceTag.FIRST_LAUNCH)
+            _appListUiState.update { it.copy(mode = AppListScreenMode.Reject) }
+          }
+        }
+
+        is AppListUpdate.Content -> {
+          val plan = update.plan
+          val content = plan.content
+          onAppListUpdatePlanApplied(plan)
+
+          if (content.items.isNotEmpty()) {
+            val prewarm = onBeforeFirstContent
+            if (prewarm != null) {
+              val timeoutMs = if (hasCommittedInitialContent) {
+                UPDATE_CONTENT_ICON_PREWARM_TIMEOUT_MS
+              } else {
+                FIRST_CONTENT_ICON_PREWARM_TIMEOUT_MS
+              }
+              withTimeoutOrNull(timeoutMs) {
+                prewarm(content.items, content.renderState.iconPackageInfos)
+              }
+            }
+            hasCommittedInitialContent = true
+          }
+
+          if (!isActive || generation != appListRefreshGeneration) {
+            return@launch
+          }
+
+          val nextMode = if (content.items.isEmpty()) {
+            AppListScreenMode.Empty
+          } else {
+            AppListScreenMode.Content
+          }
+          val shouldBumpScrollTop = shouldReturnTop || plan.shouldReturnTopAfterRequestChange
+
+          _appListUiState.update { current ->
+            val unchangedContent = current.mode == nextMode &&
+              current.items == content.items &&
+              current.viewStates == content.renderState.itemViewStates &&
+              current.chips == content.renderState.itemChips &&
+              current.highlightText == content.renderState.highlightText &&
+              !shouldBumpScrollTop
+            if (unchangedContent) {
+              current
+            } else {
+              current.copy(
+                mode = nextMode,
+                items = content.items,
+                iconPackageInfos = content.renderState.iconPackageInfos,
+                viewStates = content.renderState.itemViewStates,
+                chips = content.renderState.itemChips,
+                highlightText = content.renderState.highlightText,
+                scrollToTopSignal = if (shouldBumpScrollTop) {
+                  current.scrollToTopSignal + 1
+                } else {
+                  current.scrollToTopSignal
+                }
+              )
+            }
+          }
+          if (appListSearchKeyword.isNotEmpty()) {
+            refreshAppListSearch(appListSearchKeyword)
+          }
+
+          val initialCount = content.renderState.itemViewStates.size
+          if (content.items.size > initialCount) {
+            val remaining = content.items.drop(initialCount)
+            remainingViewStatesJob = viewModelScope.launch(Dispatchers.IO) {
+              val more = buildAppListItemViewStates(remaining, content.packageStateSnapshot)
+              if (!isActive || generation != appListRefreshGeneration) {
+                return@launch
+              }
+              _appListUiState.update { current ->
+                if (current.items != content.items) {
+                  current
+                } else {
+                  current.copy(viewStates = current.viewStates + more)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   private var initJob: Job? = null
 
   fun initItems() {
     if (initJob?.isActive == true) {
       return
     }
+    remainingViewStatesJob?.cancel()
+    refreshAppListJob?.cancel()
     initJob = viewModelScope.launch(Dispatchers.IO) {
       try {
         initItemsImpl()
@@ -288,17 +558,40 @@ class HomeViewModel(
 
   private suspend fun initItemsImpl() {
     updateAppListStatus(STATUS_START_INIT)
+    _appListUiState.update { it.copy(mode = AppListScreenMode.Loading, initProgress = 0) }
     try {
       if (!initializeAppListUseCase(::updateInitProgress)) return
     } catch (e: PackageListLoadException) {
       Timber.w(e)
       updateAppListStatus(STATUS_NOT_START)
+      _appListUiState.update { current ->
+        current.copy(
+          mode = if (current.items.isEmpty()) AppListScreenMode.Empty else AppListScreenMode.Content
+        )
+      }
       setEffect { Effect.PackageListLoadFailed }
       return
     }
     updateAppListStatus(STATUS_INIT_END)
 
+    val isFirstLaunch = !Once.beenDone(Once.THIS_APP_INSTALL, OnceTag.FIRST_LAUNCH)
+    if (isFirstLaunch) {
+      if (isOnlySelfAppInDatabase()) {
+        updateAppListStatus(STATUS_NOT_START)
+        _appListUiState.update { it.copy(mode = AppListScreenMode.Reject) }
+        return
+      }
+      Once.markDone(OnceTag.FIRST_LAUNCH)
+      Once.markDone(OnceTag.SHOULD_RELOAD_APP_LIST)
+    }
+
     updateAppListStatus(STATUS_NOT_START)
+    isFirstRequestChange = false
+    scheduleAppListRefresh(
+      highlightRefresh = false,
+      shouldReturnTop = false,
+      forceImmediate = true
+    )
     requestFeatureInitialization()
   }
 
@@ -472,6 +765,33 @@ class HomeViewModel(
     ) : AppListSearchCommandAction
   }
 
+  enum class AppListScreenMode {
+    Loading,
+    Reject,
+    Empty,
+    Content
+  }
+
+  data class AppListUiState(
+    val mode: AppListScreenMode = AppListScreenMode.Loading,
+    val items: List<LCItem> = emptyList(),
+    val iconPackageInfos: Map<String, PackageInfo> = emptyMap(),
+    val viewStates: Map<String, AppListItemViewState> = emptyMap(),
+    val chips: Map<String, List<String>> = emptyMap(),
+    val highlightText: String = "",
+    val initProgress: Int = 0,
+    val scrollToTopSignal: Int = 0
+  )
+
+  data class AppListSearchUiState(
+    val isLoading: Boolean = false,
+    val query: String = "",
+    val items: List<LCItem> = emptyList(),
+    val iconPackageInfos: Map<String, PackageInfo> = emptyMap(),
+    val viewStates: Map<String, AppListItemViewState> = emptyMap(),
+    val chips: Map<String, List<String>> = emptyMap()
+  )
+
   fun dumpAppsInfo(
     uri: Uri,
     format: ExportAppListUseCase.Format
@@ -505,3 +825,15 @@ private fun areAppListItemsEquivalent(old: List<LCItem>, new: List<LCItem>): Boo
 }
 
 private const val MANUAL_REFRESH_LOADING_MIN_DURATION_MS = 450L
+private const val APP_LIST_REFRESH_DEBOUNCE_MS = 120L
+private const val FIRST_CONTENT_ICON_PREWARM_TIMEOUT_MS = 250L
+private const val UPDATE_CONTENT_ICON_PREWARM_TIMEOUT_MS = 120L
+private const val APP_LIST_FILTER_AND_SORT_OPTIONS =
+  AdvancedOptions.SHOW_SYSTEM_APPS or
+    AdvancedOptions.SHOW_SYSTEM_FRAMEWORK_APPS or
+    AdvancedOptions.SHOW_OVERLAYS or
+    AdvancedOptions.SHOW_64_BIT_APPS or
+    AdvancedOptions.SHOW_32_BIT_APPS or
+    AdvancedOptions.SORT_BY_NAME or
+    AdvancedOptions.SORT_BY_UPDATE_TIME or
+    AdvancedOptions.SORT_BY_TARGET_API

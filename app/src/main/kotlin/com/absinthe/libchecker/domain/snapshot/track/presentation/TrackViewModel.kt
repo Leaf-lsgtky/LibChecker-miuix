@@ -38,7 +38,8 @@ class TrackViewModel(
       }
       isLoaded = true
       _uiState.value = TrackListUiState(
-        items = filterTrackItems(allItems, query),
+        items = filterTrackItems(allItems, ""),
+        searchItems = if (query.isBlank()) emptyList() else filterTrackItems(allItems, query),
         isLoading = false,
         isSearchVisible = true
       )
@@ -48,14 +49,15 @@ class TrackViewModel(
   fun setQuery(query: String) {
     this.query = query
     _uiState.value = _uiState.value.copy(
-      items = filterTrackItems(allItems, query)
+      searchItems = if (query.isBlank()) emptyList() else filterTrackItems(allItems, query)
     )
   }
 
   fun setPackageTracked(packageName: String, tracked: Boolean) {
     allItems = updateTrackedState(allItems, packageName, tracked)
     _uiState.value = _uiState.value.copy(
-      items = updateTrackedState(_uiState.value.items, packageName, tracked)
+      items = updateTrackedState(_uiState.value.items, packageName, tracked),
+      searchItems = updateTrackedState(_uiState.value.searchItems, packageName, tracked)
     )
 
     viewModelScope.launch(Dispatchers.IO) {
@@ -92,6 +94,7 @@ class TrackViewModel(
 
 data class TrackListUiState(
   val items: List<TrackedAppListItem> = emptyList(),
+  val searchItems: List<TrackedAppListItem> = emptyList(),
   val isLoading: Boolean = true,
   val loadFailed: Boolean = false,
   val isSearchVisible: Boolean = false

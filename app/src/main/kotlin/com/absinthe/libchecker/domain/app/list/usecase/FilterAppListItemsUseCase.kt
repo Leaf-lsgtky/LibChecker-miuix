@@ -55,7 +55,12 @@ class FilterAppListItemsUseCase(
         (request.options and AdvancedOptions.SORT_BY_NAME) > 0 -> {
           sortWith { a, b ->
             val abiCompare = a.abi.compareTo(b.abi)
-            if (abiCompare != 0) abiCompare else a.label.compareTo(b.label)
+            if (abiCompare != 0) {
+              abiCompare
+            } else {
+              val labelCompare = a.label.compareTo(b.label, ignoreCase = true)
+              if (labelCompare != 0) labelCompare else a.label.compareTo(b.label)
+            }
           }
         }
 

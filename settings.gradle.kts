@@ -27,6 +27,25 @@ dependencyResolutionManagement {
         includeGroupByRegex("com.github.*")
       }
     }
+    mavenLocal {
+      content {
+        includeGroup("top.yukonga.miuix.kmp")
+      }
+    }
+    val gprUser = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GITHUB_ACTOR")
+    val gprKey = providers.gradleProperty("gpr.key").orNull ?: System.getenv("GITHUB_TOKEN")
+    if (!gprUser.isNullOrBlank() && !gprKey.isNullOrBlank()) {
+      maven {
+        url = uri("https://maven.pkg.github.com/compose-miuix-ui/miuix")
+        credentials {
+          username = gprUser
+          password = gprKey
+        }
+        content {
+          includeGroup("top.yukonga.miuix.kmp")
+        }
+      }
+    }
     mavenCentral()
   }
 }

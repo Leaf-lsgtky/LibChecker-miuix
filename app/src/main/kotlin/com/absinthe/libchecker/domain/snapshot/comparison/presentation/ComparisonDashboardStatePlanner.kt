@@ -14,11 +14,14 @@ internal object ComparisonDashboardStatePlanner {
   fun planState(
     inputs: SnapshotComparisonInputs,
     labels: ComparisonDashboardLabels,
-    formatTimestamp: (Long) -> String
+    formatTimestamp: (Long) -> String,
+    previousState: ComparisonDashboardState? = null
   ): ComparisonDashboardState {
     return ComparisonDashboardState(
-      left = planSideState(inputs.left, labels, formatTimestamp),
+      left = planSideState(inputs.left, labels, formatTimestamp)
+        .preserveMatchingCount(previousState?.left, labels),
       right = planSideState(inputs.right, labels, formatTimestamp)
+        .preserveMatchingCount(previousState?.right, labels)
     )
   }
 

@@ -176,7 +176,7 @@ class LibReferenceTreemapView @JvmOverloads constructor(
       ColorUtils.colorToHSL(color, hsl)
       hsl[1] *= 0.6f
       ColorUtils.HSLToColor(hsl)
-    } ?: surfaceColor
+    } ?: onSurfaceColor
     val foreground = if (ColorUtils.calculateContrast(Color.BLACK, background) >= ColorUtils.calculateContrast(Color.WHITE, background)) {
       Color.BLACK
     } else {
@@ -780,10 +780,10 @@ class LibReferenceTreemapView @JvmOverloads constructor(
       filterAnimator?.end()
       zoomAnimator?.end()
       transformedGesture = false
-      parent?.requestDisallowInterceptTouchEvent(true)
     }
     if (zoomEnabled) scaleDetector.onTouchEvent(event)
     if (event.pointerCount > 1 || transformedGesture) {
+      parent?.requestDisallowInterceptTouchEvent(true)
       resetPressAnimation()
       transformedGesture = true
       if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) {

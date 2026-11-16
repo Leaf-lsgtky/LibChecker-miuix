@@ -15,6 +15,15 @@ import com.absinthe.libchecker.constant.GlobalValues
 class HomeAppearanceState {
   var floatingNavBar by mutableStateOf(GlobalValues.isFloatingNavBar)
   var blurDesign by mutableStateOf(GlobalValues.isBlurDesign)
+  var miuixOs4 by mutableStateOf(GlobalValues.isMiuixOs4)
+  var useCustomFont by mutableStateOf(GlobalValues.isUseCustomFont)
+  var bottomBarSearch by mutableStateOf(GlobalValues.isBottomBarSearch)
+  var darkMode by mutableStateOf(GlobalValues.darkMode)
+  var amoledTheme by mutableStateOf(GlobalValues.isAmoledTheme)
 }
 
-val LocalHomeAppearance = staticCompositionLocalOf { HomeAppearanceState() }
+object AppAppearanceStore {
+  val current = HomeAppearanceState()
+}
+
+val LocalHomeAppearance = staticCompositionLocalOf { AppAppearanceStore.current }

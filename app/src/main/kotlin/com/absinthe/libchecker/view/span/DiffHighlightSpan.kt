@@ -8,7 +8,7 @@ import kotlin.math.ceil
 import kotlin.math.max
 
 class DiffHighlightSpan(
-  @ColorInt private val color: Int?
+  @ColorInt val color: Int?
 ) : ReplacementSpan() {
 
   override fun getSize(

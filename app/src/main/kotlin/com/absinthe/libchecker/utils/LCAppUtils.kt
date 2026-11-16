@@ -123,24 +123,12 @@ object LCAppUtils {
   ): Pair<SpannableString, SpannableString> {
     val oldSpannable = SpannableString(oldString)
     val newSpannable = SpannableString(newString)
-    var oldIndex = 0
-    var newIndex = 0
-
-    while (oldIndex < oldString.length && newIndex < newString.length) {
-      val oldEnd = oldString.offsetByCodePoints(oldIndex, 1)
-      val newEnd = newString.offsetByCodePoints(newIndex, 1)
-      if (oldString.codePointAt(oldIndex) != newString.codePointAt(newIndex)) {
-        oldSpannable.setDiffHighlight(oldIndex, oldEnd, highlightDiffColor, emphasizeDiffs)
-        newSpannable.setDiffHighlight(newIndex, newEnd, highlightDiffColor, emphasizeDiffs)
-      }
-      oldIndex = oldEnd
-      newIndex = newEnd
+    val ranges = calculateTextDiffRanges(oldString, newString)
+    ranges.oldRanges.forEach { range ->
+      oldSpannable.setDiffHighlight(range.first, range.last + 1, highlightDiffColor, emphasizeDiffs)
     }
-
-    if (oldIndex < oldString.length) {
-      oldSpannable.setDiffHighlight(oldIndex, oldString.length, highlightDiffColor, emphasizeDiffs)
-    } else if (newIndex < newString.length) {
-      newSpannable.setDiffHighlight(newIndex, newString.length, highlightDiffColor, emphasizeDiffs)
+    ranges.newRanges.forEach { range ->
+      newSpannable.setDiffHighlight(range.first, range.last + 1, highlightDiffColor, emphasizeDiffs)
     }
 
     return Pair(oldSpannable, newSpannable)

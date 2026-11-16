@@ -123,7 +123,6 @@ class SnapshotViewModel(
     return snapshotListWorkflow.buildSnapshotCapturePlan()
   }
 
-
   fun getSnapshotOptions(): Int {
     return snapshotListWorkflow.getSnapshotOptions()
   }
@@ -240,11 +239,13 @@ class SnapshotViewModel(
 
   suspend fun buildSnapshotListUpdatePlan(
     currentItems: List<SnapshotDiffItem>,
-    highlightRefresh: Boolean
+    highlightRefresh: Boolean,
+    searchKeyword: String = ""
   ): BuildSnapshotListUpdatePlanUseCase.Plan {
     return snapshotListWorkflow.buildSnapshotListUpdatePlan(
       currentItems = currentItems,
-      highlightRefresh = highlightRefresh
+      highlightRefresh = highlightRefresh,
+      searchKeyword = searchKeyword
     )
   }
 

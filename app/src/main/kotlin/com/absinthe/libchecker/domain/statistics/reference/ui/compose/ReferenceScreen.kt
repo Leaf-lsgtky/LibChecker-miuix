@@ -1,11 +1,15 @@
 package com.absinthe.libchecker.domain.statistics.reference.ui.compose
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,7 +17,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -28,11 +31,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,32 +50,41 @@ import com.absinthe.libchecker.domain.statistics.reference.model.LibReferenceLoa
 import com.absinthe.libchecker.domain.statistics.reference.model.LibReferenceSearchLabels
 import com.absinthe.libchecker.domain.statistics.reference.model.resolveReferenceIcon
 import com.absinthe.libchecker.domain.statistics.reference.presentation.LibReferenceViewModel
+import com.absinthe.libchecker.ui.compose.component.AdaptiveGlassOverflowMenu
+import com.absinthe.libchecker.ui.compose.component.AdaptiveSearchOverlay
 import com.absinthe.libchecker.ui.compose.component.AdaptiveTopAppBar
+import com.absinthe.libchecker.ui.compose.component.AdaptiveTopBarIconButton
+import com.absinthe.libchecker.ui.compose.component.AdaptiveTopBarMenuAction
+import com.absinthe.libchecker.ui.compose.component.AdaptiveTopSearchButton
+import com.absinthe.libchecker.ui.compose.component.CoverFlowReferenceLoading
 import com.absinthe.libchecker.ui.compose.component.LcEmptyState
-import com.absinthe.libchecker.ui.compose.component.LcLoadingState
+import com.absinthe.libchecker.ui.compose.component.LocalHomeBottomPadding
+import com.absinthe.libchecker.ui.compose.component.MiuixPageHost
+import com.absinthe.libchecker.ui.compose.component.TopBarSearchConfig
+import com.absinthe.libchecker.ui.compose.component.TopBarSearchState
+import com.absinthe.libchecker.ui.compose.component.adaptiveVerticalScroll
+import com.absinthe.libchecker.ui.compose.component.rememberMiuixRefreshTexts
+import com.absinthe.libchecker.ui.compose.component.rememberTopBarSearchState
 import com.absinthe.libchecker.ui.compose.util.WideContentBox
+import com.absinthe.libchecker.ui.compose.util.horizontalCutoutPadding
 import kotlinx.coroutines.delay
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.DropdownEntry
 import top.yukonga.miuix.kmp.basic.DropdownItem
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
-import top.yukonga.miuix.kmp.basic.InputField
 import top.yukonga.miuix.kmp.basic.LinearProgressIndicator
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
-import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
 import top.yukonga.miuix.kmp.basic.PullToRefresh
+import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
+import top.yukonga.miuix.kmp.glass.rememberGlassPopupAnchor
 import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.extended.GridView
-import top.yukonga.miuix.kmp.icon.extended.ListView
-import top.yukonga.miuix.kmp.icon.extended.Report
-import top.yukonga.miuix.kmp.icon.extended.Tune
+import top.yukonga.miuix.kmp.icon.glass.Menu
 import top.yukonga.miuix.kmp.menu.OverlayIconCascadingDropdownMenu
 import top.yukonga.miuix.kmp.theme.MiuixTheme
-import top.yukonga.miuix.kmp.utils.overScrollVertical
-import top.yukonga.miuix.kmp.utils.scrollEndHaptic
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import com.absinthe.libchecker.ui.compose.component.FastScrollLazyColumn as LazyColumn
 
 /**
  * Statistics destination: one card per referenced library, newest computation first.
@@ -87,24 +98,34 @@ fun ReferenceScreen(
   onOpenReference: (LibReference) -> Unit,
   onOpenChart: () -> Unit = {},
   modifier: Modifier = Modifier,
-  listState: LazyListState = rememberLazyListState()
+  listState: LazyListState = rememberLazyListState(),
+  isCurrentPage: Boolean = true,
+  searchState: TopBarSearchState = rememberTopBarSearchState(),
+  showSearchButton: Boolean = true
 ) {
   val references by viewModel.libReference.collectAsStateWithLifecycle()
   val loadingState by viewModel.loadingState.collectAsStateWithLifecycle()
-  val focusManager = LocalFocusManager.current
   val scrollBehavior = MiuixScrollBehavior()
   var isRefreshing by remember { mutableStateOf(false) }
   val pullToRefreshState = rememberPullToRefreshState()
 
-  var query by rememberSaveable { mutableStateOf("") }
-  var searchExpanded by rememberSaveable { mutableStateOf(false) }
+  val query = searchState.query
   var searchResult by remember { mutableStateOf<List<LibReference>?>(null) }
+  var settledSearchQuery by remember { mutableStateOf<String?>(null) }
   var options by remember { mutableIntStateOf(viewModel.getLibReferenceOptions()) }
   var easterEgg by remember { mutableStateOf(false) }
   var treemapEnabled by remember { mutableStateOf(viewModel.treemapEnabled) }
 
-  LaunchedEffect(Unit) {
-    viewModel.onReferencePageVisible(hasDisplayedReferences = false)
+  var hasActivated by rememberSaveable { mutableStateOf(isCurrentPage) }
+  LaunchedEffect(isCurrentPage) {
+    if (isCurrentPage) {
+      hasActivated = true
+    }
+  }
+
+  LaunchedEffect(hasActivated) {
+    if (!hasActivated) return@LaunchedEffect
+    viewModel.onReferencePageVisible(hasDisplayedReferences = references != null)
   }
 
   val searchLabels = LibReferenceSearchLabels(
@@ -114,168 +135,277 @@ fun ReferenceScreen(
     packageLabel = stringResource(R.string.ref_category_package)
   )
 
-  LaunchedEffect(query) {
-    delay(160)
+  LaunchedEffect(query, hasActivated, references) {
+    if (!hasActivated) return@LaunchedEffect
+    if (references == null) {
+      searchResult = null
+      settledSearchQuery = null
+      return@LaunchedEffect
+    }
+    if (query.isNotEmpty()) {
+      delay(160)
+    }
     viewModel.onSearchQueryChanged(query, searchLabels)
     val result = viewModel.buildCurrentSearchResult()
     searchResult = result?.references
     easterEgg = result?.shouldShowEasterEgg == true
+    settledSearchQuery = query
   }
 
-  val displayed = (searchResult ?: references).orEmpty()
-  val isLoading = references == null && searchResult == null
+  val displayed = references.orEmpty()
+  val isLoading = references == null
   LaunchedEffect(isLoading) {
     if (!isLoading) isRefreshing = false
   }
 
-  Column(modifier = modifier.fillMaxSize()) {
-    AdaptiveTopAppBar(
-      title = stringResource(R.string.title_statistics),
-      scrollBehavior = scrollBehavior,
-      actions = {
-        IconButton(
-          onClick = {
-            treemapEnabled = !treemapEnabled
-            viewModel.treemapEnabled = treemapEnabled
+  var showFilterMenu by remember { mutableStateOf(false) }
+  val homeBottomPadding = LocalHomeBottomPadding.current
+  val isScrolled = if (treemapEnabled) false else listState.canScrollBackward
+
+  MiuixPageHost(
+    modifier = modifier.fillMaxSize(),
+    enableMenuBackdrop = false,
+    overlay = {
+      ReferenceMenuSheet(
+        show = showFilterMenu,
+        viewModel = viewModel,
+        treemapEnabled = treemapEnabled,
+        onToggleTreemap = {
+          treemapEnabled = !treemapEnabled
+          viewModel.treemapEnabled = treemapEnabled
+        },
+        onDismiss = { optionsChanged ->
+          showFilterMenu = false
+          if (optionsChanged) {
+            viewModel.requestComputeReference(isVisible = true, needShowLoading = true)
           }
-        ) {
-          Icon(
-            painter = painterResource(
-              if (treemapEnabled) R.drawable.ic_reference_list else R.drawable.ic_reference_treemap
+        }
+      )
+    }
+  ) {
+    val pageState = this
+    Box(modifier = Modifier.fillMaxSize()) {
+      Scaffold(
+        modifier = Modifier
+          .fillMaxSize()
+          .then(pageState.menuBackdropModifier),
+        containerColor = MiuixTheme.colorScheme.surface,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+          AdaptiveTopAppBar(
+            title = stringResource(R.string.title_statistics),
+            scrollBehavior = scrollBehavior,
+            isContentScrolled = isScrolled,
+            search = TopBarSearchConfig(
+              state = searchState,
+              label = stringResource(R.string.search_hint)
             ),
-            contentDescription = stringResource(
-              if (treemapEnabled) {
-                R.string.lib_reference_switch_to_list
-              } else {
-                R.string.lib_reference_switch_to_treemap
+            actions = {
+              if (showSearchButton) {
+                AdaptiveTopSearchButton(onClick = searchState::open)
               }
-            )
+              AdaptiveTopBarIconButton(onClick = onOpenChart) {
+                AsyncImage(
+                  model = R.drawable.ic_chart,
+                  contentDescription = stringResource(R.string.tab_chart),
+                  colorFilter = ColorFilter.tint(MiuixTheme.colorScheme.onSurface),
+                  modifier = Modifier.size(24.dp)
+                )
+              }
+              AdaptiveTopBarIconButton(onClick = { showFilterMenu = true }) {
+                Icon(
+                  imageVector = MiuixIcons.Glass.Menu,
+                  contentDescription = stringResource(R.string.menu_filter)
+                )
+              }
+            },
+            bottomContent = {
+              if (isLoading && displayed.isNotEmpty()) {
+                LinearProgressIndicator(
+                  modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp),
+                  progress = loadingState.overallProgress?.takeIf { it > 0 }?.let { it / 100f },
+                  height = 3.dp
+                )
+              }
+            }
           )
         }
-        IconButton(onClick = onOpenChart) {
-          AsyncImage(
-            model = R.drawable.ic_chart,
-            contentDescription = stringResource(R.string.tab_chart),
-            colorFilter = ColorFilter.tint(MiuixTheme.colorScheme.onSurface),
-            modifier = Modifier.size(24.dp)
-          )
-        }
-        val entries = buildReferenceMenuEntries(options) { option, enabled ->
-          options = viewModel.setLibReferenceOption(option, enabled)
-          viewModel.requestComputeReference(isVisible = true, needShowLoading = true)
-        }
-        OverlayIconCascadingDropdownMenu(
-          entries = entries,
-          collapseOnSelection = false
+      ) { padding ->
+        Box(
+          Modifier
+            .fillMaxSize()
+            .then(pageState.topBarBackdropModifier)
+            .imePadding()
         ) {
-          Icon(
-            painter = painterResource(R.drawable.ic_menu),
-            contentDescription = stringResource(R.string.menu_filter)
-          )
-        }
-      },
-      bottomContent = {
-        Column {
-          InputField(
-            query = query,
-            onQueryChange = { query = it },
-            onSearch = { focusManager.clearFocus() },
-            expanded = searchExpanded,
-            onExpandedChange = { searchExpanded = it },
-            label = stringResource(R.string.search_hint),
-            modifier = Modifier
-              .fillMaxWidth()
-              .padding(horizontal = 12.dp)
-              .padding(bottom = 8.dp)
-          )
-          if (isLoading && references.isNullOrEmpty()) {
-            LinearProgressIndicator(
-              modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp),
-              progress = loadingState.overallProgress?.let { it / 100f } ?: 0f,
-              height = 3.dp
-            )
+          val displayMode = when {
+            isLoading && displayed.isEmpty() -> ReferenceDisplayMode.Loading
+            displayed.isEmpty() -> ReferenceDisplayMode.Empty
+            treemapEnabled -> ReferenceDisplayMode.Treemap
+            else -> ReferenceDisplayMode.List
+          }
+          Crossfade(
+            targetState = displayMode,
+            animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing),
+            label = "ReferenceModeTransition"
+          ) { mode ->
+            when (mode) {
+              ReferenceDisplayMode.Loading -> CoverFlowReferenceLoading(
+                message = stringResource(R.string.loading),
+                progress = loadingState.overallProgress?.takeIf { it > 0 }?.let { it / 100f },
+                modifier = Modifier.padding(padding)
+              )
+
+              ReferenceDisplayMode.Empty -> LcEmptyState(
+                title = stringResource(R.string.empty_list),
+                modifier = Modifier.padding(padding)
+              )
+
+              ReferenceDisplayMode.Treemap -> Box(
+                modifier = Modifier
+                  .fillMaxSize()
+                  .padding(padding)
+                  .let { if (homeBottomPadding > 0.dp) it.padding(bottom = homeBottomPadding) else it }
+              ) {
+                LibReferenceTreemapContent(
+                  references = displayed,
+                  colorfulRuleIcon = viewModel.colorfulRuleIcon,
+                  aggregateSmallReferences = true,
+                  onReferenceClick = onOpenReference
+                )
+              }
+
+              ReferenceDisplayMode.List -> PullToRefresh(
+                isRefreshing = isRefreshing,
+                onRefresh = {
+                  isRefreshing = true
+                  viewModel.requestComputeReference(isVisible = true, needShowLoading = true)
+                },
+                pullToRefreshState = pullToRefreshState,
+                topAppBarScrollBehavior = scrollBehavior,
+                contentPadding = PaddingValues(top = padding.calculateTopPadding() + 6.dp),
+                refreshTexts = rememberMiuixRefreshTexts(),
+                modifier = Modifier.fillMaxSize()
+              ) {
+                WideContentBox { sidePadding ->
+                  LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                      .fillMaxSize()
+                      .horizontalCutoutPadding()
+                      .adaptiveVerticalScroll(scrollBehavior),
+                    contentPadding = PaddingValues(
+                      top = padding.calculateTopPadding() + 6.dp,
+                      start = sidePadding,
+                      end = sidePadding
+                    )
+                  ) {
+                    items(items = displayed, key = { "${it.type}:${it.libName}" }) { reference ->
+                      ReferenceRow(reference = reference, onClick = { onOpenReference(reference) })
+                    }
+                    item {
+                      Spacer(
+                        if (homeBottomPadding > 0.dp) {
+                          Modifier.height(24.dp + homeBottomPadding)
+                        } else {
+                          Modifier
+                            .height(24.dp)
+                            .navigationBarsPadding()
+                        }
+                      )
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
-    )
 
-    Box(
-      Modifier
-        .weight(1f)
-        .imePadding()
-    ) {
-      when {
-        isLoading && displayed.isEmpty() -> LcLoadingState(
-          message = stringResource(R.string.loading)
+      AdaptiveSearchOverlay(
+        config = TopBarSearchConfig(
+          state = searchState,
+          label = stringResource(R.string.search_hint)
         )
-
-        displayed.isEmpty() -> LcEmptyState(
-          title = if (easterEgg) "🥚" else stringResource(R.string.empty_list)
-        )
-
-        else -> if (treemapEnabled) {
-          LibReferenceTreemapContent(
-            references = displayed,
-            colorfulRuleIcon = viewModel.colorfulRuleIcon,
-            onReferenceClick = onOpenReference
+      ) { activeQuery ->
+        val searchListState = rememberLazyListState()
+        val results = searchResult.orEmpty()
+        val isSearchLoading = (isLoading && displayed.isEmpty()) ||
+          searchResult == null ||
+          (settledSearchQuery != activeQuery && (activeQuery.isNotEmpty() || results.isEmpty()))
+        LaunchedEffect(activeQuery) {
+          searchListState.scrollToItem(0)
+        }
+        if (isSearchLoading) {
+          CoverFlowReferenceLoading(
+            message = stringResource(R.string.loading),
+            progress = loadingState.overallProgress?.takeIf { it > 0 }?.let { it / 100f }
           )
-        } else PullToRefresh(
-          isRefreshing = isRefreshing,
-          onRefresh = {
-            isRefreshing = true
-            viewModel.requestComputeReference(isVisible = true, needShowLoading = true)
-          },
-          pullToRefreshState = pullToRefreshState,
-          topAppBarScrollBehavior = scrollBehavior,
-          modifier = Modifier.fillMaxSize()
-        ) {
+        } else if (results.isEmpty()) {
+          LcEmptyState(title = if (easterEgg) "🥚" else stringResource(R.string.empty_list))
+        } else {
           WideContentBox { sidePadding ->
-          LazyColumn(
-            state = listState,
-            modifier = Modifier
-              .fillMaxSize()
-              .scrollEndHaptic()
-              .overScrollVertical()
-              .nestedScroll(scrollBehavior.nestedScrollConnection),
-            contentPadding = PaddingValues(
-              top = 6.dp,
-              start = sidePadding,
-              end = sidePadding
-            )
-          ) {
-            items(items = displayed, key = { "${it.type}:${it.libName}" }) { reference ->
-              ReferenceRow(reference = reference, onClick = { onOpenReference(reference) })
-            }
-            item {
-              Spacer(
-                Modifier
-                  .height(24.dp)
-                  .navigationBarsPadding()
+            LazyColumn(
+              state = searchListState,
+              modifier = Modifier
+                .fillMaxSize()
+                .horizontalCutoutPadding()
+                .adaptiveVerticalScroll(),
+              contentPadding = PaddingValues(
+                top = 6.dp,
+                start = sidePadding,
+                end = sidePadding
               )
+            ) {
+              items(items = results, key = { "${it.type}:${it.libName}" }) { reference ->
+                ReferenceRow(reference = reference, onClick = { onOpenReference(reference) })
+              }
+              item {
+                Spacer(
+                  if (homeBottomPadding > 0.dp) {
+                    Modifier.height(24.dp + homeBottomPadding)
+                  } else {
+                    Modifier
+                      .height(24.dp)
+                      .navigationBarsPadding()
+                  }
+                )
+              }
             }
           }
-        }
         }
       }
     }
   }
 }
 
+private enum class ReferenceDisplayMode {
+  Loading,
+  Empty,
+  Treemap,
+  List
+}
+
 @Composable
-private fun ReferenceRow(reference: LibReference, onClick: () -> Unit) {
+internal fun ReferenceRow(
+  reference: LibReference,
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier
+    .fillMaxWidth()
+    .padding(horizontal = 12.dp)
+    .padding(bottom = 12.dp),
+  labelSuffix: String? = null
+) {
   val colorScheme = MiuixTheme.colorScheme
-  val label = reference.rule?.label
+  val baseLabel = reference.rule?.label
     ?: reference.resolvedLabel
     ?: stringResource(R.string.not_marked_lib)
+  val label = if (!labelSuffix.isNullOrBlank()) "$baseLabel $labelSuffix" else baseLabel
   val iconRes = resolveReferenceIcon(reference.libName, reference.type, reference.rule)
   val placeholder = remember { ColorPainter(colorScheme.surfaceContainerHigh) }
   Card(
-    modifier = Modifier
-      .fillMaxWidth()
-      .padding(horizontal = 12.dp)
-      .padding(bottom = 12.dp),
+    modifier = modifier,
     onClick = onClick,
     showIndication = true,
     insideMargin = PaddingValues(start = 10.dp, end = 16.dp, top = 10.dp, bottom = 10.dp)
@@ -317,38 +447,4 @@ private fun ReferenceRow(reference: LibReference, onClick: () -> Unit) {
       )
     }
   }
-}
-
-@Composable
-private fun buildReferenceMenuEntries(
-  options: Int,
-  onToggleOption: (Int, Boolean) -> Unit
-): List<DropdownEntry> {
-  val filters = listOf(
-    LibReferenceOptions.NATIVE_LIBS to stringResource(R.string.ref_category_native),
-    LibReferenceOptions.SERVICES to stringResource(R.string.ref_category_service),
-    LibReferenceOptions.ACTIVITIES to stringResource(R.string.ref_category_activity),
-    LibReferenceOptions.RECEIVERS to stringResource(R.string.ref_category_br),
-    LibReferenceOptions.PROVIDERS to stringResource(R.string.ref_category_cp),
-    LibReferenceOptions.METADATA to stringResource(R.string.ref_category_metadata),
-    LibReferenceOptions.PACKAGES to stringResource(R.string.ref_category_package),
-    LibReferenceOptions.SHARED_UID to stringResource(R.string.ref_category_shared_uid),
-    LibReferenceOptions.ONLY_NOT_MARKED to stringResource(R.string.ref_category_only_not_marked)
-  )
-  return listOf(
-    DropdownEntry(
-      items = listOf(
-        DropdownItem(
-          text = stringResource(R.string.menu_filter),
-          children = filters.map { (option, label) ->
-            DropdownItem(
-              text = label,
-              selected = options and option != 0,
-              onClick = { onToggleOption(option, options and option == 0) }
-            )
-          }
-        )
-      )
-    )
-  )
 }

@@ -9,6 +9,8 @@ import com.absinthe.libchecker.domain.snapshot.comparison.usecase.CompareSnapsho
 import com.absinthe.libchecker.domain.snapshot.comparison.usecase.CompareSnapshotItemsUseCase
 import com.absinthe.libchecker.domain.snapshot.comparison.usecase.CompareSnapshotListsUseCase
 import com.absinthe.libchecker.domain.snapshot.comparison.usecase.CompareSnapshotWithInstalledAppsUseCase
+import com.absinthe.libchecker.domain.snapshot.list.usecase.BuildSnapshotTimeNodeListDataUseCase
+import com.absinthe.libchecker.domain.snapshot.timenode.usecase.ComputeSnapshotContributionsUseCase
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -28,7 +30,9 @@ val snapshotComparisonModule = module {
       compareSnapshotDiffs = get(),
       snapshotRepository = get(),
       formatSnapshotTimestampUseCase = get(),
-      comparisonWorkflow = get()
+      comparisonWorkflow = get(),
+      buildSnapshotTimeNodeListDataUseCase = get(),
+      computeSnapshotContributionsUseCase = get()
     )
   }
 }

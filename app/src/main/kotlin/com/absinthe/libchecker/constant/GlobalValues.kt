@@ -72,6 +72,9 @@ object GlobalValues {
 
   var isBlurDesign: Boolean by SPDelegates(Constants.PREF_BLUR_DESIGN, false)
   var isFloatingNavBar: Boolean by SPDelegates(Constants.PREF_FLOATING_NAV_BAR, false)
+  var isMiuixOs4: Boolean by SPDelegates(Constants.PREF_MIUIX_OS4, false)
+  var isUseCustomFont: Boolean by SPDelegates(Constants.PREF_USE_CUSTOM_FONT, false)
+  var isBottomBarSearch: Boolean by SPDelegates(Constants.PREF_BOTTOM_BAR_SEARCH, false)
 
   val isAnonymousAnalyticsEnabled: Boolean by SPDelegates(Constants.PREF_ANONYMOUS_ANALYTICS, true)
 

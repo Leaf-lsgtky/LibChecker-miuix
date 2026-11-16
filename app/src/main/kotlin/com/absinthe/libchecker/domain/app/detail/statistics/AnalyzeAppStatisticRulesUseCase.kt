@@ -25,7 +25,7 @@ class AnalyzeAppStatisticRulesUseCase(
   ): List<AppStatisticRuleAnalysis> {
     val coroutineContext = currentCoroutineContext()
     onProgress(0)
-    val definitions = getSelectedOfficialDefinitions()
+    val definitions = getOfficialDefinitions(allowRemoteRefresh = true)
     coroutineContext.ensureActive()
     if (definitions.isEmpty()) {
       onProgress(100)
@@ -65,11 +65,20 @@ class AnalyzeAppStatisticRulesUseCase(
   }
 
   suspend fun hasSelectedRules(): Boolean {
-    return getSelectedOfficialDefinitions().isNotEmpty()
+    return getOfficialDefinitions(allowRemoteRefresh = true).isNotEmpty()
   }
 
-  private suspend fun getSelectedOfficialDefinitions(): List<StatisticDefinition> {
-    return catalogRepository.getSelectedStatistics()
+  private suspend fun getOfficialDefinitions(allowRemoteRefresh: Boolean): List<StatisticDefinition> {
+    val selectedOfficial = catalogRepository.getSelectedStatistics()
+      .filter { definition -> definition.source == StatisticSource.OFFICIAL }
+    val availableOfficial = catalogRepository.getAvailableStatistics()
+      .filter { definition -> definition.source == StatisticSource.OFFICIAL }
+    val combined = (selectedOfficial + availableOfficial).distinctBy(StatisticDefinition::id)
+    if (combined.isNotEmpty() || !allowRemoteRefresh) {
+      return combined
+    }
+    return catalogRepository.refreshAvailableStatistics()
+      .orEmpty()
       .filter { definition -> definition.source == StatisticSource.OFFICIAL }
   }
 

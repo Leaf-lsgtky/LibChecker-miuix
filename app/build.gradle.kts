@@ -147,6 +147,7 @@ dependencies {
   implementation(libs.kotlinX.coroutines)
   implementation(platform(libs.koin.bom))
   implementation(libs.koin.android)
+  implementation(libs.koin.compose.viewmodel)
   implementation(libs.androidX.core)
   implementation(libs.androidX.activity)
   implementation(libs.androidX.appfunctions)
@@ -208,7 +209,18 @@ dependencies {
   implementation(libs.androidX.compose.ui.tooling.preview)
   implementation(libs.androidX.lifecycle.runtime.compose)
   implementation(libs.androidX.lifecycle.viewmodel.compose)
+  implementation(libs.miuix.blur)
+  implementation(libs.miuix.core)
+  implementation(libs.miuix.glass)
+  implementation(libs.miuix.glass.icons)
   implementation(libs.miuix.icons)
+  implementation(libs.miuix.nav) {
+    // The navigation runtime is independently released. Use the squircle implementation
+    // already supplied by the UI snapshot instead of changing the app's glass renderer.
+    exclude(group = "top.yukonga.miuix.kmp", module = "miuix-squircle")
+    exclude(group = "top.yukonga.miuix.kmp", module = "miuix-squircle-android")
+  }
+  implementation(libs.miuix.material)
   implementation(libs.miuix.preference)
   implementation(libs.miuix.ui)
   debugImplementation(libs.androidX.compose.ui.tooling)

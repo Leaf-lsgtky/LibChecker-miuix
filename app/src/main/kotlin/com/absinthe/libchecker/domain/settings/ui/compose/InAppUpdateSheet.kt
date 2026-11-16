@@ -1,5 +1,8 @@
 package com.absinthe.libchecker.domain.settings.ui.compose
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,10 +41,15 @@ import com.absinthe.libchecker.domain.settings.model.showInstallProgress
 import com.absinthe.libchecker.domain.settings.presentation.SettingsViewModel
 import com.absinthe.libchecker.domain.snapshot.list.model.SnapshotItemCardPresentation
 import com.absinthe.libchecker.domain.snapshot.list.usecase.BuildSnapshotItemDisplayDataUseCase
-import com.absinthe.libchecker.ui.compose.component.LcLoadingState
+import com.absinthe.libchecker.ui.compose.component.SheetCardListSkeleton
+import com.absinthe.libchecker.ui.compose.util.sheetContentSafePadding
+import com.absinthe.libchecker.ui.compose.util.sheetHeightTransition
 import com.absinthe.libchecker.utils.showToast
 import kotlinx.coroutines.launch
 import org.koin.core.context.GlobalContext
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.squircle.squircleBackground
@@ -156,8 +164,9 @@ fun InAppUpdateSheet(
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(horizontal = 16.dp)
         .padding(bottom = 16.dp)
+        .sheetContentSafePadding()
+        .sheetHeightTransition()
     ) {
       Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         ChannelChip(
@@ -174,44 +183,54 @@ fun InAppUpdateSheet(
         )
       }
       Spacer(Modifier.height(12.dp))
-      when (val content = state.content) {
-        is InAppUpdateDialogContent.Loading -> {
-          Box(
-            Modifier
-              .fillMaxWidth()
-              .height(160.dp)
+      val contentState = state.content
+      var lastReady by remember {
+        mutableStateOf<InAppUpdateDialogContent.Ready?>(null)
+      }
+      if (contentState is InAppUpdateDialogContent.Ready) {
+        lastReady = contentState
+      }
+      Crossfade(
+        targetState = contentState is InAppUpdateDialogContent.Loading,
+        animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing),
+        label = "InAppUpdateSheetTransition"
+      ) { isLoading ->
+        if (isLoading) {
+          SheetCardListSkeleton(
+            rowCount = 3,
+            showIcon = false,
+            twoLine = true
+          )
+        } else {
+          val item = lastReady?.item
+          Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.defaultColors(
+              color = MiuixTheme.colorScheme.onSurface.copy(alpha = 0.04f)
+            ),
+            insideMargin = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
           ) {
-            LcLoadingState(message = stringResource(R.string.loading))
-          }
-        }
-
-        is InAppUpdateDialogContent.Ready -> {
-          val item = content.item
-          Column(
-            modifier = Modifier
-              .fillMaxWidth()
-              .squircleBackground(MiuixTheme.colorScheme.surfaceContainerHigh, 16.dp)
-              .padding(horizontal = 16.dp, vertical = 12.dp)
-          ) {
-            Text(
-              text = item?.appName?.text?.toString()
-                ?: stringResource(R.string.settings_get_updates),
-              fontWeight = FontWeight(600),
-              color = MiuixTheme.colorScheme.onSurface
-            )
-            if (item != null) {
-              Spacer(Modifier.height(2.dp))
+            Column(Modifier.fillMaxWidth()) {
               Text(
-                text = item.packageName,
-                fontSize = 12.sp,
-                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                text = item?.appName?.text?.toString()
+                  ?: stringResource(R.string.settings_get_updates),
+                fontWeight = FontWeight(600),
+                color = MiuixTheme.colorScheme.onSurface
               )
-              Spacer(Modifier.height(2.dp))
-              Text(
-                text = item.versionInfo.toString(),
-                fontSize = 12.sp,
-                color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-              )
+              if (item != null) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                  text = item.packageName,
+                  style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
+                  color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                  text = item.versionInfo.toString(),
+                  style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
+                  color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+                )
+              }
             }
           }
         }
@@ -221,7 +240,8 @@ fun InAppUpdateSheet(
         text = stringResource(R.string.rules_btn_update),
         onClick = { install() },
         enabled = state.isUpdateEnabled,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.textButtonColorsPrimary()
       )
     }
   }
@@ -240,8 +260,8 @@ private fun ChannelChip(
       .squircleBackground(
         when {
           selected -> colorScheme.onSurface
-          enabled -> colorScheme.surfaceContainerHigh
-          else -> colorScheme.surfaceContainer
+          enabled -> colorScheme.onSurface.copy(alpha = 0.06f)
+          else -> colorScheme.onSurface.copy(alpha = 0.03f)
         },
         14.dp
       )
@@ -250,8 +270,7 @@ private fun ChannelChip(
   ) {
     Text(
       text = label,
-      fontSize = 13.sp,
-      fontWeight = FontWeight(550),
+      style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
       color = when {
         selected -> colorScheme.surface
         enabled -> colorScheme.onSurface

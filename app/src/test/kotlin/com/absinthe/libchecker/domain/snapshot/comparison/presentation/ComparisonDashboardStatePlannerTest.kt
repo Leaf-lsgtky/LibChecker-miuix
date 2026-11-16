@@ -94,4 +94,34 @@ class ComparisonDashboardStatePlannerTest {
     )
     assertEquals(state.right, updatedState.right)
   }
+
+  @Test
+  fun preservesUnchangedSideAppsCountWhenSelectingOtherSide() {
+    val leftLoaded = ComparisonDashboardStatePlanner.planState(
+      inputs = SnapshotComparisonInputs(
+        left = SnapshotComparisonInput.snapshot(1680000000000L)
+      ),
+      labels = labels,
+      formatTimestamp = { "2026-06-11, 20:26:22" }
+    ).withAppsCountText(
+      side = SnapshotComparisonSide.LEFT,
+      appsCountText = "619",
+      labels = labels
+    )
+
+    val withRightSelected = ComparisonDashboardStatePlanner.planState(
+      inputs = SnapshotComparisonInputs(
+        left = SnapshotComparisonInput.snapshot(1680000000000L),
+        right = SnapshotComparisonInput.snapshot(1680001000000L)
+      ),
+      labels = labels,
+      formatTimestamp = { ts ->
+        if (ts == 1680000000000L) "2026-06-11, 20:26:22" else "2026-06-11, 20:43:02"
+      },
+      previousState = leftLoaded
+    )
+
+    assertEquals("619", withRightSelected.left.appsCountText)
+    assertEquals("0", withRightSelected.right.appsCountText)
+  }
 }

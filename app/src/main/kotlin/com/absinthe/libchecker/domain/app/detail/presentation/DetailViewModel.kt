@@ -22,13 +22,13 @@ import com.absinthe.libchecker.domain.app.detail.model.AppBundleItem
 import com.absinthe.libchecker.domain.app.detail.model.AppInstallSourceBottomSheetDisplay
 import com.absinthe.libchecker.domain.app.detail.model.AppInstallSourceRequesterAccess
 import com.absinthe.libchecker.domain.app.detail.model.AppPropItem
-import com.absinthe.libchecker.domain.app.detail.resource.AppResourcePreview
 import com.absinthe.libchecker.domain.app.detail.model.LibStringItem
 import com.absinthe.libchecker.domain.app.detail.model.LibStringItemChip
 import com.absinthe.libchecker.domain.app.detail.model.buildComponentMenuState
 import com.absinthe.libchecker.domain.app.detail.navigation.DetailReferenceNavigation
 import com.absinthe.libchecker.domain.app.detail.packageinfo.GetAppDetailPackageUseCase
 import com.absinthe.libchecker.domain.app.detail.presentation.content.DetailContentLoader
+import com.absinthe.libchecker.domain.app.detail.resource.AppResourcePreview
 import com.absinthe.libchecker.domain.app.detail.statistics.AnalyzeAppStatisticRulesUseCase
 import com.absinthe.libchecker.domain.app.detail.statistics.AppStatisticAnalysisState
 import com.absinthe.libchecker.domain.app.model.VersionedFeature
@@ -535,8 +535,7 @@ class DetailViewModel(
 
   suspend fun getPermissionDetail(permissionName: String) = detailActionLoader.getPermissionDetail(permissionName)
 
-  suspend fun getPermissionProviders(permissionName: String) =
-    detailActionLoader.getPermissionProviders(permissionName)
+  suspend fun getPermissionProviders(permissionName: String) = detailActionLoader.getPermissionProviders(permissionName)
 
   fun initAbilities(packageName: String) {
     detailContentLoader.initAbilities(viewModelScope, packageName)

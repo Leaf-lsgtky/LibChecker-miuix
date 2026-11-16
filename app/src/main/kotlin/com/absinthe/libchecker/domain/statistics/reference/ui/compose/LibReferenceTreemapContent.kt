@@ -14,6 +14,7 @@ import com.absinthe.libchecker.domain.statistics.reference.ui.view.LibReferenceT
 fun LibReferenceTreemapContent(
   references: List<LibReference>,
   colorfulRuleIcon: Boolean,
+  aggregateSmallReferences: Boolean = true,
   onReferenceClick: (LibReference) -> Unit,
   modifier: Modifier = Modifier
 ) {
@@ -29,7 +30,11 @@ fun LibReferenceTreemapContent(
     },
     update = { view ->
       view.colorfulRuleIcon = colorfulRuleIcon
-      view.submitReferences(references, animate = true, aggregateSmallReferences = false)
+      view.submitReferences(
+        references,
+        animate = true,
+        aggregateSmallReferences = aggregateSmallReferences
+      )
     }
   )
 }

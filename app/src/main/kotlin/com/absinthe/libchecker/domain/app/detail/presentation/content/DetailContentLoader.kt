@@ -3,13 +3,13 @@ package com.absinthe.libchecker.domain.app.detail.presentation.content
 import com.absinthe.libchecker.database.entity.Features
 import com.absinthe.libchecker.domain.app.detail.content.DetailContentResolver
 import com.absinthe.libchecker.domain.app.detail.model.LibStringItemChip
+import com.absinthe.libchecker.domain.app.detail.model.MODE_SORT_BY_SIZE
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailContentState
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailFeatureState
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailLoadJobsState
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailPackageState
 import com.absinthe.libchecker.domain.app.detail.trace.TRACE_DETAIL_NATIVE_INIT_USE_CASE
 import com.absinthe.libchecker.domain.app.detail.trace.traceDetailSection
-import com.absinthe.libchecker.domain.app.detail.model.MODE_SORT_BY_SIZE
 import com.absinthe.libchecker.domain.app.model.VersionedFeature
 import com.absinthe.libchecker.domain.app.repository.AppDetailSettingsRepository
 import com.absinthe.libchecker.utils.UiUtils
@@ -91,6 +91,7 @@ class DetailContentLoader(
       return
     }
     contentState.nativeLibItemsFor(tab)?.let {
+      contentState.nativeLibItems.value = null
       nativeChipJob = scope.launch(Dispatchers.IO) {
         val items = contentResolver.buildChipList(
           packageInfo = packageState.packageInfo,

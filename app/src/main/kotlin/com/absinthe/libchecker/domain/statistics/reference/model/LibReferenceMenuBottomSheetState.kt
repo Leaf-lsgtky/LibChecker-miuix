@@ -58,6 +58,25 @@ fun buildLibReferenceMenuBottomSheetState(
   )
 }
 
+private const val ALL_DEMO_OPTIONS =
+  LibReferenceOptions.NATIVE_LIBS or
+    LibReferenceOptions.SERVICES or
+    LibReferenceOptions.ACTIVITIES or
+    LibReferenceOptions.RECEIVERS or
+    LibReferenceOptions.PROVIDERS or
+    LibReferenceOptions.ACTION or
+    LibReferenceOptions.PERMISSIONS or
+    LibReferenceOptions.METADATA or
+    LibReferenceOptions.PACKAGES or
+    LibReferenceOptions.SHARED_UID
+
+fun buildLibReferenceDemoCatalog(
+  demoIconPackages: List<PackageInfo> = emptyList()
+): List<LibReference> = buildLibReferenceDemoItems(
+  currentOptions = ALL_DEMO_OPTIONS,
+  demoIconPackages = demoIconPackages
+)
+
 private fun buildLibReferenceDemoItems(
   currentOptions: Int,
   demoIconPackages: List<PackageInfo>

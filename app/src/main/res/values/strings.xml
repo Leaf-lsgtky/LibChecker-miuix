@@ -426,12 +426,22 @@
   <string name="blur_design_summary">Provides more blur effects throughout the interface</string>
   <string name="floating_nav_bar">Floating navigation</string>
   <string name="floating_nav_bar_summary">Show the navigation bar in a floating style</string>
+  <string name="bottom_bar_search">Bottom bar search</string>
+  <string name="bottom_bar_search_summary">Show a search button in the bottom navigation bar</string>
+  <string name="miuix_ui_version">Miuix UI style</string>
+  <string name="miuix_ui_version_summary">Choose between OS3 and OS4 liquid glass styles</string>
+  <string name="miuix_ui_os3">OS3</string>
+  <string name="miuix_ui_os4">OS4</string>
   <string name="lib_reference_switch_to_treemap">Switch to treemap</string>
   <string name="lib_reference_switch_to_list">Switch to list</string>
   <string name="lib_reference_other">Other</string>
   <string name="lib_reference_other_description">Other: %1$d libraries, %2$d references</string>
-  <string name="legacy_snapshot_detail">Legacy snapshot detail page</string>
-  <string name="legacy_snapshot_detail_summary">Use the classic card layout for snapshot details</string>
+  <string name="legacy_snapshot_detail">Previous snapshot detail layout</string>
+  <string name="legacy_snapshot_detail_summary">Use the previous layout with status and change badges</string>
+  <string name="snapshot_detail_previous_path">Previous path</string>
+  <string name="snapshot_detail_class_count_label">Classes</string>
+  <string name="use_custom_font">Use custom font</string>
+  <string name="use_custom_font_summary">Use condensed and monospace fonts for version info, paths, and counters</string>
   <string name="app_function_details">AppFunctions is an Android platform API with an accompanying Jetpack library to simplify Android MCP integration.</string>
   <string name="about_open_source_licenses">Open source licenses</string>
   <string name="about_open_source_licenses_summary">Third-party libraries used by this app</string>
@@ -477,4 +487,9 @@
   <string name="recent_visits_pinned">Pinned</string>
   <string name="snapshot_contribution_view_snapshot">View snapshot</string>
   <string name="action_back">Back</string>
+  <string name="pull_to_refresh_pull_down">Pull down to refresh</string>
+  <string name="pull_to_refresh_release">Release to refresh</string>
+  <string name="pull_to_refresh_refreshing">Refreshing…</string>
+  <string name="pull_to_refresh_complete">Refreshed successfully</string>
+  <string name="fast_scroll">Quick scroll</string>
 </resources>

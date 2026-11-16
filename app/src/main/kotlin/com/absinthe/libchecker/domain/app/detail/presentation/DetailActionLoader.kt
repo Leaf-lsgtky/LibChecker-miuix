@@ -21,8 +21,6 @@ import com.absinthe.libchecker.domain.app.detail.action.DetailItemElfInfoAction
 import com.absinthe.libchecker.domain.app.detail.action.DetailItemLongClickActions
 import com.absinthe.libchecker.domain.app.detail.action.DetailItemReferenceAction
 import com.absinthe.libchecker.domain.app.detail.action.DetailItemResolver
-import com.absinthe.libchecker.domain.app.detail.resource.AppResourcePreview
-import com.absinthe.libchecker.domain.app.detail.resource.ResolveAppResourceValueUseCase
 import com.absinthe.libchecker.domain.app.detail.action.ExportAppPackageShareFileUseCase
 import com.absinthe.libchecker.domain.app.detail.action.ExtractNativeLibraryUseCase
 import com.absinthe.libchecker.domain.app.detail.action.OverlayDetailResult
@@ -45,6 +43,8 @@ import com.absinthe.libchecker.domain.app.detail.model.XposedInfoBottomSheetDisp
 import com.absinthe.libchecker.domain.app.detail.navigation.DetailReferenceNavigation
 import com.absinthe.libchecker.domain.app.detail.related.RelatedAppDisplayData
 import com.absinthe.libchecker.domain.app.detail.related.buildRelatedAppDisplayData
+import com.absinthe.libchecker.domain.app.detail.resource.AppResourcePreview
+import com.absinthe.libchecker.domain.app.detail.resource.ResolveAppResourceValueUseCase
 import com.absinthe.libchecker.domain.app.repository.InstalledAppRepository
 import java.io.File
 import kotlinx.coroutines.async
@@ -179,8 +179,7 @@ class DetailActionLoader(
 
   suspend fun getElfDetail(packageName: String, elfPath: String) = itemResolver.getElfDetail(packageName, elfPath)
 
-  suspend fun getPermissionProviders(permissionName: String) =
-    itemResolver.getPermissionProviders(permissionName)
+  suspend fun getPermissionProviders(permissionName: String) = itemResolver.getPermissionProviders(permissionName)
 
   suspend fun getLibraryDetailDialogHeader(
     libName: String,

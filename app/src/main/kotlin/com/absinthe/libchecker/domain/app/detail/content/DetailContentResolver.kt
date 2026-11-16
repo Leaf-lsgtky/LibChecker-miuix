@@ -55,6 +55,7 @@ import com.absinthe.libchecker.utils.elf.NativeLibraryAnalyzer.STRING_ABI_MAP
 import com.absinthe.libchecker.utils.elf.NativeLibraryAnalyzer.is16KBAligned
 import com.absinthe.libchecker.utils.extensions.getStatefulPermissionsList
 import com.absinthe.libchecker.utils.extensions.maybeResourceId
+import com.absinthe.libchecker.utils.extensions.sizeToString
 import com.absinthe.libchecker.utils.harmony.ApplicationDelegate
 import com.absinthe.libchecker.utils.manifest.ApplicationReader
 import com.absinthe.rulesbundle.Rule
@@ -687,7 +688,7 @@ class DetailContentResolver(
   ): NativeLibraryItemDisplayData {
     val elfInfo = item.elfInfo
     return NativeLibraryItemDisplayData(
-      sizeText = PackageInfoFormatter.sizeToString(context, item),
+      sizeText = item.size.sizeToString(context, showBytes = false),
       labels = buildList {
         if (elfInfo.elfType != ET_NOT_SET && elfInfo.elfType != ET_DYN) {
           add(PackageInfoFormatter.elfTypeToString(elfInfo.elfType))

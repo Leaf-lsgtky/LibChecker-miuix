@@ -4,26 +4,26 @@ import android.content.Intent
 import android.content.pm.PackageInfo
 import android.net.Uri
 import android.os.Bundle
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.absinthe.libchecker.R
 import com.absinthe.libchecker.compat.IntentCompat
+import com.absinthe.libchecker.database.entity.Features
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel.ApkAnalysisPackageResult
-import com.absinthe.libchecker.database.entity.Features
 import com.absinthe.libchecker.domain.app.detail.ui.compose.AppDetailScreen
-import com.absinthe.libchecker.domain.snapshot.detail.ui.launchSnapshotDetail
-import androidx.compose.runtime.LaunchedEffect
 import com.absinthe.libchecker.domain.app.model.VersionedFeature
 import com.absinthe.libchecker.domain.app.packageinfo.PrepareApkAnalysisPackageUseCase
+import com.absinthe.libchecker.domain.snapshot.detail.ui.launchSnapshotDetail
 import com.absinthe.libchecker.ui.base.BaseComposeActivity
-import com.absinthe.libchecker.ui.compose.component.LcLoadingState
+import com.absinthe.libchecker.ui.compose.component.AppDetailSkeleton
 import com.absinthe.libchecker.utils.extensions.requireAvailableCacheDir
 import com.absinthe.libchecker.utils.showToast
 import kotlinx.coroutines.launch
@@ -112,38 +112,42 @@ class ApkDetailActivity : BaseComposeActivity() {
   @Composable
   override fun Content() {
     val packageInfo = packageInfoState
-    if (packageInfo == null) {
-      Box(Modifier.fillMaxSize()) {
-        LcLoadingState()
-      }
-    } else {
-      LaunchedEffect(packageInfo.packageName) {
-        canCompareWithInstalled = runCatching {
-          viewModel.isInstalledAppComparisonAvailable(packageInfo.packageName)
-        }.getOrDefault(false)
-      }
-      AppDetailScreen(
-        viewModel = viewModel,
-        packageInfo = packageInfo,
-        onCompareWithInstalled = if (canCompareWithInstalled) {
-          {
-            lifecycleScope.launch {
-              val base = viewModel.loadInstalledAppComparisonPackage(packageInfo.packageName)
-              if (base == null) {
-                showToast(R.string.toast_cant_open_app)
-                return@launch
-              }
-              val diff = viewModel.buildPackageComparisonSnapshotItem(base, packageInfo)
-              if (diff != null) {
-                launchSnapshotDetail(this@ApkDetailActivity, diff)
+    Crossfade(
+      targetState = packageInfo,
+      animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
+      label = "ApkDetailLoadTransition"
+    ) { resolvedPackage ->
+      if (resolvedPackage == null) {
+        AppDetailSkeleton(onBack = { onBackPressedDispatcher.onBackPressed() })
+      } else {
+        LaunchedEffect(resolvedPackage.packageName) {
+          canCompareWithInstalled = runCatching {
+            viewModel.isInstalledAppComparisonAvailable(resolvedPackage.packageName)
+          }.getOrDefault(false)
+        }
+        AppDetailScreen(
+          viewModel = viewModel,
+          packageInfo = resolvedPackage,
+          onCompareWithInstalled = if (canCompareWithInstalled) {
+            {
+              lifecycleScope.launch {
+                val base = viewModel.loadInstalledAppComparisonPackage(resolvedPackage.packageName)
+                if (base == null) {
+                  showToast(R.string.toast_cant_open_app)
+                  return@launch
+                }
+                val diff = viewModel.buildPackageComparisonSnapshotItem(base, resolvedPackage)
+                if (diff != null) {
+                  launchSnapshotDetail(this@ApkDetailActivity, diff)
+                }
               }
             }
-          }
-        } else {
-          null
-        },
-        onBack = { onBackPressedDispatcher.onBackPressed() }
-      )
+          } else {
+            null
+          },
+          onBack = { onBackPressedDispatcher.onBackPressed() }
+        )
+      }
     }
   }
 }

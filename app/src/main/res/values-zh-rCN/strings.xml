@@ -401,8 +401,14 @@
   <string name="lib_reference_switch_to_list">切换为列表</string>
   <string name="lib_reference_other">其他</string>
   <string name="lib_reference_other_description">其他：%1$d 个库，%2$d 次引用</string>
-  <string name="legacy_snapshot_detail">旧式快照详情页面</string>
-  <string name="legacy_snapshot_detail_summary">使用经典卡片布局显示快照详情</string>
+  <string name="legacy_snapshot_detail">旧版快照详情页面</string>
+  <string name="legacy_snapshot_detail_summary">使用带状态和变化量标签的上一版布局</string>
+  <string name="snapshot_detail_previous_path">原路径</string>
+  <string name="snapshot_detail_class_count_label">类数</string>
+  <string name="bottom_bar_search">底栏搜索</string>
+  <string name="bottom_bar_search_summary">在底部导航栏显示搜索按钮</string>
+  <string name="use_custom_font">使用自定义字体</string>
+  <string name="use_custom_font_summary">为版本信息、组件路径与统计数值使用经典紧凑和等宽字体</string>
   <string name="app_function_details">AppFunctions 是 Android 平台 API，并提供配套的 Jetpack 库，用于简化 Android 的 MCP 集成。</string>
   <string name="app_prop_transform">显示解析后的值</string>
   <string name="app_prop_restore">显示原始值</string>
@@ -428,4 +434,9 @@
   <string name="recent_visits_pinned">已固定</string>
   <string name="snapshot_contribution_view_snapshot">查看该快照</string>
   <string name="action_back">返回</string>
+  <string name="pull_to_refresh_pull_down">下拉刷新</string>
+  <string name="pull_to_refresh_release">释放立即刷新</string>
+  <string name="pull_to_refresh_refreshing">正在刷新…</string>
+  <string name="pull_to_refresh_complete">刷新成功</string>
+  <string name="fast_scroll">快速滚动</string>
 </resources>

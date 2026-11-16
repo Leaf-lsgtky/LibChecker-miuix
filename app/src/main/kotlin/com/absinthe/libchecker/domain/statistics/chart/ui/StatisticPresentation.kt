@@ -6,6 +6,9 @@ import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
 import coil.Coil
 import coil.load
 import coil.request.ImageRequest
@@ -48,6 +51,27 @@ internal suspend fun StatisticIconSpec.resolveDrawable(context: Context): Drawab
       tintedDrawable.setTint(context.getColorByAttr(tintRole.colorAttr))
     }
   } ?: resolvedDrawable
+}
+
+internal fun Drawable.toScaledAspectBitmap(maxPx: Int): ImageBitmap {
+  val safeMax = maxPx.coerceAtLeast(1)
+  val iw = intrinsicWidth
+  val ih = intrinsicHeight
+  val targetWidth: Int
+  val targetHeight: Int
+  if (iw > 0 && ih > 0) {
+    if (iw >= ih) {
+      targetWidth = safeMax
+      targetHeight = ((safeMax.toFloat() * ih / iw).toInt()).coerceAtLeast(1)
+    } else {
+      targetHeight = safeMax
+      targetWidth = ((safeMax.toFloat() * iw / ih).toInt()).coerceAtLeast(1)
+    }
+  } else {
+    targetWidth = safeMax
+    targetHeight = safeMax
+  }
+  return toBitmap(targetWidth, targetHeight).asImageBitmap()
 }
 
 internal val StatisticFacetSpec.summaryTitle: StatisticTitleSpec

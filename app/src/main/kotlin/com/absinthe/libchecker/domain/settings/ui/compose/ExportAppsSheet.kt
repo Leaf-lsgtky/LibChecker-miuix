@@ -28,11 +28,16 @@ import com.absinthe.libchecker.R
 import com.absinthe.libchecker.constant.URLManager
 import com.absinthe.libchecker.domain.settings.model.ExportAppsDialogState
 import com.absinthe.libchecker.domain.settings.presentation.SettingsViewModel
+import com.absinthe.libchecker.ui.compose.util.sheetContentSafePadding
+import com.absinthe.libchecker.ui.compose.util.sheetHeightTransition
 import com.absinthe.libchecker.utils.extensions.openUrlInBrowser
 import com.absinthe.libchecker.utils.showToast
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.LinearProgressIndicator
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
@@ -93,29 +98,43 @@ fun ExportAppsSheet(
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(horizontal = 16.dp)
-        .padding(bottom = 16.dp),
+        .padding(bottom = 16.dp)
+        .sheetContentSafePadding()
+        .sheetHeightTransition(),
       horizontalAlignment = Alignment.CenterHorizontally
     ) {
-      Text(
-        text = stringResource(R.string.export_apps_webui_tip),
-        style = MiuixTheme.textStyles.body2,
-        color = MiuixTheme.colorScheme.onSurfaceVariantSummary
-      )
-      Spacer(Modifier.height(6.dp))
-      TextButton(
-        text = "WebUI",
-        onClick = { context.openUrlInBrowser(URLManager.WEBUI_PAGE) }
-      )
-      Spacer(Modifier.height(12.dp))
-      AsyncImage(
-        model = R.drawable.ic_webui_skeleton_preview,
-        contentDescription = null,
-        contentScale = ContentScale.Fit,
-        modifier = Modifier
-          .fillMaxWidth()
-          .height(170.dp)
-      )
+      Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.defaultColors(
+          color = MiuixTheme.colorScheme.onSurface.copy(alpha = 0.04f)
+        ),
+        insideMargin = PaddingValues(16.dp)
+      ) {
+        Column(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+          Text(
+            text = stringResource(R.string.export_apps_webui_tip),
+            style = MiuixTheme.textStyles.body2,
+            color = MiuixTheme.colorScheme.onSurfaceVariantSummary
+          )
+          Spacer(Modifier.height(6.dp))
+          TextButton(
+            text = "WebUI",
+            onClick = { context.openUrlInBrowser(URLManager.WEBUI_PAGE) }
+          )
+          Spacer(Modifier.height(12.dp))
+          AsyncImage(
+            model = R.drawable.ic_webui_skeleton_preview,
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+              .fillMaxWidth()
+              .height(170.dp)
+          )
+        }
+      }
       val current = state
       if (current is ExportAppsDialogState.Exporting || current == ExportAppsDialogState.Done) {
         Spacer(Modifier.height(16.dp))
@@ -125,9 +144,7 @@ fun ExportAppsSheet(
         }
         LinearProgressIndicator(
           progress = progress / 100f,
-          modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp)
+          modifier = Modifier.fillMaxWidth()
         )
       }
       Spacer(Modifier.height(16.dp))
@@ -150,9 +167,9 @@ fun ExportAppsSheet(
           }
         },
         enabled = current == ExportAppsDialogState.Ready || current == ExportAppsDialogState.Done,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.textButtonColorsPrimary()
       )
-      Spacer(Modifier.height(8.dp))
     }
   }
 }

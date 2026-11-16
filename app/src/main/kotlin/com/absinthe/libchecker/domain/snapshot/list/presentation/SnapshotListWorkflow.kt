@@ -204,18 +204,21 @@ class SnapshotListWorkflow(
 
   suspend fun buildSnapshotListUpdatePlan(
     currentItems: List<SnapshotDiffItem>,
-    highlightRefresh: Boolean
+    highlightRefresh: Boolean,
+    searchKeyword: String = ""
   ): BuildSnapshotListUpdatePlanUseCase.Plan {
     val plan = buildSnapshotListUpdatePlanUseCase(
       BuildSnapshotListUpdatePlanUseCase.Request(
         currentItems = currentItems,
         sourceItems = snapshotDiffItems,
-        searchKeyword = snapshotSearchKeyword,
+        searchKeyword = searchKeyword,
         pendingRemovePackageNames = pendingParticleRemovePackageNames.toSet(),
         highlightRefresh = highlightRefresh
       )
     )
-    pendingParticleRemovePackageNames.removeAll(plan.consumedRemovePackageNames)
+    if (searchKeyword.isEmpty()) {
+      pendingParticleRemovePackageNames.removeAll(plan.consumedRemovePackageNames)
+    }
     return plan
   }
 

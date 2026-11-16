@@ -4,6 +4,11 @@
 # Preserve some attributes that may be required for reflection.
 -keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
 
+# Android restores the Miuix page stack through the generated Parcelable entry point.
+-keepclassmembers,allowoptimization class com.absinthe.libchecker.ui.compose.navigation.PageKey {
+    public static final android.os.Parcelable$Creator CREATOR;
+}
+
 # We want to keep methods in Activity that could be used in the XML attribute onClick.
 # -keepclassmembers class * extends android.app.Activity {
 #     public void *(android.view.View);

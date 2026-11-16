@@ -30,7 +30,12 @@ class DetailContentState {
     put(RECEIVER, MutableStateFlow(null))
     put(PROVIDER, MutableStateFlow(null))
   }
-  val abilitiesMap = SparseArray<MutableStateFlow<List<LibStringItemChip>?>>()
+  val abilitiesMap = SparseArray<MutableStateFlow<List<LibStringItemChip>?>>().apply {
+    put(AbilityType.PAGE, MutableStateFlow(null))
+    put(AbilityType.SERVICE, MutableStateFlow(null))
+    put(AbilityType.WEB, MutableStateFlow(null))
+    put(AbilityType.DATA, MutableStateFlow(null))
+  }
 
   var processesMap: Map<String, Int> = emptyMap()
     private set
@@ -113,10 +118,19 @@ class DetailContentState {
   }
 
   fun resetAbilities() {
-    abilitiesMap.put(AbilityType.PAGE, MutableStateFlow(null))
-    abilitiesMap.put(AbilityType.SERVICE, MutableStateFlow(null))
-    abilitiesMap.put(AbilityType.WEB, MutableStateFlow(null))
-    abilitiesMap.put(AbilityType.DATA, MutableStateFlow(null))
+    listOf(
+      AbilityType.PAGE,
+      AbilityType.SERVICE,
+      AbilityType.WEB,
+      AbilityType.DATA
+    ).forEach { type ->
+      val existing = abilitiesMap.get(type)
+      if (existing != null) {
+        existing.value = null
+      } else {
+        abilitiesMap.put(type, MutableStateFlow(null))
+      }
+    }
   }
 
   suspend fun emitAbilities(abilityChips: Map<Int, List<LibStringItemChip>>) {

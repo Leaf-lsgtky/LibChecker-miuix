@@ -6,39 +6,43 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.IBinder
+import android.view.View
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import android.view.View
 import com.absinthe.libchecker.constant.Constants
 import com.absinthe.libchecker.domain.app.list.ui.compose.AppListScreen
 import com.absinthe.libchecker.domain.home.presentation.HomeViewModel
 import com.absinthe.libchecker.domain.home.presentation.RecentVisitsViewModel
 import com.absinthe.libchecker.domain.home.ui.compose.HomeScaffold
 import com.absinthe.libchecker.domain.home.ui.compose.HomeTab
+import com.absinthe.libchecker.domain.home.ui.compose.rememberMainPagerState
 import com.absinthe.libchecker.domain.home.ui.view.RecentVisitItem
 import com.absinthe.libchecker.domain.rules.CloudRulesRepository
 import com.absinthe.libchecker.domain.settings.presentation.SettingsViewModel
+import com.absinthe.libchecker.domain.settings.ui.compose.SettingsScreen
 import com.absinthe.libchecker.domain.snapshot.list.presentation.SnapshotViewModel
 import com.absinthe.libchecker.domain.snapshot.list.ui.compose.SnapshotScreen
 import com.absinthe.libchecker.domain.statistics.reference.presentation.LibReferenceViewModel
 import com.absinthe.libchecker.domain.statistics.reference.ui.compose.ReferenceScreen
-import com.absinthe.libchecker.domain.settings.ui.compose.SettingsScreen
 import com.absinthe.libchecker.services.IWorkerService
 import com.absinthe.libchecker.services.WorkerService
 import com.absinthe.libchecker.ui.base.BaseComposeActivity
-import com.absinthe.libchecker.ui.compose.HomeAppearanceState
+import com.absinthe.libchecker.ui.compose.AppAppearanceStore
 import com.absinthe.libchecker.ui.compose.LocalHomeAppearance
+import com.absinthe.libchecker.ui.compose.component.rememberTopBarSearchState
+import com.absinthe.libchecker.ui.compose.util.rememberIsWideScreen
 import com.absinthe.libchecker.utils.extensions.launchDetailPage
 import com.absinthe.libchecker.utils.extensions.launchLibReferencePage
 import kotlinx.coroutines.flow.launchIn
@@ -135,33 +139,57 @@ class MainActivity : BaseComposeActivity() {
 
   @Composable
   override fun Content() {
-    var selectedTab by rememberSaveable { mutableStateOf(HomeTab.APP_LIST) }
+    val initialTab = remember { pendingTab ?: HomeTab.APP_LIST }
+    val pagerState = rememberPagerState(
+      initialPage = initialTab.ordinal,
+      pageCount = { HomeTab.entries.size }
+    )
+    val mainPagerState = rememberMainPagerState(pagerState)
     val pending = pendingTab
     LaunchedEffect(pending) {
       if (pending != null) {
-        selectedTab = pending
+        if (pending.ordinal != mainPagerState.selectedPage) {
+          mainPagerState.animateToPage(pending.ordinal)
+        }
         pendingTab = null
       }
     }
-    val appearance = remember { HomeAppearanceState() }
+    val appearance = AppAppearanceStore.current
     val appListState = rememberLazyListState()
     val settingsState = rememberLazyListState()
     val referenceState = rememberLazyListState()
     val snapshotState = rememberLazyListState()
-    val appearanceState = rememberLazyListState()
-    var reselectSignal by androidx.compose.runtime.mutableIntStateOf(0)
+    var reselectSignal by remember { mutableIntStateOf(0) }
+    val initialSearchQuery = remember { appViewModel.getAppListSearchQuery() }
+    val appSearchState = rememberTopBarSearchState(
+      initialQuery = initialSearchQuery,
+      initialExpanded = initialSearchQuery.isNotEmpty()
+    )
+    val referenceSearchState = rememberTopBarSearchState()
+    val snapshotSearchState = rememberTopBarSearchState()
+    val activeSearchState = when (HomeTab.entries[mainPagerState.selectedPage]) {
+      HomeTab.APP_LIST -> appSearchState
+      HomeTab.STATISTICS -> referenceSearchState
+      HomeTab.SNAPSHOT -> snapshotSearchState
+      HomeTab.SETTINGS -> null
+    }
+    val useBottomBarSearch = appearance.bottomBarSearch && !rememberIsWideScreen()
 
     CompositionLocalProvider(LocalHomeAppearance provides appearance) {
       HomeScaffold(
-        selectedTab = selectedTab,
-        onTabSelected = { tab ->
-          if (tab == selectedTab) {
+        mainPagerState = mainPagerState,
+        searchExpanded = activeSearchState?.expanded == true,
+        userScrollEnabled = activeSearchState?.expanded != true,
+        onTabReselected = { tab ->
+          if (tab == HomeTab.APP_LIST) {
             appViewModel.onAppListUserScrolled()
             reselectSignal += 1
           }
-          selectedTab = tab
+        },
+        onSearchRequested = {
+          activeSearchState?.open()
         }
-      ) { tab ->
+      ) { tab, isCurrentPage ->
         when (tab) {
           HomeTab.APP_LIST -> AppListScreen(
             homeViewModel = appViewModel,
@@ -169,6 +197,9 @@ class MainActivity : BaseComposeActivity() {
             onOpenDetail = { item -> launchDetailPage(item) },
             listState = appListState,
             reselectSignal = reselectSignal,
+            isCurrentPage = isCurrentPage,
+            searchState = appSearchState,
+            showSearchButton = !useBottomBarSearch,
             recentVisitsViewModel = recentVisitsViewModel,
             onOpenRecentApp = { targetPackage ->
               launchDetailPage(
@@ -215,23 +246,27 @@ class MainActivity : BaseComposeActivity() {
                 )
               )
             },
-            listState = referenceState
+            listState = referenceState,
+            isCurrentPage = isCurrentPage,
+            searchState = referenceSearchState,
+            showSearchButton = !useBottomBarSearch
           )
 
           HomeTab.SNAPSHOT -> SnapshotScreen(
             viewModel = snapshotViewModel,
-            listState = snapshotState
+            listState = snapshotState,
+            isCurrentPage = isCurrentPage,
+            searchState = snapshotSearchState,
+            showSearchButton = !useBottomBarSearch
           )
 
           HomeTab.SETTINGS -> SettingsScreen(
             settingsViewModel = settingsViewModel,
             homeViewModel = appViewModel,
-            mainListState = settingsState,
-            appearanceListState = appearanceState
+            mainListState = settingsState
           )
         }
       }
     }
   }
-
 }

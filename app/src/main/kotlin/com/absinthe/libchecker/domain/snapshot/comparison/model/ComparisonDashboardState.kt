@@ -26,6 +26,20 @@ internal data class ComparisonDashboardSideState(
       )
     )
   }
+
+  fun preserveMatchingCount(
+    previous: ComparisonDashboardSideState?,
+    labels: ComparisonDashboardLabels
+  ): ComparisonDashboardSideState {
+    val shouldPreserve = previous != null &&
+      dashboardCountTimestamp != null &&
+      dashboardCountTimestamp == previous.dashboardCountTimestamp
+    return if (shouldPreserve) {
+      withAppsCountText(previous.appsCountText, labels)
+    } else {
+      this
+    }
+  }
 }
 
 internal data class ComparisonDashboardState(

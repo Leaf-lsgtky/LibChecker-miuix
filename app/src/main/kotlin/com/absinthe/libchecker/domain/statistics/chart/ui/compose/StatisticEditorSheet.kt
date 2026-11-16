@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import com.absinthe.libchecker.domain.statistics.chart.model.StatisticSource
 import top.yukonga.miuix.kmp.icon.extended.Sort
@@ -31,14 +32,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.drawable.toBitmap
 import kotlin.math.roundToInt
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.absinthe.libchecker.R
@@ -46,6 +46,12 @@ import com.absinthe.libchecker.domain.statistics.chart.model.StatisticDefinition
 import com.absinthe.libchecker.domain.statistics.chart.presentation.ChartViewModel
 import com.absinthe.libchecker.domain.statistics.chart.ui.resolve
 import com.absinthe.libchecker.domain.statistics.chart.ui.resolveDrawable
+import com.absinthe.libchecker.domain.statistics.chart.ui.toScaledAspectBitmap
+import com.absinthe.libchecker.ui.compose.util.sheetBottomSafePadding
+import com.absinthe.libchecker.ui.compose.util.sheetContentSafePadding
+import com.absinthe.libchecker.ui.compose.util.sheetHeightTransition
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.squircle.squircleBackground
@@ -79,10 +85,13 @@ fun StatisticEditorSheet(
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(horizontal = 16.dp)
-        .padding(bottom = 16.dp)
+        .sheetHeightTransition()
     ) {
-      LazyColumn(modifier = Modifier.heightIn(max = 480.dp)) {
+      LazyColumn(
+        modifier = Modifier.weight(1f, fill = false),
+        contentPadding = PaddingValues(bottom = sheetBottomSafePadding(16.dp)),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+      ) {
         item(key = "added-title") {
           SectionTitle(stringResource(R.string.chart_statistics_added))
         }
@@ -136,7 +145,7 @@ fun StatisticEditorSheet(
                   R.string.chart_statistics_online_error
                 }
               ),
-              fontSize = 12.sp,
+              style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
               color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
               modifier = Modifier.padding(vertical = 8.dp)
             )
@@ -150,7 +159,7 @@ fun StatisticEditorSheet(
           item(key = "available-empty") {
             Text(
               text = stringResource(R.string.chart_statistics_no_available),
-              fontSize = 12.sp,
+              style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
               color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
               modifier = Modifier.padding(vertical = 8.dp)
             )
@@ -173,8 +182,7 @@ fun StatisticEditorSheet(
 private fun SectionTitle(text: String) {
   Text(
     text = text,
-    fontSize = 13.sp,
-    fontWeight = FontWeight(600),
+    style = MiuixTheme.textStyles.body2.copy(fontSize = 13.sp),
     color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
     modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
   )
@@ -191,71 +199,77 @@ private fun StatisticEditorRow(
 ) {
   val context = LocalContext.current
   val colorScheme = MiuixTheme.colorScheme
+  val iconSizePx = with(LocalDensity.current) { 24.dp.roundToPx() }
   var icon by remember(statistic.id) { mutableStateOf<ImageBitmap?>(null) }
-  LaunchedEffect(statistic.id) {
+  LaunchedEffect(statistic.id, colorScheme) {
     icon = runCatching {
-      statistic.icon.resolveDrawable(context)?.toBitmap(48, 48)?.asImageBitmap()
+      statistic.icon.resolveDrawable(context)?.toScaledAspectBitmap(iconSizePx)
     }.getOrNull()
   }
-  Row(
-    modifier = modifier
-      .fillMaxWidth()
-      .padding(vertical = 4.dp),
-    verticalAlignment = Alignment.CenterVertically
+  Card(
+    modifier = modifier.fillMaxWidth(),
+    colors = CardDefaults.defaultColors(
+      color = colorScheme.onSurface.copy(alpha = 0.04f)
+    ),
+    insideMargin = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
   ) {
-    if (draggable) {
-      Icon(
-        painter = painterResource(R.drawable.ic_drag_indicator),
-        contentDescription = stringResource(R.string.chart_statistics_drag),
-        tint = colorScheme.onSurfaceVariantSummary,
-        modifier = Modifier
-          .padding(end = 8.dp)
-          .size(18.dp)
-      )
-    }
-    if (icon != null) {
-      androidx.compose.foundation.Image(
-        bitmap = icon!!,
-        contentDescription = null,
-        modifier = Modifier
-          .padding(end = 12.dp)
-          .size(24.dp)
-      )
-    }
-    Column(Modifier.weight(1f)) {
-      Text(
-        text = statistic.title.resolve(context),
-        fontSize = 14.sp,
-        color = colorScheme.onSurface
-      )
-      Text(
-        text = stringResource(
-          if (statistic.source == StatisticSource.BUILTIN) {
-            R.string.chart_statistics_source_builtin
-          } else {
-            R.string.chart_statistics_source_online
-          }
-        ),
-        fontSize = 11.sp,
-        color = colorScheme.onSurfaceVariantSummary
-      )
-    }
-    Box(
-      modifier = Modifier
-        .squircleBackground(colorScheme.surfaceContainerHigh, 12.dp)
-        .clickable(enabled = actionEnabled, onClick = onAction)
-        .padding(horizontal = 12.dp, vertical = 6.dp)
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically
     ) {
-      Text(
-        text = actionLabel,
-        fontSize = 14.sp,
-        fontWeight = FontWeight(600),
-        color = if (actionEnabled) {
-          colorScheme.onSurface
-        } else {
-          colorScheme.onSurfaceVariantSummary
-        }
-      )
+      if (draggable) {
+        Icon(
+          painter = painterResource(R.drawable.ic_drag_indicator),
+          contentDescription = stringResource(R.string.chart_statistics_drag),
+          tint = colorScheme.onSurfaceVariantSummary,
+          modifier = Modifier
+            .padding(end = 8.dp)
+            .size(18.dp)
+        )
+      }
+      if (icon != null) {
+        androidx.compose.foundation.Image(
+          bitmap = icon!!,
+          contentDescription = null,
+          modifier = Modifier
+            .padding(end = 12.dp)
+            .size(24.dp)
+        )
+      }
+      Column(Modifier.weight(1f)) {
+        Text(
+          text = statistic.title.resolve(context),
+          style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
+          color = colorScheme.onSurface
+        )
+        Text(
+          text = stringResource(
+            if (statistic.source == StatisticSource.BUILTIN) {
+              R.string.chart_statistics_source_builtin
+            } else {
+              R.string.chart_statistics_source_online
+            }
+          ),
+          style = MiuixTheme.textStyles.footnote2.copy(fontSize = 11.sp),
+          color = colorScheme.onSurfaceVariantSummary
+        )
+      }
+      Box(
+        modifier = Modifier
+          .squircleBackground(colorScheme.onSurface.copy(alpha = 0.06f), 12.dp)
+          .clickable(enabled = actionEnabled, onClick = onAction)
+          .padding(horizontal = 12.dp, vertical = 6.dp)
+      ) {
+        Text(
+          text = actionLabel,
+          style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
+          color = if (actionEnabled) {
+            colorScheme.onSurface
+          } else {
+            colorScheme.onSurfaceVariantSummary
+          }
+        )
+      }
     }
   }
 }

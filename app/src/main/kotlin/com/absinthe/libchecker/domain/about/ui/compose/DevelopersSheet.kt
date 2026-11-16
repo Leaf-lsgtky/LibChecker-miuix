@@ -1,7 +1,11 @@
 package com.absinthe.libchecker.domain.about.ui.compose
 
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,7 +40,10 @@ import com.absinthe.libchecker.constant.GlobalValues
 import com.absinthe.libchecker.constant.URLManager
 import com.absinthe.libchecker.domain.about.model.CachedDeveloperInfo
 import com.absinthe.libchecker.domain.about.model.DeveloperInfo
-import com.absinthe.libchecker.ui.compose.component.LcLoadingState
+import com.absinthe.libchecker.ui.compose.component.SheetCardListSkeleton
+import com.absinthe.libchecker.ui.compose.util.sheetBottomSafePadding
+import com.absinthe.libchecker.ui.compose.util.sheetContentSafePadding
+import com.absinthe.libchecker.ui.compose.util.sheetHeightTransition
 import com.absinthe.libchecker.utils.JsonUtil
 import com.absinthe.libchecker.utils.SPUtils
 import com.absinthe.libchecker.utils.extensions.openUrlInBrowser
@@ -46,6 +53,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import timber.log.Timber
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
@@ -90,25 +99,37 @@ fun DevelopersSheet(
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(horizontal = 16.dp)
-        .padding(bottom = 16.dp)
+        .sheetHeightTransition()
     ) {
-      if (loading) {
-        LcLoadingState(
-          modifier = Modifier.height(120.dp),
-          message = stringResource(R.string.loading)
-        )
-      } else {
-        LazyColumn(
-          modifier = Modifier
-            .heightIn(max = 480.dp)
-            .padding(top = 8.dp)
-        ) {
-          items(items, key = { it.github + it.name }) { developer ->
-            DeveloperRow(
-              developer = developer,
-              onClick = { context.openUrlInBrowser(developer.github) }
-            )
+      Crossfade(
+        targetState = loading,
+        modifier = Modifier
+          .fillMaxWidth()
+          .weight(1f, fill = false),
+        animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing),
+        label = "DevelopersSheetTransition"
+      ) { isLoading ->
+        if (isLoading) {
+          SheetCardListSkeleton(
+            rowCount = 4,
+            showIcon = true,
+            twoLine = true,
+            modifier = Modifier
+              .padding(top = 8.dp)
+              .padding(bottom = sheetBottomSafePadding(16.dp))
+          )
+        } else {
+          LazyColumn(
+            modifier = Modifier.padding(top = 8.dp),
+            contentPadding = PaddingValues(bottom = sheetBottomSafePadding(16.dp)),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+          ) {
+            items(items, key = { it.github + it.name }) { developer ->
+              DeveloperRow(
+                developer = developer,
+                onClick = { context.openUrlInBrowser(developer.github) }
+              )
+            }
           }
         }
       }
@@ -119,38 +140,44 @@ fun DevelopersSheet(
 @Composable
 private fun DeveloperRow(developer: DeveloperInfo, onClick: () -> Unit) {
   val colorScheme = MiuixTheme.colorScheme
-  Row(
-    modifier = Modifier
-      .fillMaxWidth()
-      .clickable(onClick = onClick)
-      .padding(vertical = 8.dp),
-    verticalAlignment = Alignment.CenterVertically
+  Card(
+    modifier = Modifier.fillMaxWidth(),
+    colors = CardDefaults.defaultColors(
+      color = colorScheme.onSurface.copy(alpha = 0.04f)
+    ),
+    onClick = onClick,
+    showIndication = true,
+    insideMargin = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
   ) {
-    AsyncImage(
-      model = developer.avatarUrl,
-      contentDescription = null,
-      modifier = Modifier
-        .padding(end = 12.dp)
-        .size(40.dp)
-        .clip(CircleShape)
-    )
-    Column(Modifier.weight(1f)) {
-      Text(
-        text = developer.name,
-        fontSize = 14.sp,
-        fontWeight = FontWeight(550),
-        color = colorScheme.onSurface,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      AsyncImage(
+        model = developer.avatarUrl,
+        contentDescription = null,
+        modifier = Modifier
+          .padding(end = 12.dp)
+          .size(40.dp)
+          .clip(CircleShape)
       )
-      Spacer(Modifier.height(2.dp))
-      Text(
-        text = developer.desc,
-        fontSize = 12.sp,
-        color = colorScheme.onSurfaceVariantSummary,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis
-      )
+      Column(Modifier.weight(1f)) {
+        Text(
+          text = developer.name,
+          style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
+          color = colorScheme.onSurface,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+          text = developer.desc,
+          style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
+          color = colorScheme.onSurfaceVariantSummary,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis
+        )
+      }
     }
   }
 }

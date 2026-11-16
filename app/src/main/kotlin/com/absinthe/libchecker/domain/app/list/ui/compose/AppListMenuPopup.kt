@@ -5,6 +5,7 @@ import top.yukonga.miuix.kmp.window.WindowBottomSheet
 import com.absinthe.libchecker.domain.app.list.model.AppListItemViewState
 import com.absinthe.libchecker.database.entity.LCItem
 import com.absinthe.libchecker.constant.Constants
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,9 +22,13 @@ import com.absinthe.libchecker.R
 import com.absinthe.libchecker.constant.options.AdvancedOptions
 import com.absinthe.libchecker.constant.options.withOption
 import com.absinthe.libchecker.domain.app.list.model.buildAdvancedMenuBottomSheetState
+import com.absinthe.libchecker.ui.compose.util.sheetContentSafePadding
+import com.absinthe.libchecker.ui.compose.util.sheetHeightTransition
+import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.DropdownEntry
 import top.yukonga.miuix.kmp.basic.DropdownItem
 import top.yukonga.miuix.kmp.menu.OverlayIconCascadingDropdownMenu
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 /**
  * Sort / filter / appearance menu for the app list.
@@ -31,16 +36,28 @@ import top.yukonga.miuix.kmp.menu.OverlayIconCascadingDropdownMenu
  * A cascading dropdown anchored to the icon instead of a bottom sheet, so it matches the Miuix
  * menu language: sort options are top level, filter and appearance options live in a second level.
  */
+class AppListMenuState(
+  val entries: List<DropdownEntry>,
+  private val sheetsContent: @Composable () -> Unit
+) {
+  @Composable
+  fun Sheets() {
+    sheetsContent()
+  }
+}
+
 @Composable
-fun AppListMenu(
+fun rememberAppListMenuState(
   displayOptions: Int,
   onDisplayOptionsChange: (Int) -> Unit,
-  content: @Composable () -> Unit
-) {
+  onDismissMenu: () -> Unit = {}
+): AppListMenuState {
   val state = remember(displayOptions) {
     buildAdvancedMenuBottomSheetState(displayOptions = displayOptions)
   }
   val currentOnChange by rememberUpdatedState(onDisplayOptionsChange)
+  val currentOnDismissMenu by rememberUpdatedState(onDismissMenu)
+  val latestDisplayOptions by rememberUpdatedState(displayOptions)
   var showPreview by remember { mutableStateOf(false) }
   val previewTitle = stringResource(R.string.adv_app_appearance_preview)
   val sortByName = stringResource(R.string.adv_sort_by_name)
@@ -53,6 +70,7 @@ fun AppListMenu(
 
   val entries = remember(
     displayOptions,
+    previewTitle,
     sortByName,
     sortByTime,
     sortByTarget,
@@ -111,7 +129,10 @@ fun AppListMenu(
               )
             } + DropdownItem(
               text = previewTitle,
-              onClick = { showPreview = true }
+              onClick = {
+                currentOnDismissMenu()
+                showPreview = true
+              }
             )
           )
         )
@@ -119,17 +140,21 @@ fun AppListMenu(
     )
   }
 
-  OverlayIconCascadingDropdownMenu(
-    entries = entries,
-    collapseOnSelection = false,
-    content = content
-  )
-
-  AppListPreviewSheet(
-    show = showPreview,
-    displayOptions = displayOptions,
-    onDismiss = { showPreview = false }
-  )
+  val sheetsContent: @Composable () -> Unit = remember {
+    {
+      AppListPreviewSheet(
+        show = showPreview,
+        displayOptions = latestDisplayOptions,
+        onDismiss = { showPreview = false }
+      )
+    }
+  }
+  return remember(entries, sheetsContent) {
+    AppListMenuState(
+      entries = entries,
+      sheetsContent = sheetsContent
+    )
+  }
 }
 
 private const val SORT_MASK =
@@ -165,12 +190,15 @@ private fun AppListPreviewSheet(
   WindowBottomSheet(
     show = show,
     title = stringResource(R.string.adv_app_appearance_preview),
+    insideMargin = DpSize(0.dp, 0.dp),
     onDismissRequest = onDismiss
   ) {
     Column(
       modifier = Modifier
         .fillMaxWidth()
         .padding(bottom = 16.dp)
+        .sheetContentSafePadding()
+        .sheetHeightTransition()
     ) {
       AppListRow(
         item = item,
@@ -178,7 +206,10 @@ private fun AppListPreviewSheet(
         packageInfo = null,
         chips = emptyList(),
         highlight = "",
-        onClick = {}
+        onClick = {},
+        colors = CardDefaults.defaultColors(
+          color = MiuixTheme.colorScheme.onSurface.copy(alpha = 0.04f)
+        )
       )
     }
   }

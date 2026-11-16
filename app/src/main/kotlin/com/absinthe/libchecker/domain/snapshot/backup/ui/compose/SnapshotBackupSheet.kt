@@ -4,6 +4,10 @@ import android.net.Uri
 import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.DrawableRes
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,8 +25,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,16 +39,24 @@ import com.absinthe.libchecker.domain.snapshot.backup.presentation.SnapshotBacku
 import com.absinthe.libchecker.domain.snapshot.backup.presentation.SnapshotBackupViewModel.LocalBackupAction
 import com.absinthe.libchecker.domain.snapshot.backup.presentation.SnapshotBackupViewModel.RestoreBackupResult
 import com.absinthe.libchecker.domain.snapshot.backup.usecase.SnapshotArchiveBackupResult
-import com.absinthe.libchecker.ui.compose.component.LcLoadingState
+import com.absinthe.libchecker.ui.compose.component.SheetCardListSkeleton
+import com.absinthe.libchecker.ui.compose.util.rememberActiveValue
+import com.absinthe.libchecker.ui.compose.util.sheetContentSafePadding
+import com.absinthe.libchecker.ui.compose.util.sheetHeightTransition
 import com.absinthe.libchecker.utils.extensions.requireAvailableCacheDir
 import com.absinthe.libchecker.utils.showToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
-import top.yukonga.miuix.kmp.squircle.squircleBackground
+import top.yukonga.miuix.kmp.icon.MiuixIcons
+import top.yukonga.miuix.kmp.icon.basic.ArrowRight
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.window.WindowBottomSheet
 import top.yukonga.miuix.kmp.window.WindowDialog
@@ -175,77 +190,106 @@ fun SnapshotBackupSheet(
     Column(
       modifier = Modifier
         .fillMaxWidth()
-        .padding(horizontal = 16.dp)
         .padding(bottom = 16.dp)
+        .sheetContentSafePadding()
+        .sheetHeightTransition(),
+      verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-      if (busy) {
-        LcLoadingState(
-          modifier = Modifier.height(120.dp),
-          message = stringResource(R.string.loading)
-        )
-      } else {
-        ActionRow(
-          title = stringResource(R.string.album_backup_summary),
-          summary = stringResource(R.string.album_backup_sheet_backup_description),
-          onClick = ::requestBackup
-        )
-        Spacer(Modifier.height(8.dp))
-        ActionRow(
-          title = stringResource(R.string.album_restore_from_file),
-          summary = stringResource(R.string.album_restore_auto_detect_summary),
-          onClick = { restoreLauncher.launch(arrayOf("*/*")) }
-        )
+      Crossfade(
+        targetState = busy,
+        animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
+        label = "SnapshotBackupSheetTransition"
+      ) { isBusy ->
+        if (isBusy) {
+          SheetCardListSkeleton(
+            rowCount = 2,
+            showIcon = true,
+            twoLine = true
+          )
+        } else {
+          Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            ActionRow(
+              iconRes = R.drawable.ic_backup,
+              title = stringResource(R.string.album_backup_summary),
+              summary = stringResource(R.string.album_backup_sheet_backup_description),
+              onClick = ::requestBackup
+            )
+            ActionRow(
+              iconRes = R.drawable.ic_restore,
+              title = stringResource(R.string.album_restore_from_file),
+              summary = stringResource(R.string.album_restore_auto_detect_summary),
+              onClick = { restoreLauncher.launch(arrayOf("*/*")) }
+            )
+          }
+        }
       }
     }
   }
 
-  message?.let { text ->
-    WindowDialog(
-      show = true,
-      title = stringResource(R.string.album_item_backup_restore_title),
-      summary = text,
-      onDismissRequest = { message = null }
-    ) {
-      Row(
-        modifier = Modifier
-          .fillMaxWidth()
-          .padding(horizontal = 24.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.End
-      ) {
-        TextButton(
-          text = stringResource(android.R.string.ok),
-          onClick = { message = null }
-        )
-      }
-    }
+  val activeMessage = rememberActiveValue(message)
+  WindowDialog(
+    show = message != null,
+    title = stringResource(R.string.album_item_backup_restore_title),
+    summary = activeMessage.value ?: "",
+    onDismissRequest = { message = null },
+    onDismissFinished = { if (message == null) activeMessage.value = null }
+  ) {
+    TextButton(
+      text = stringResource(android.R.string.ok),
+      onClick = { message = null },
+      modifier = Modifier.fillMaxWidth(),
+      colors = ButtonDefaults.textButtonColorsPrimary()
+    )
   }
 }
 
 @Composable
 private fun ActionRow(
+  @DrawableRes iconRes: Int,
   title: String,
   summary: String,
   onClick: () -> Unit
 ) {
   val colorScheme = MiuixTheme.colorScheme
-  Column(
-    modifier = Modifier
-      .fillMaxWidth()
-      .squircleBackground(colorScheme.surfaceContainerHigh, 16.dp)
-      .clickable(onClick = onClick)
-      .padding(horizontal = 16.dp, vertical = 16.dp)
+  Card(
+    modifier = Modifier.fillMaxWidth(),
+    colors = CardDefaults.defaultColors(
+      color = colorScheme.onSurface.copy(alpha = 0.04f)
+    ),
+    onClick = onClick,
+    showIndication = true,
+    insideMargin = PaddingValues(16.dp)
   ) {
-    Text(
-      text = title,
-      fontSize = 14.sp,
-      fontWeight = FontWeight(550),
-      color = colorScheme.onSurface
-    )
-    Spacer(Modifier.height(2.dp))
-    Text(
-      text = summary,
-      fontSize = 12.sp,
-      color = colorScheme.onSurfaceVariantSummary
-    )
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+      Icon(
+        painter = painterResource(iconRes),
+        contentDescription = null,
+        tint = colorScheme.onSurface,
+        modifier = Modifier.size(24.dp)
+      )
+      Column(Modifier.weight(1f)) {
+        Text(
+          text = title,
+          style = MiuixTheme.textStyles.body2.copy(fontSize = 14.sp),
+          color = colorScheme.onSurface
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+          text = summary,
+          style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp),
+          color = colorScheme.onSurfaceVariantSummary
+        )
+      }
+      Icon(
+        imageVector = MiuixIcons.Basic.ArrowRight,
+        contentDescription = null,
+        tint = colorScheme.onSurfaceVariantActions,
+        modifier = Modifier.size(width = 10.dp, height = 16.dp)
+      )
+    }
   }
 }

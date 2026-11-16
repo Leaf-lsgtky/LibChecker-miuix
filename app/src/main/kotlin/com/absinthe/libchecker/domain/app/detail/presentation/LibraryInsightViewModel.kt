@@ -36,6 +36,13 @@ class LibraryInsightViewModel(
     resolve(request ?: return)
   }
 
+  fun reset() {
+    job?.cancel()
+    job = null
+    request = null
+    _state.value = LibraryInsightUiState.Hidden
+  }
+
   fun retry() {
     request?.let(::resolve)
   }

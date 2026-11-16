@@ -13,6 +13,7 @@ import com.absinthe.libchecker.domain.statistics.chart.ui.ChartDataRenderer
 import com.absinthe.libchecker.domain.statistics.chart.ui.animateEntrance
 import com.absinthe.libchecker.domain.statistics.chart.ui.view.AsymmetricBarChartRenderer
 import com.absinthe.libchecker.utils.extensions.getColorByAttr
+import com.github.mikephil.charting.charts.Chart
 import com.github.mikephil.charting.charts.HorizontalBarChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.Legend
@@ -41,6 +42,11 @@ internal class ChartHostController(
 
   private var host: ViewGroup? = null
   private var renderer: ChartDataRenderer? = null
+  private var activeChart: Chart<*>? = null
+
+  fun clearHighlight() {
+    activeChart?.highlightValues(emptyList())
+  }
 
   fun attach(host: ViewGroup) {
     if (this.host === host) {
@@ -61,6 +67,7 @@ internal class ChartHostController(
           newChartView = createPieChart(),
           fillChart = plan.dataSource::fillChartView
         ) { committed ->
+          activeChart = committed
           committed.animateEntrance()
           if (committed.parent == null) {
             host.addView(committed)
@@ -76,6 +83,7 @@ internal class ChartHostController(
           newChartView = createBarChart(),
           fillChart = plan.dataSource::fillChartView
         ) { committed ->
+          activeChart = committed
           committed.animateEntrance()
           if (committed.parent == null) {
             host.addView(committed)
@@ -125,6 +133,7 @@ internal class ChartHostController(
       description.isEnabled = false
       legend.isEnabled = false
       isDragEnabled = true
+      isHighlightPerDragEnabled = false
       isDrawBordersEnabled = false
       isDrawGridBackgroundEnabled = false
       isFitBarsEnabled = true
