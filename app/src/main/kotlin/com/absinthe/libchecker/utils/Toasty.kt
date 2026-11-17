@@ -3,17 +3,16 @@ package com.absinthe.libchecker.utils
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.view.ContextThemeWrapper
-import android.view.Gravity
 import android.widget.Toast
 import androidx.annotation.AnyThread
 import androidx.annotation.MainThread
 import androidx.annotation.StringRes
-import com.absinthe.libchecker.view.app.ToastView
 import java.lang.ref.WeakReference
 import timber.log.Timber
 
 /**
+ * Thin wrapper over the platform toast.
+ *
  * <pre>
  * author : Absinthe
  * time : 2020/08/12
@@ -43,23 +42,12 @@ object Toasty {
     showLong(context, context.getString(res))
   }
 
-  @Suppress("deprecation")
   @MainThread
   private fun show(context: Context, message: String, duration: Int) {
+    // Drop the toast that is still on screen so a fresh message is not queued behind it.
     toastRef?.get()?.cancel()
 
-    val toast = if (OsUtils.atLeastR() && context !is ContextThemeWrapper) {
-      Toast.makeText(context, message, duration)
-    } else {
-      val view = ToastView(context).also {
-        it.message.text = message
-      }
-      Toast(context).also {
-        it.setGravity(Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM, 0, 200)
-        it.duration = duration
-        it.view = view
-      }
-    }
+    val toast = Toast.makeText(context.applicationContext ?: context, message, duration)
     toastRef = WeakReference(toast)
     toast.show()
   }

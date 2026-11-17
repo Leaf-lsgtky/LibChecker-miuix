@@ -37,6 +37,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -64,7 +65,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.absinthe.libchecker.R
 import com.absinthe.libchecker.constant.options.SnapshotOptions
-import com.absinthe.libchecker.database.entity.TimeStampItem
 import com.absinthe.libchecker.domain.app.detail.navigation.EXTRA_PACKAGE_NAME
 import com.absinthe.libchecker.domain.app.detail.ui.AppDetailActivity
 import com.absinthe.libchecker.domain.snapshot.album.ui.AlbumActivity
@@ -188,23 +188,24 @@ fun SnapshotScreen(
   val buildTitleDisplayData = remember {
     GlobalContext.get().get<BuildSnapshotTitleDisplayDataUseCase>()
   }
-  var timeStamps by remember { mutableStateOf<List<TimeStampItem>>(emptyList()) }
-  var selectedTimestamp by remember { mutableLongStateOf(0L) }
-  var items by remember { mutableStateOf<List<SnapshotDiffItem>>(emptyList()) }
-  var renderState by remember { mutableStateOf(SnapshotListRenderState()) }
+  // The tab leaves the composition while a deeper page is open; restore what it had loaded instead
+  // of reading timestamps and comparing snapshots again.
+  val retainedState = remember(viewModel) { viewModel.homeScreenState }
+  var timeStamps by remember(retainedState) { mutableStateOf(retainedState.timeStamps) }
+  var selectedTimestamp by remember(retainedState) { mutableLongStateOf(retainedState.selectedTimestamp) }
+  var items by remember(retainedState) { mutableStateOf(retainedState.items) }
+  var renderState by remember(retainedState) { mutableStateOf(retainedState.renderState) }
   var searchItems by remember { mutableStateOf<List<SnapshotDiffItem>>(emptyList()) }
   var searchRenderState by remember { mutableStateOf(SnapshotListRenderState()) }
-  var snapshotCount by remember { mutableIntStateOf(0) }
-  var appCount by remember { mutableIntStateOf(0) }
-  var loading by remember { mutableStateOf(true) }
+  var snapshotCount by remember(retainedState) { mutableIntStateOf(retainedState.snapshotCount) }
+  var appCount by remember(retainedState) { mutableIntStateOf(retainedState.appCount) }
+  var loading by remember(retainedState) { mutableStateOf(retainedState.loading) }
   val query = searchState.query
   var showDeleteDialog by remember { mutableStateOf(false) }
   var showMoreMenu by remember { mutableStateOf(false) }
   var snapshotOptions by remember { mutableIntStateOf(viewModel.getSnapshotOptions()) }
   var showTimeNode by remember { mutableStateOf(false) }
-  var systemProps by remember {
-    mutableStateOf<List<com.absinthe.libchecker.domain.snapshot.list.model.SnapshotSystemPropDisplayData>>(emptyList())
-  }
+  var systemProps by remember(retainedState) { mutableStateOf(retainedState.systemProps) }
   var noDiffItem by remember {
     mutableStateOf<com.absinthe.libchecker.domain.snapshot.model.SnapshotDiffItem?>(null)
   }
@@ -213,9 +214,20 @@ fun SnapshotScreen(
   var isRefreshing by remember { mutableStateOf(false) }
   val pullToRefreshState = rememberPullToRefreshState()
   val comparingProgress by viewModel.comparingProgress.collectAsStateWithLifecycle(0)
+  SideEffect {
+    retainedState.timeStamps = timeStamps
+    retainedState.selectedTimestamp = selectedTimestamp
+    retainedState.items = items
+    retainedState.renderState = renderState
+    retainedState.snapshotCount = snapshotCount
+    retainedState.appCount = appCount
+    retainedState.systemProps = systemProps
+    retainedState.loading = loading
+  }
 
   suspend fun reloadTimeStamps(selectLatest: Boolean) {
     val stamps = viewModel.getTimeStamps()
+    retainedState.initialized = true
     timeStamps = stamps
     if (stamps.isEmpty()) {
       loading = false
@@ -277,6 +289,10 @@ fun SnapshotScreen(
 
   LaunchedEffect(hasActivated) {
     if (!hasActivated) return@LaunchedEffect
+    // Skip the reload only when the tab really has something to show again; a load that was still
+    // running when the tab left the composition is restarted.
+    val restored = retainedState.initialized && (items.isNotEmpty() || !loading)
+    if (restored) return@LaunchedEffect
     reloadTimeStamps(selectLatest = true)
   }
 
@@ -317,6 +333,9 @@ fun SnapshotScreen(
   }
 
   LaunchedEffect(selectedTimestamp) {
+    if (retainedState.selectedTimestamp == selectedTimestamp && systemProps.isNotEmpty()) {
+      return@LaunchedEffect
+    }
     systemProps = if (selectedTimestamp == 0L) {
       emptyList()
     } else {

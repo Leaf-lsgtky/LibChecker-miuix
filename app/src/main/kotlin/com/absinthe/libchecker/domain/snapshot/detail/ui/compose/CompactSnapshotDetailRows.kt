@@ -51,6 +51,7 @@ import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.glass.ChevronForward
+import top.yukonga.miuix.kmp.squircle.squircleClip
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
@@ -259,6 +260,7 @@ internal fun CompactSnapshotDetailItemRow(
       }
       Row(
         modifier = Modifier
+          .squircleClip(8.dp)
           .clickable { onChipClick(item) }
           .padding(vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,

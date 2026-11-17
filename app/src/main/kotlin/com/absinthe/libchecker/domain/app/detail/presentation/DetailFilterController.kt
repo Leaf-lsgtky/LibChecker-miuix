@@ -40,14 +40,21 @@ class DetailFilterController(
   }
 
   fun sortDetailItems(items: List<LibStringItemChip>, @LibType type: Int): List<LibStringItemChip> {
+    // The name tie-break keeps the list order stable; equal sizes come from an unordered scan.
     return if (appDetailSettingsRepository.sortMode == MODE_SORT_BY_LIB) {
       if (type == NATIVE) {
-        items.sortedByDescending { it.item.size }
+        items.sortedWith(
+          compareByDescending<LibStringItemChip> { it.item.size }
+            .thenBy { it.item.name.lowercase() }
+        )
       } else {
-        items.sortedByDescending { it.item.name }
+        items.sortedWith(compareByDescending<LibStringItemChip> { it.item.name.lowercase() })
       }
     } else {
-      items.sortedWith(compareByDescending<LibStringItemChip> { it.rule != null }.thenBy { it.item.name })
+      items.sortedWith(
+        compareByDescending<LibStringItemChip> { it.rule != null }
+          .thenBy { it.item.name.lowercase() }
+      )
     }
   }
 

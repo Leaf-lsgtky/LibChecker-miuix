@@ -3,6 +3,7 @@ package com.absinthe.libchecker.ui.compose.component
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -29,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,6 +61,8 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.TabRow
 import top.yukonga.miuix.kmp.basic.TabRowColors
@@ -397,7 +401,7 @@ fun AdaptiveGlassSegmentedTabRow(
   val indicatorLeft = remember(tabs) { Animatable(0f) }
   val indicatorWidth = remember(tabs) { Animatable(0f) }
 
-  LaunchedEffect(tabs, index, viewportWidth, placementRev, settleGeneration) {
+  LaunchedEffect(tabs, index, viewportWidth, placementRev, settleGeneration, dragging) {
     if (dragging) return@LaunchedEffect
     val targetLeft = tabLefts.getOrNull(index) ?: 0f
     val targetWidth = tabWidths.getOrNull(index) ?: 0f
@@ -490,9 +494,11 @@ fun AdaptiveGlassSegmentedTabRow(
       Box(
         modifier = Modifier
           .fillMaxHeight()
-          .pointerInput(tabs.size, layoutDirection, placementRev) {
+          // Hover typography changes placement; keep the current gesture alive across remeasurement.
+          .pointerInput(tabs, layoutDirection) {
             if (tabs.size <= 1) return@pointerInput
             val dragSpring = spring<Float>(dampingRatio = 0.88f, stiffness = 1200f)
+            val maxEdgeScrollSpeed = 480.dp.toPx()
             fun logicalX(rawX: Float): Float =
               if (layoutDirection == LayoutDirection.Rtl) size.width - rawX else rawX
 
@@ -518,8 +524,7 @@ fun AdaptiveGlassSegmentedTabRow(
               val down = awaitFirstDown(requireUnconsumed = false)
               val downX = logicalX(down.position.x)
               val downY = down.position.y
-              val totalWidth = size.width.toFloat()
-              if (totalWidth <= 0f) return@awaitEachGesture
+              if (size.width <= 0) return@awaitEachGesture
 
               // When the strip overflows the viewport, let drags outside the active pill scroll
               // the strip while drags starting on the pill scrub tabs directly.
@@ -530,7 +535,29 @@ fun AdaptiveGlassSegmentedTabRow(
               }
 
               var grabOffset = Float.NaN
-              var hovered = tabIndexAt(downX)
+              var pointerViewportX = downX - scrollState.value
+              var dragScroll: Job? = null
+              var dragLeftAnimation: Job? = null
+              var dragWidthAnimation: Job? = null
+
+              fun updateIndicator(x: Float) {
+                val nextIndex = tabIndexAt(x)
+                val targetWidth = tabWidths[nextIndex].takeIf { it > 0f } ?: indicatorWidth.value
+                val maxLeft = (size.width - targetWidth).coerceAtLeast(0f)
+                val desiredLeft = (x - grabOffset).coerceIn(0f, maxLeft)
+                if (indicatorLeft.targetValue != desiredLeft) {
+                  dragLeftAnimation = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                    indicatorLeft.animateTo(desiredLeft, dragSpring)
+                  }
+                }
+                draggedTabIndex = nextIndex
+                if (indicatorWidth.targetValue != targetWidth) {
+                  dragWidthAnimation = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                    indicatorWidth.animateTo(targetWidth, GlassMotion.default())
+                  }
+                }
+              }
+
               try {
                 while (true) {
                   val event = awaitPointerEvent()
@@ -539,6 +566,7 @@ fun AdaptiveGlassSegmentedTabRow(
                   val x = logicalX(change.position.x)
                   val dx = x - downX
                   val dy = change.position.y - downY
+                  pointerViewportX = x - scrollState.value
                   if (!change.pressed) {
                     if (dragging && change.changedToUp()) {
                       val releaseIndex = tabIndexAt(x)
@@ -555,7 +583,7 @@ fun AdaptiveGlassSegmentedTabRow(
                     if (abs(dy) > slop && abs(dy) > abs(dx)) break
                     if (abs(dx) < slop) continue
                     dragging = true
-                    hovered = tabIndexAt(x)
+                    val hovered = tabIndexAt(x)
                     draggedTabIndex = hovered
                     val currentW = indicatorWidth.value
                     grabOffset = if (downX in indicatorLeft.value..(indicatorLeft.value + currentW)) {
@@ -563,26 +591,39 @@ fun AdaptiveGlassSegmentedTabRow(
                     } else {
                       (tabWidths.getOrNull(hovered) ?: currentW) / 2f
                     }
-                  }
-                  val nextIndex = tabIndexAt(x)
-                  val targetW = tabWidths.getOrNull(nextIndex)?.takeIf { it > 0f }
-                    ?: indicatorWidth.value
-                  val maxLeft = (totalWidth - targetW).coerceAtLeast(0f)
-                  val desiredLeft = (x - grabOffset).coerceIn(0f, maxLeft)
-                  scope.launch { indicatorLeft.animateTo(desiredLeft, dragSpring) }
-                  if (nextIndex != hovered || draggedTabIndex != nextIndex) {
-                    hovered = nextIndex
-                    draggedTabIndex = nextIndex
-                    scope.launch { indicatorWidth.animateTo(targetW, GlassMotion.default()) }
-                    if (scrollState.maxValue > 0 && viewportWidth > 0) {
-                      val center = (tabLefts[nextIndex] + targetW / 2f).roundToInt()
-                      val desiredScroll = (center - viewportWidth / 2).coerceIn(0, scrollState.maxValue)
-                      scope.launch { scrollState.animateScrollTo(desiredScroll) }
+                    // The pill owns this gesture, including edge scrolling. Keep the pointer in
+                    // viewport coordinates so scrolling cannot feed back into its drag distance.
+                    dragScroll = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                      scrollState.scroll(MutatePriority.PreventUserInput) {
+                        var previousFrame = withFrameNanos { it }
+                        while (true) {
+                          val frame = withFrameNanos { it }
+                          val elapsedSeconds = ((frame - previousFrame) / 1_000_000_000f).coerceAtMost(0.05f)
+                          previousFrame = frame
+                          val hoveredIndex = tabIndexAt(pointerViewportX + scrollState.value)
+                          val targetWidth = tabWidths[hoveredIndex].takeIf { it > 0f } ?: indicatorWidth.value
+                          val viewportLeft = pointerViewportX - grabOffset
+                          val viewportRight = viewportLeft + targetWidth
+                          val overflow = when {
+                            viewportWidth <= 0 -> 0f
+                            viewportLeft < 0f -> viewportLeft
+                            viewportRight > viewportWidth -> viewportRight - viewportWidth
+                            else -> 0f
+                          }
+                          val speed = (overflow * 8f).coerceIn(-maxEdgeScrollSpeed, maxEdgeScrollSpeed)
+                          if (speed != 0f) scrollBy(speed * elapsedSeconds)
+                          updateIndicator(pointerViewportX + scrollState.value)
+                        }
+                      }
                     }
                   }
+                  updateIndicator(x)
                   change.consume()
                 }
               } finally {
+                dragScroll?.cancel()
+                dragLeftAnimation?.cancel()
+                dragWidthAnimation?.cancel()
                 if (dragging) {
                   dragging = false
                   draggedTabIndex = -1
@@ -610,7 +651,7 @@ fun AdaptiveGlassSegmentedTabRow(
         )
 
         AdaptiveTabRowLayout(
-            availableWidthPx = availableInnerWidthPx,
+          availableWidthPx = availableInnerWidthPx,
           gap = GlassSegmentedTabRowDefaults.TabGap,
           modifier = Modifier
             .fillMaxHeight()

@@ -8,8 +8,10 @@ import com.absinthe.libchecker.database.entity.TimeStampItem
 import com.absinthe.libchecker.domain.app.model.PackageChangeState
 import com.absinthe.libchecker.domain.app.repository.PackageListLoadException
 import com.absinthe.libchecker.domain.snapshot.detail.model.SnapshotDetailDiffTextStyle
+import com.absinthe.libchecker.domain.snapshot.detail.model.SnapshotDetailScreenState
 import com.absinthe.libchecker.domain.snapshot.detail.model.SnapshotDetailSection
 import com.absinthe.libchecker.domain.snapshot.list.model.SnapshotCapturePlan
+import com.absinthe.libchecker.domain.snapshot.list.model.SnapshotHomeScreenState
 import com.absinthe.libchecker.domain.snapshot.list.model.SnapshotSystemPropDisplayData
 import com.absinthe.libchecker.domain.snapshot.list.model.SnapshotTimeNodeListData
 import com.absinthe.libchecker.domain.snapshot.list.usecase.BuildSnapshotListUpdatePlanUseCase
@@ -34,6 +36,10 @@ class SnapshotViewModel(
 ) : ViewModel() {
 
   val allSnapshots = snapshotListWorkflow.currentSnapshotCount
+  /** Survives the snapshot tab leaving the composition, so returning to it does not reload. */
+  val homeScreenState = SnapshotHomeScreenState()
+  /** Survives one snapshot detail page losing its composition while a deeper page is open. */
+  val detailScreenState = SnapshotDetailScreenState()
   private val _snapshotDiffItemsUpdates: MutableSharedFlow<Unit> = MutableSharedFlow()
   val snapshotDiffItemsUpdates = _snapshotDiffItemsUpdates.asSharedFlow()
   val snapshotDetailContentFlow: MutableSharedFlow<List<SnapshotDetailSection>> = MutableSharedFlow()

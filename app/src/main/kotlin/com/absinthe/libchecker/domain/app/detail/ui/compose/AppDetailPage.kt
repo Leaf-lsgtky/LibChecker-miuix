@@ -22,6 +22,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.absinthe.libchecker.R
+import com.absinthe.libchecker.annotation.ALL
 import com.absinthe.libchecker.compat.IntentCompat
 import com.absinthe.libchecker.constant.Constants
 import com.absinthe.libchecker.database.entity.Features
@@ -33,6 +34,8 @@ import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel
 import com.absinthe.libchecker.domain.app.model.VersionedFeature
 import com.absinthe.libchecker.domain.home.presentation.RecentVisitsViewModel
 import com.absinthe.libchecker.domain.home.recent.RecentVisit
+import com.absinthe.libchecker.domain.statistics.reference.ui.EXTRA_REF_NAME
+import com.absinthe.libchecker.domain.statistics.reference.ui.EXTRA_REF_TYPE
 import com.absinthe.libchecker.ui.compose.component.AppDetailSkeleton
 import com.absinthe.libchecker.utils.Toasty
 import kotlinx.coroutines.CoroutineStart
@@ -52,7 +55,10 @@ fun AppDetailPage(intent: Intent, onBack: () -> Unit) {
     }
   }
   val extra = remember(intent) { IntentCompat.getParcelableExtra<DetailExtraBean>(intent, EXTRA_DETAIL_BEAN) }
-  var packageInfo by remember(intent) { mutableStateOf<PackageInfo?>(null) }
+  val referenceName = remember(intent) { intent.getStringExtra(EXTRA_REF_NAME) }
+  val referenceType = remember(intent) { intent.getIntExtra(EXTRA_REF_TYPE, ALL) }
+  // A re-entered page keeps the loaded package in the view model, so it must not load it again.
+  var packageInfo by remember(intent) { mutableStateOf<PackageInfo?>(viewModel.loadedPackageInfo(packageName)) }
   var recordVisit by rememberSaveable(intent) { mutableStateOf(true) }
   LaunchedEffect(intent) {
     if (packageName == null) {
@@ -90,7 +96,9 @@ fun AppDetailPage(intent: Intent, onBack: () -> Unit) {
         }
       }
     }
-    viewModel.loadAppDetailPackage(packageName)
+    if (viewModel.loadedPackageInfo(packageName) == null) {
+      viewModel.loadAppDetailPackage(packageName)
+    }
   }
   DisposableEffect(context, packageName) {
     val receiver = object : BroadcastReceiver() {
@@ -129,6 +137,8 @@ fun AppDetailPage(intent: Intent, onBack: () -> Unit) {
           packageInfo = resolved,
           isHarmonyVariant = extra?.variant == Constants.VARIANT_HAP,
           insightViewModel = insightViewModel,
+          referenceName = referenceName,
+          referenceType = referenceType,
           onBack = onBack
         )
       }

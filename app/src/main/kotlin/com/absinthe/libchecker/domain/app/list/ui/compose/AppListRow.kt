@@ -52,6 +52,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.absinthe.libchecker.database.entity.LCItem
 import com.absinthe.libchecker.domain.app.list.model.AppListItemViewState
+import com.absinthe.libchecker.ui.compose.component.resolveAbiBadgeTint
 import com.absinthe.libchecker.ui.compose.theme.lcCondensedFontFamily
 import com.absinthe.libchecker.ui.compose.theme.withCustomFont
 import me.zhanghai.android.appiconloader.AppIconLoader
@@ -94,19 +95,12 @@ fun AppListRow(
     insideMargin = PaddingValues(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 10.dp)
   ) {
     val badgeTint by animateColorAsState(
-      targetValue = resolveAbiBadgeTint(
-        isAbi64Bit = viewState?.isAbiBadge64Bit == true,
-        tintAbiLabels = viewState?.tintAbiLabels == true
-      ),
+      targetValue = resolveAbiBadgeTint(tintAbiLabels = viewState?.tintAbiLabels == true),
       animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
       label = "AppListAbiBadgeTint"
     )
     val multiArchTint by animateColorAsState(
-      targetValue = if (viewState?.tintAbiLabels == true) {
-        colorScheme.secondary
-      } else {
-        colorScheme.onSurfaceVariantSummary
-      },
+      targetValue = resolveAbiBadgeTint(tintAbiLabels = viewState?.tintAbiLabels == true),
       animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
       label = "AppListMultiArchTint"
     )
@@ -376,19 +370,6 @@ fun highlightText(text: String, query: String, highlightColor: Color): Annotated
         start = index + query.length
       }
     }
-  }
-}
-
-@Composable
-private fun resolveAbiBadgeTint(
-  isAbi64Bit: Boolean,
-  tintAbiLabels: Boolean
-): Color {
-  val colorScheme = MiuixTheme.colorScheme
-  return when {
-    !tintAbiLabels -> colorScheme.onSurfaceVariantSummary
-    isAbi64Bit -> colorScheme.primary
-    else -> colorScheme.secondary
   }
 }
 

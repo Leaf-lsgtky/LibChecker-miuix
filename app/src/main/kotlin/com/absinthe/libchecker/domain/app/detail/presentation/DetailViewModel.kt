@@ -463,6 +463,15 @@ class DetailViewModel(
     return detailPackageLoader.buildPackageComparisonSnapshotItem(basePackage, analysisPackage)
   }
 
+  /** Package already held by this view model, so a re-entered page can skip reloading it. */
+  fun loadedPackageInfo(packageName: String?): PackageInfo? {
+    packageName ?: return null
+    val state = packageState
+    if (!state.hasPackageInfo()) return null
+    val loaded = runCatching { state.packageInfo }.getOrNull() ?: return null
+    return loaded.takeIf { it.packageName == packageName }
+  }
+
   fun reset() {
     Timber.d("reset")
     appStatisticAnalysisJob?.cancel()

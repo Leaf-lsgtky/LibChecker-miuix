@@ -116,6 +116,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.absinthe.libchecker.R
 import com.absinthe.libchecker.annotation.ACTIVITY
+import com.absinthe.libchecker.annotation.ALL
+import com.absinthe.libchecker.annotation.LibType
 import com.absinthe.libchecker.annotation.METADATA
 import com.absinthe.libchecker.annotation.NATIVE
 import com.absinthe.libchecker.annotation.PERMISSION
@@ -144,6 +146,7 @@ import com.absinthe.libchecker.domain.app.detail.model.SignatureDetailItem
 import com.absinthe.libchecker.domain.app.detail.navigation.EXTRA_PACKAGE_NAME
 import com.absinthe.libchecker.domain.app.detail.presentation.DetailViewModel
 import com.absinthe.libchecker.domain.app.detail.ui.AppDetailActivity
+import com.absinthe.libchecker.domain.app.detail.ui.DetailTabItem
 import com.absinthe.libchecker.domain.app.detail.ui.DetailTabSpecBuilder
 import com.absinthe.libchecker.domain.app.list.ui.compose.AppIcon
 import com.absinthe.libchecker.domain.app.model.PackageInfoFormatter
@@ -164,6 +167,7 @@ import com.absinthe.libchecker.ui.compose.component.TopBarSearchConfig
 import com.absinthe.libchecker.ui.compose.component.adaptiveVerticalScroll
 import com.absinthe.libchecker.ui.compose.component.rememberFittingTabMinWidth
 import com.absinthe.libchecker.ui.compose.component.rememberTopBarSearchState
+import com.absinthe.libchecker.ui.compose.component.resolveAbiBadgeTint
 import com.absinthe.libchecker.ui.compose.theme.lcCondensedFontFamily
 import com.absinthe.libchecker.ui.compose.theme.withCustomFont
 import com.absinthe.libchecker.ui.compose.util.WideContentBox
@@ -217,6 +221,9 @@ import top.yukonga.miuix.kmp.window.WindowBottomSheet
 import top.yukonga.miuix.kmp.window.WindowDialog
 import com.absinthe.libchecker.ui.compose.component.FastScrollLazyColumn as LazyColumn
 
+/** One library/component entry a caller asked the page to reveal, keyed by its category tab. */
+private data class DetailItemTarget(@LibType val type: Int, val name: String)
+
 /**
  * App detail page: header card with feature badges, category tabs and the component/library list of
  * the selected tab. Rows follow the flat, divider separated layout used by the system app info page.
@@ -230,6 +237,8 @@ fun AppDetailScreen(
   isHarmonyVariant: Boolean = false,
   insightViewModel: com.absinthe.libchecker.domain.app.detail.presentation.LibraryInsightViewModel? = null,
   onCompareWithInstalled: (() -> Unit)? = null,
+  referenceName: String? = null,
+  @LibType referenceType: Int = ALL,
   listState: LazyListState = rememberLazyListState()
 ) {
   val context = LocalContext.current
@@ -259,6 +268,32 @@ fun AppDetailScreen(
       pagerState.scrollToPage(0)
       detailPagerState.syncPage()
     }
+  }
+  // A caller can ask for one component/library entry (snapshot detail rows, reference lists and
+  // recent visits). Mirror the ViewPager behaviour: switch to the matching category tab, scroll the
+  // target row about a quarter down the viewport and highlight it.
+  var referenceTarget by remember { mutableStateOf<DetailItemTarget?>(null) }
+  var highlightedTarget by remember { mutableStateOf<DetailItemTarget?>(null) }
+  var referenceApplied by remember { mutableStateOf(false) }
+  val referenceNavigation = remember(packageInfo.packageName, referenceName, referenceType, pages) {
+    viewModel.buildDetailReferenceNavigation(
+      packageName = packageInfo.packageName,
+      refName = referenceName,
+      refType = referenceType,
+      visibleTypes = pages.map(DetailTabItem::type)
+    )
+  }
+  LaunchedEffect(referenceNavigation) {
+    val navigation = referenceNavigation ?: return@LaunchedEffect
+    if (referenceApplied) return@LaunchedEffect
+    referenceApplied = true
+    val target = DetailItemTarget(navigation.type, navigation.targetName)
+    highlightedTarget = target
+    referenceTarget = target
+    if (pagerState.currentPage != navigation.tabPosition) {
+      pagerState.scrollToPage(navigation.tabPosition)
+    }
+    detailPagerState.syncPage()
   }
   val selectedTab = detailPagerState.selectedPage.coerceIn(0, (pages.size - 1).coerceAtLeast(0))
   val selectedType = pages.getOrNull(selectedTab)?.type ?: NATIVE
@@ -327,8 +362,9 @@ fun AppDetailScreen(
     mutableStateOf<AppDetailHeaderExtraInfo?>(null)
   }
   LaunchedEffect(packageInfo.packageName) {
+    // The detail header follows the global display options, not the item-level ones.
     val showAndroidVersion =
-      (GlobalValues.itemAdvancedOptions and AdvancedOptions.SHOW_ANDROID_VERSION) != 0
+      (GlobalValues.advancedOptions and AdvancedOptions.SHOW_ANDROID_VERSION) != 0
     headerExtraInfo = runCatching {
       viewModel.buildAppDetailHeaderExtraInfo(packageInfo, showAndroidVersion)
     }.getOrNull()
@@ -345,7 +381,10 @@ fun AppDetailScreen(
         canShowAppIcons = viewModel.featureState.appIcons.isNotEmpty()
       )?.let { item ->
         if (featureItems.none { it.titleRes == item.titleRes }) {
-          featureItems.add(item)
+          // Badges arrive in detection order, and some (the 16 KB page size one) come from a
+          // separate background scan. Insert them into their priority slot so the row keeps the
+          // same order on every visit instead of following whichever scan finished first.
+          featureItems.add(item.position?.coerceIn(0, featureItems.size) ?: featureItems.size, item)
         }
       }
     }
@@ -932,6 +971,22 @@ fun AppDetailScreen(
     }
   }
 
+  // The reference row was scrolled into view: give it the whole viewport by folding the header.
+  val onReferenceScrolled: () -> Unit = {
+    referenceTarget = null
+    if (maxCollapsePx > 0f) {
+      scope.launch {
+        animate(
+          initialValue = headerCollapsePx,
+          targetValue = maxCollapsePx,
+          animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+        ) { value, _ ->
+          headerCollapsePx = value
+        }
+      }
+    }
+  }
+
   MiuixPageHost(
     modifier = modifier.fillMaxSize(),
     enableMenuBackdrop = true,
@@ -1195,7 +1250,9 @@ fun AppDetailScreen(
                   ) {
                     itemsIndexed(
                       items = featureItems,
-                      key = { index, item -> "${item.titleRes}-$index" }
+                      // The title resource is unique per badge; an index based key would make every
+                      // later badge look like a new item whenever an earlier one gets inserted.
+                      key = { _, item -> item.titleRes.toString() }
                     ) { _, item ->
                       FeatureChip(
                         item = item,
@@ -1331,7 +1388,10 @@ fun AppDetailScreen(
                     regexName = chip.rule?.regexName
                   )
                 },
-                onLongPressChip = { longPressChip = it }
+                onLongPressChip = { longPressChip = it },
+                referenceTargetName = referenceTarget?.takeIf { it.type == pageType }?.name,
+                highlightedItemName = highlightedTarget?.takeIf { it.type == pageType }?.name,
+                onReferenceScrolled = onReferenceScrolled
               )
             }
           }
@@ -1381,20 +1441,7 @@ fun AppDetailScreen(
               chip.rule?.label?.contains(activeQuery, ignoreCase = true) == true ||
               chip.labels.any { it.contains(activeQuery, ignoreCase = true) }
           }
-          if (sortBySize) {
-            filtered.sortedByDescending { it.item.size }
-          } else if (activePageType == NATIVE) {
-            filtered.sortedWith(
-              compareByDescending<LibStringItemChip> { it.rule != null }
-                .thenByDescending { it.item.size }
-                .thenBy { it.item.name.lowercase() }
-            )
-          } else {
-            filtered.sortedWith(
-              compareByDescending<LibStringItemChip> { it.rule != null }
-                .thenBy { it.item.name.lowercase() }
-            )
-          }
+          viewModel.sortDetailItems(filtered, activePageType)
         }
         val permissionNotGrantedLabel = stringResource(R.string.permission_not_granted)
         val permissionNotGrantedColor = colorScheme.error.toArgb()
@@ -1505,7 +1552,10 @@ private fun DetailTabPage(
   onOpenPermissionDetail: (String) -> Unit,
   onOpenSignatureDetail: (String) -> Unit,
   onOpenLibDetail: (LibStringItemChip) -> Unit,
-  onLongPressChip: (LibStringItemChip) -> Unit
+  onLongPressChip: (LibStringItemChip) -> Unit,
+  referenceTargetName: String? = null,
+  highlightedItemName: String? = null,
+  onReferenceScrolled: () -> Unit = {}
 ) {
   val colorScheme = MiuixTheme.colorScheme
   val isComponentType = !isHarmonyMode &&
@@ -1549,20 +1599,7 @@ private fun DetailTabPage(
     } ?: emptyList()
   }
   val displayItems = remember(filteredItems, sortBySize, pageType) {
-    if (sortBySize) {
-      filteredItems.sortedByDescending { it.item.size }
-    } else if (pageType == NATIVE) {
-      filteredItems.sortedWith(
-        compareByDescending<LibStringItemChip> { it.rule != null }
-          .thenByDescending { it.item.size }
-          .thenBy { it.item.name.lowercase() }
-      )
-    } else {
-      filteredItems.sortedWith(
-        compareByDescending<LibStringItemChip> { it.rule != null }
-          .thenBy { it.item.name.lowercase() }
-      )
-    }
+    viewModel.sortDetailItems(filteredItems, pageType)
   }
   val itemPlacementSpec = remember {
     spring<IntOffset>(
@@ -1570,6 +1607,24 @@ private fun DetailTabPage(
       stiffness = Spring.StiffnessMediumLow,
       visibilityThreshold = IntOffset.VisibilityThreshold
     )
+  }
+  val showsProcessRow = supportsProcessFilter &&
+    processColors.isNotEmpty() &&
+    (pageType == PERMISSION || GlobalValues.processMode || processColors.size > 1)
+  val leadingItemCount = if (showsProcessRow) 2 else 1
+  LaunchedEffect(referenceTargetName, displayItems) {
+    val target = referenceTargetName ?: return@LaunchedEffect
+    if (isLoadingItems || displayItems.isEmpty()) return@LaunchedEffect
+    val index = displayItems.indexOfFirst { it.item.name == target }
+    if (index >= 0) {
+      // A negative offset parks the row below the top edge, about a quarter down the viewport.
+      val viewportHeight = listState.layoutInfo.viewportSize.height
+      listState.scrollToItem(
+        index = leadingItemCount + index,
+        scrollOffset = -(if (viewportHeight > 0) viewportHeight / 4 else 0)
+      )
+    }
+    onReferenceScrolled()
   }
 
   LazyColumn(
@@ -1603,11 +1658,7 @@ private fun DetailTabPage(
         }
       }
     }
-    if (
-      supportsProcessFilter &&
-      processColors.isNotEmpty() &&
-      (pageType == PERMISSION || GlobalValues.processMode || processColors.size > 1)
-    ) {
+    if (showsProcessRow) {
       item(key = "processes") {
         Row(
           modifier = Modifier
@@ -1674,6 +1725,7 @@ private fun DetailTabPage(
         DetailItemRow(
           chip = chip,
           highlight = query,
+          highlighted = highlightedItemName != null && chip.item.name == highlightedItemName,
           indicatorColor = indicatorColor,
           isFirst = index == 0,
           isLast = index == displayItems.lastIndex,
@@ -1817,7 +1869,8 @@ private fun DetailHeader(
           text = "${packageInfo.versionName} (${PackageInfoCompat.getLongVersionCode(packageInfo)})",
           style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp).withCustomFont(condensedFont),
           color = colorScheme.onSurfaceVariantSummary,
-          maxLines = 1
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis
         )
       }
     }
@@ -1882,8 +1935,6 @@ private fun DetailHeader(
       text = infoLineText,
       style = MiuixTheme.textStyles.footnote1.copy(fontSize = 12.sp).withCustomFont(condensedFont),
       color = colorScheme.onSurfaceVariantSummary.copy(alpha = 0.85f),
-      maxLines = 2,
-      overflow = TextOverflow.Ellipsis,
       modifier = Modifier
         .padding(start = 70.dp)
         .combinedClickable(
@@ -1901,6 +1952,7 @@ private fun DetailHeader(
       )
     }
     val abiLabels = abiLabelData?.labels.orEmpty()
+    val tintAbiLabels = (GlobalValues.advancedOptions and AdvancedOptions.TINT_ABI_LABEL) != 0
     val fallbackAbi = appInfo?.nativeLibraryDir
       ?.substringAfterLast('/')
       ?.takeIf(String::isNotBlank)
@@ -1925,7 +1977,8 @@ private fun DetailHeader(
                 Icon(
                   painter = painterResource(badgeRes),
                   contentDescription = itemLabel.contentDescription,
-                  tint = colorScheme.onSurface.copy(alpha = if (itemLabel.isActive) 1f else 0.4f),
+                  tint = resolveAbiBadgeTint(tintAbiLabels)
+                    .copy(alpha = if (itemLabel.isActive) 1f else 0.5f),
                   modifier = Modifier.size(width = 39.dp, height = 26.dp)
                 )
               } else {
@@ -2036,12 +2089,19 @@ private fun DetailItemRow(
   isLast: Boolean,
   onClick: () -> Unit,
   onLongClick: () -> Unit,
+  highlighted: Boolean = false,
   modifier: Modifier = Modifier
 ) {
   val colorScheme = MiuixTheme.colorScheme
+  val rowColor by animateColorAsState(
+    targetValue = if (highlighted) colorScheme.secondaryContainer else colorScheme.surfaceContainer,
+    animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
+    label = "DetailItemHighlight"
+  )
   CardSegment(
     isFirst = isFirst,
     isLast = isLast,
+    color = rowColor,
     modifier = modifier
   ) {
     Row(
