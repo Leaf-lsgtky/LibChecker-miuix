@@ -313,7 +313,6 @@ fun AppListScreen(
           AdaptiveTopAppBar(
             title = title,
             scrollBehavior = scrollBehavior,
-            isContentScrolled = listState.canScrollBackward,
             search = TopBarSearchConfig(
               state = searchState,
               label = stringResource(R.string.search_hint)
@@ -335,7 +334,6 @@ fun AppListScreen(
                 menuAnchor = filterMenuAnchor,
                 show = showFilterMenu,
                 onShowChange = { showFilterMenu = it },
-                isContentScrolled = listState.canScrollBackward,
                 collapseOnSelection = false
               ) {
                 Icon(

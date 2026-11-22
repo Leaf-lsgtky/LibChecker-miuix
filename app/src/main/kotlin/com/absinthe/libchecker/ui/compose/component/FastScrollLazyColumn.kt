@@ -52,7 +52,6 @@ fun FastScrollLazyColumn(
   val host = LocalFastScrollHost.current?.takeIf { it.view === view }
   SideEffect {
     entry.trackPadding = PaddingValues(top = contentPadding.calculateTopPadding(), bottom = bottomInset)
-    entry.reverseLayout = reverseLayout
     entry.enabled = userScrollEnabled
   }
   DisposableEffect(host, entry) {
@@ -73,8 +72,10 @@ fun FastScrollLazyColumn(
     if (host == null) {
       // A match-parent overlay does not change wrap-content lists or sheet measurements.
       Box(Modifier.matchParentSize()) {
-        FastScrollBar(
+        PageScrollBar(
           entry = entry,
+          topBarBottom = 0f,
+          scrollBehavior = null,
           modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
         )
       }

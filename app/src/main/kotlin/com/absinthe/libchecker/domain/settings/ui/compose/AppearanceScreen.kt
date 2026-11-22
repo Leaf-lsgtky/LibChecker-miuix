@@ -44,7 +44,7 @@ import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.glass.Album
-import top.yukonga.miuix.kmp.icon.glass.Notes
+import top.yukonga.miuix.kmp.icon.glass.NotesFill
 import top.yukonga.miuix.kmp.icon.glass.Search
 import top.yukonga.miuix.kmp.icon.glass.Theme
 import top.yukonga.miuix.kmp.preference.SwitchPreference
@@ -85,7 +85,6 @@ fun AppearanceScreen(
         AdaptiveTopAppBar(
           title = stringResource(R.string.pref_group_appearance),
           scrollBehavior = scrollBehavior,
-          isContentScrolled = listState.canScrollBackward,
           navigationIcon = {
             AdaptiveBackButton(onClick = onBack)
           }
@@ -163,7 +162,7 @@ fun AppearanceScreen(
                   },
                   title = stringResource(R.string.use_custom_font),
                   summary = stringResource(R.string.use_custom_font_summary),
-                  startAction = { SettingsIcon(MiuixIcons.Glass.Notes) }
+                  startAction = { SettingsIcon(MiuixIcons.Glass.NotesFill) }
                 )
                 if (isMiuixOs4Supported()) {
                   val uiVersionItems = listOf(

@@ -11,7 +11,7 @@ import top.yukonga.miuix.kmp.icon.extended.Settings
 import top.yukonga.miuix.kmp.icon.glass.Album as GlassAlbum
 import top.yukonga.miuix.kmp.icon.glass.GridView as GlassGridView
 import top.yukonga.miuix.kmp.icon.glass.ListView as GlassListView
-import top.yukonga.miuix.kmp.icon.glass.Settings as GlassSettings
+import top.yukonga.miuix.kmp.icon.glass.SettingsFill as GlassSettings
 
 /** Top level destinations of the home shell. */
 enum class HomeTab(

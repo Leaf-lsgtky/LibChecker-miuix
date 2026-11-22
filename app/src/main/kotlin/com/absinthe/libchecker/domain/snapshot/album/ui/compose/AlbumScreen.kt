@@ -147,7 +147,6 @@ fun AlbumScreen(
         AdaptiveTopAppBar(
           title = stringResource(R.string.title_album),
           scrollBehavior = scrollBehavior,
-          isContentScrolled = listState.canScrollBackward,
           navigationIcon = {
             AdaptiveBackButton(onClick = onBack)
           }

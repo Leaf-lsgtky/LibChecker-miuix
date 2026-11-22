@@ -1,4 +1,3 @@
-@file:Suppress("ktlint:standard:function-naming")
 @file:OptIn(top.yukonga.miuix.kmp.interfaces.ExperimentalScrollBarApi::class)
 
 package com.absinthe.libchecker.ui.compose.component
@@ -22,6 +21,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
@@ -32,18 +32,28 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.absinthe.libchecker.R
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.ScrollBarAdapter
+import top.yukonga.miuix.kmp.basic.ScrollBehavior
+import top.yukonga.miuix.kmp.basic.VerticalScrollBar
 
 @Stable
 internal class FastScrollEntry(val listState: LazyListState, val adapter: ScrollBarAdapter) {
   var boundsInWindow by mutableStateOf(Rect.Zero)
   var trackPadding by mutableStateOf<PaddingValues>(PaddingValues(0.dp))
-  var reverseLayout by mutableStateOf(false)
   var enabled by mutableStateOf(true)
 }
 
@@ -53,6 +63,9 @@ internal class FastScrollHost(val view: View) {
   var coveringLayers by mutableIntStateOf(0)
   var origin by mutableStateOf(Offset.Zero)
   var topBarBottom by mutableFloatStateOf(0f)
+
+  /** Page scroll behavior, so the scrollbar can drive the top bar while it is dragged. */
+  var scrollBehavior by mutableStateOf<ScrollBehavior?>(null)
   val activeEntry by derivedStateOf {
     // Search/results and pager pages can coexist during transitions. Use the foremost
     // visible viewport; clipped off-screen pager lists must not paint another thumb.
@@ -97,9 +110,10 @@ internal fun FastScrollLayer(
                     layout(width, height) { placeable.place(0, 0) }
                   }
               ) {
-                FastScrollBar(
+                PageScrollBar(
                   entry = entry,
-                  minimumTrackTop = { (host.topBarBottom - entry.boundsInWindow.top).coerceAtLeast(0f) },
+                  topBarBottom = host.topBarBottom,
+                  scrollBehavior = host.scrollBehavior,
                   modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight()
                 )
               }
@@ -110,4 +124,50 @@ internal fun FastScrollLayer(
       foreground()
     }
   }
+}
+
+/**
+ * Miuix scrollbar for [entry], kept below the top bar. The library moves the bar itself, so a
+ * thumb drag also drives the page's top bar and its progressive blur.
+ */
+@Composable
+internal fun PageScrollBar(
+  entry: FastScrollEntry,
+  topBarBottom: Float,
+  scrollBehavior: ScrollBehavior?,
+  modifier: Modifier = Modifier
+) {
+  val density = LocalDensity.current
+  val adapter = entry.adapter
+  val scope = rememberCoroutineScope()
+  val description = stringResource(R.string.fast_scroll)
+  val contentPadding = entry.trackPadding
+  val trackPadding = with(density) {
+    val topBarInset = (topBarBottom - entry.boundsInWindow.top).coerceAtLeast(0f).toDp()
+    PaddingValues(
+      top = maxOf(contentPadding.calculateTopPadding(), topBarInset),
+      bottom = contentPadding.calculateBottomPadding()
+    )
+  }
+  VerticalScrollBar(
+    adapter = adapter,
+    modifier = modifier.semantics {
+      contentDescription = description
+      val range = (adapter.contentSize - adapter.viewportSize).coerceAtLeast(0.0)
+      progressBarRangeInfo = ProgressBarRangeInfo(
+        current = if (range > 0.0) (adapter.scrollOffset / range).toFloat().coerceIn(0f, 1f) else 0f,
+        range = 0f..1f
+      )
+      setProgress { progress ->
+        if (entry.enabled && range > 0.0) {
+          scope.launch { adapter.scrollTo(progress.coerceIn(0f, 1f) * range) }
+          true
+        } else {
+          false
+        }
+      }
+    },
+    trackPadding = trackPadding,
+    topAppBarScrollBehavior = scrollBehavior
+  )
 }

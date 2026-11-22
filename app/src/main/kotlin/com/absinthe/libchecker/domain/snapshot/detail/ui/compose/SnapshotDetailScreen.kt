@@ -117,7 +117,6 @@ fun SnapshotDetailScreen(
   val scrollBehavior = MiuixScrollBehavior()
   var collapsedSections by remember { mutableStateOf(setOf<Int>()) }
   var selectedRuleItem by remember { mutableStateOf<SnapshotDetailItemDisplayData?>(null) }
-  val isScrolled = listState.canScrollBackward
   val showCollapsedTitle by remember(listState) {
     derivedStateOf {
       listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 120
@@ -135,7 +134,6 @@ fun SnapshotDetailScreen(
           title = if (showCollapsedTitle) title.appName.toString() else "",
           subtitle = "",
           scrollBehavior = scrollBehavior,
-          isContentScrolled = isScrolled,
           pinned = true,
           navigationIcon = {
             AdaptiveBackButton(onClick = onBack)

@@ -328,7 +328,7 @@ fun AdaptiveTopBarMenuAction(
   onShowChange: (Boolean) -> Unit,
   modifier: Modifier = Modifier,
   enabled: Boolean = true,
-  isContentScrolled: Boolean = true,
+  isContentScrolled: Boolean? = null,
   collapseOnSelection: Boolean = entries.size <= 1,
   cornerRadius: Dp = IconButtonDefaults.CornerRadius,
   iconContent: @Composable () -> Unit
@@ -352,7 +352,9 @@ fun AdaptiveTopBarMenuAction(
     DisposableEffect(anchorBoundsMap, menuAnchor) {
       onDispose { anchorBoundsMap?.remove(menuAnchor) }
     }
+    val pageBehavior = LocalFastScrollHost.current?.scrollBehavior
     val floating = fallback?.floating ?: isContentScrolled
+      ?: ((pageBehavior?.state?.contentOffset ?: 0f) < 0f)
     val anchorModifier = modifier
       .onGloballyPositioned { coords ->
         anchorBoundsMap?.set(menuAnchor, coords.boundsInWindow())

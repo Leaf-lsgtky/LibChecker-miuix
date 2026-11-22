@@ -202,7 +202,7 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.glass.rememberGlassPopupAnchor
 import top.yukonga.miuix.kmp.icon.MiuixIcons
-import top.yukonga.miuix.kmp.icon.glass.CloudFill
+import top.yukonga.miuix.kmp.icon.glass.Cloud
 import top.yukonga.miuix.kmp.icon.glass.Copy
 import top.yukonga.miuix.kmp.icon.glass.HorizontalSplit
 import top.yukonga.miuix.kmp.icon.glass.Menu
@@ -1052,7 +1052,7 @@ fun AppDetailScreen(
             if (onlineStatisticRulesAvailable) {
               AdaptiveTopBarIconButton(onClick = { showOnlineAnalysis = true }) {
                 Icon(
-                  imageVector = MiuixIcons.Glass.CloudFill,
+                  imageVector = MiuixIcons.Glass.Cloud,
                   contentDescription = stringResource(R.string.app_detail_online_rules_action)
                 )
               }

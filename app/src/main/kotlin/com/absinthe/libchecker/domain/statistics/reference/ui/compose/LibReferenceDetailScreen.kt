@@ -100,8 +100,6 @@ fun LibReferenceDetailScreen(
     }
   }
 
-  val isScrolled = if (loading || apps.isEmpty()) false else listState.canScrollBackward
-
   MiuixPageHost(modifier = modifier.fillMaxSize()) {
     val pageState = this
     Scaffold(
@@ -112,7 +110,6 @@ fun LibReferenceDetailScreen(
         AdaptiveTopAppBar(
           title = refLabel ?: refName,
           scrollBehavior = scrollBehavior,
-          isContentScrolled = isScrolled,
           navigationIcon = {
             AdaptiveBackButton(onClick = onBack)
           }

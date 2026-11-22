@@ -10,7 +10,7 @@ androidX-appfunctions = "1.0.0-rc01"
 androidX-compose = "1.12.1"
 appIconLoader = "1.5.0"
 coil = "2.7.0"
-miuix = "0.9.4-19b5b831-SNAPSHOT"
+miuix = "0.9.5-beta03"
 firebase-bom = "35.2.0"
 hiddenApiRefine = "4.4.0"
 kotlin = "2.4.21"
@@ -87,7 +87,7 @@ miuix-core = { module = "top.yukonga.miuix.kmp:miuix-core-android", version.ref 
 miuix-glass = { module = "top.yukonga.miuix.kmp:miuix-glass-android", version.ref = "miuix" }
 miuix-glass-icons = { module = "top.yukonga.miuix.kmp:miuix-glass-icons-android", version.ref = "miuix" }
 miuix-icons = { module = "top.yukonga.miuix.kmp:miuix-icons-android", version.ref = "miuix" }
-miuix-nav = { module = "top.yukonga.miuix.kmp:miuix-nav-android", version = "0.9.4" }
+miuix-nav = { module = "top.yukonga.miuix.kmp:miuix-nav-android", version.ref = "miuix" }
 miuix-material = { module = "top.yukonga.miuix.kmp:miuix-material-android", version.ref = "miuix" }
 miuix-preference = { module = "top.yukonga.miuix.kmp:miuix-preference-android", version.ref = "miuix" }
 miuix-ui = { module = "top.yukonga.miuix.kmp:miuix-ui-android", version.ref = "miuix" }

@@ -448,11 +448,6 @@ fun SnapshotScreen(
   } else {
     emptyList()
   }
-  val isScrolled = if (timeStamps.isEmpty()) {
-    false
-  } else {
-    listState.canScrollBackward
-  }
 
   MiuixPageHost(
     modifier = modifier.fillMaxSize(),
@@ -487,7 +482,6 @@ fun SnapshotScreen(
           AdaptiveTopAppBar(
             title = stringResource(R.string.title_snapshot),
             scrollBehavior = scrollBehavior,
-            isContentScrolled = isScrolled,
             search = TopBarSearchConfig(
               state = searchState,
               label = stringResource(R.string.search_hint)
@@ -517,7 +511,6 @@ fun SnapshotScreen(
                   menuAnchor = moreMenuAnchor,
                   show = showMoreMenu,
                   onShowChange = { showMoreMenu = it },
-                  isContentScrolled = isScrolled,
                   collapseOnSelection = false
                 ) {
                   Icon(

@@ -47,7 +47,7 @@ import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Contacts
-import top.yukonga.miuix.kmp.icon.glass.Favorites
+import top.yukonga.miuix.kmp.icon.glass.FavoriteFill
 import top.yukonga.miuix.kmp.icon.glass.File
 import top.yukonga.miuix.kmp.icon.glass.Help
 import top.yukonga.miuix.kmp.icon.glass.Info
@@ -83,7 +83,6 @@ fun AboutScreen(
         AdaptiveTopAppBar(
           title = stringResource(R.string.settings_about),
           scrollBehavior = scrollBehavior,
-          isContentScrolled = listState.canScrollBackward,
           navigationIcon = {
             AdaptiveBackButton(onClick = onBack)
           }
@@ -188,7 +187,7 @@ fun AboutScreen(
                 ArrowPreference(
                   title = stringResource(R.string.settings_rate_us),
                   summary = stringResource(R.string.settings_rate_us_summary),
-                  startAction = { AboutIcon(MiuixIcons.Glass.Favorites) },
+                  startAction = { AboutIcon(MiuixIcons.Glass.FavoriteFill) },
                   onClick = { context.openUrlInBrowser(URLManager.PLAY_STORE_DETAIL_PAGE) }
                 )
                 ArrowPreference(

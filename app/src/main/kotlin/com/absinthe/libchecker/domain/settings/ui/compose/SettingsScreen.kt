@@ -75,8 +75,8 @@ import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextField
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.glass.Album
-import top.yukonga.miuix.kmp.icon.glass.CloudFill
-import top.yukonga.miuix.kmp.icon.glass.Favorites
+import top.yukonga.miuix.kmp.icon.glass.Cloud
+import top.yukonga.miuix.kmp.icon.glass.FavoriteFill
 import top.yukonga.miuix.kmp.icon.glass.File
 import top.yukonga.miuix.kmp.icon.glass.Help
 import top.yukonga.miuix.kmp.icon.glass.Info
@@ -158,7 +158,6 @@ private fun SettingsMainPage(
         AdaptiveTopAppBar(
           title = stringResource(R.string.title_settings),
           scrollBehavior = scrollBehavior,
-          isContentScrolled = listState.canScrollBackward
         )
       }
     ) { padding ->
@@ -243,7 +242,7 @@ private fun SettingsMainPage(
             ArrowPreference(
               title = stringResource(R.string.cloud_rules),
               summary = stringResource(R.string.cloud_rules_summary),
-              startAction = { SettingsIcon(MiuixIcons.Glass.CloudFill) },
+              startAction = { SettingsIcon(MiuixIcons.Glass.Cloud) },
               onClick = { showCloudRulesDialog = true }
             )
           }
@@ -317,7 +316,7 @@ private fun SettingsMainPage(
             ArrowPreference(
               title = stringResource(R.string.settings_rate_us),
               summary = stringResource(R.string.settings_rate_us_summary),
-              startAction = { SettingsIcon(MiuixIcons.Glass.Favorites) },
+              startAction = { SettingsIcon(MiuixIcons.Glass.FavoriteFill) },
               onClick = { context.openUrlInBrowser(URLManager.PLAY_STORE_DETAIL_PAGE) }
             )
             ArrowPreference(

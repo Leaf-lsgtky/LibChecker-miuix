@@ -160,7 +160,6 @@ fun ReferenceScreen(
 
   var showFilterMenu by remember { mutableStateOf(false) }
   val homeBottomPadding = LocalHomeBottomPadding.current
-  val isScrolled = if (treemapEnabled) false else listState.canScrollBackward
 
   MiuixPageHost(
     modifier = modifier.fillMaxSize(),
@@ -195,7 +194,6 @@ fun ReferenceScreen(
           AdaptiveTopAppBar(
             title = stringResource(R.string.title_statistics),
             scrollBehavior = scrollBehavior,
-            isContentScrolled = isScrolled,
             search = TopBarSearchConfig(
               state = searchState,
               label = stringResource(R.string.search_hint)

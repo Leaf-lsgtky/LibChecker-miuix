@@ -77,8 +77,6 @@ fun LicensesScreen(
     }
   }
 
-  val isScrolled = if (libraries.isEmpty()) false else listState.canScrollBackward
-
   MiuixPageHost(modifier = modifier.fillMaxSize()) {
     val pageState = this
     Box(modifier = Modifier.fillMaxSize()) {
@@ -88,7 +86,6 @@ fun LicensesScreen(
           AdaptiveTopAppBar(
             title = stringResource(R.string.about_open_source_licenses),
             scrollBehavior = scrollBehavior,
-            isContentScrolled = isScrolled,
             search = TopBarSearchConfig(
               state = searchState,
               label = stringResource(R.string.search_hint)

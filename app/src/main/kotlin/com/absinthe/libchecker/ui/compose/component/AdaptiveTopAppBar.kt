@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -98,26 +99,17 @@ fun AdaptiveTopAppBar(
   val barModifier = modifier.onGloballyPositioned { coordinates ->
     scrollHost?.topBarBottom = coordinates.boundsInWindow().bottom
   }
-  val scrollEntry = scrollHost?.activeEntry
-  val exactScrolled = isContentScrolled ?: scrollEntry?.listState?.canScrollBackward
-  val density = LocalDensity.current
-  val visualContentOffset: (() -> Float)? = remember(scrollEntry, scrollBehavior, density) {
-    scrollEntry?.let { entry ->
-      val rampDistance = with(density) { GlassTopAppBarDefaults.ProgressiveBlurRampDistance.toPx() }
-      val readOffset: () -> Float = {
-        val list = entry.listState
-        val offset = if (list.firstVisibleItemIndex == 0) {
-          -list.firstVisibleItemScrollOffset.toFloat()
-        } else {
-          -rampDistance
-        }
-        offset + (scrollBehavior?.state?.overscrollOffset ?: 0f)
-      }
-      readOffset
+  // The page scrollbar drives this behavior while it is dragged.
+  DisposableEffect(scrollHost, scrollBehavior) {
+    val host = scrollHost
+    host?.scrollBehavior = scrollBehavior
+    onDispose {
+      if (host != null && host.scrollBehavior === scrollBehavior) host.scrollBehavior = null
     }
   }
   val hasOverscrollUp = (scrollBehavior?.state?.overscrollOffset ?: 0f) < -0.5f
-  val scrolled = (exactScrolled ?: ((scrollBehavior?.state?.contentOffset ?: 0f) < 0f)) || hasOverscrollUp
+  val scrolled = (isContentScrolled ?: ((scrollBehavior?.state?.contentOffset ?: 0f) < 0f)) ||
+    hasOverscrollUp
 
   if (search != null) {
     val transition = updateTransition(search.state.expanded, label = "adaptiveTopBarSearch")
@@ -138,8 +130,7 @@ fun AdaptiveTopAppBar(
       resolvedBackdrop = resolvedBackdrop,
       useOs4 = useOs4,
       isWideScreen = isWideScreen,
-      isContentScrolled = exactScrolled,
-      visualContentOffset = visualContentOffset,
+      isContentScrolled = isContentScrolled,
       scrolled = scrolled,
       pinned = pinned,
       navigationIcon = navigationIcon,
@@ -158,8 +149,7 @@ fun AdaptiveTopAppBar(
     resolvedBackdrop = resolvedBackdrop,
     useOs4 = useOs4,
     isWideScreen = isWideScreen,
-    isContentScrolled = exactScrolled,
-    visualContentOffset = visualContentOffset,
+    isContentScrolled = isContentScrolled,
     scrolled = scrolled,
     pinned = pinned,
     navigationIcon = navigationIcon,
@@ -179,7 +169,6 @@ private fun AdaptiveStandardTopAppBar(
   useOs4: Boolean,
   isWideScreen: Boolean,
   isContentScrolled: Boolean?,
-  visualContentOffset: (() -> Float)?,
   scrolled: Boolean,
   pinned: Boolean,
   navigationIcon: @Composable () -> Unit,
@@ -219,7 +208,6 @@ private fun AdaptiveStandardTopAppBar(
         GlassTopAppBar(
           title = title,
           isContentScrolled = isContentScrolled,
-          visualContentOffset = visualContentOffset,
           modifier = modifier,
           progressiveBlur = resolvedBackdrop != null,
           backdrop = resolvedBackdrop,
@@ -234,7 +222,6 @@ private fun AdaptiveStandardTopAppBar(
         GlassTopAppBar(
           title = title,
           modifier = modifier,
-          visualContentOffset = visualContentOffset,
           progressiveBlur = resolvedBackdrop != null,
           backdrop = resolvedBackdrop,
           subtitle = subtitle,

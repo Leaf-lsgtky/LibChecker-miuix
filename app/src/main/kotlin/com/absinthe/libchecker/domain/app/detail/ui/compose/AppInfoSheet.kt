@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.glass.Rocket
-import top.yukonga.miuix.kmp.icon.glass.Settings
+import top.yukonga.miuix.kmp.icon.glass.SettingsFill
 import top.yukonga.miuix.kmp.icon.glass.Share
 import com.absinthe.libchecker.R
 import com.absinthe.libchecker.domain.app.detail.model.AppInfoActionItem
@@ -209,7 +209,7 @@ fun AppInfoSheet(
           modifier = Modifier.weight(1f)
         )
         PrimaryAction(
-          icon = MiuixIcons.Glass.Settings,
+          icon = MiuixIcons.Glass.SettingsFill,
           circleColor = Color(0xFF7B61FF),
           label = stringResource(R.string.app_info_settings),
           onClick = ::openSettings,

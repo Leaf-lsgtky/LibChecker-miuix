@@ -75,12 +75,6 @@ fun TrackScreen(
     viewModel.setQuery(query)
   }
 
-  val isScrolled = if (uiState.isLoading || uiState.loadFailed || uiState.items.isEmpty()) {
-    false
-  } else {
-    listState.canScrollBackward
-  }
-
   MiuixPageHost(modifier = modifier.fillMaxSize()) {
     val pageState = this
     Box(modifier = Modifier.fillMaxSize()) {
@@ -90,7 +84,6 @@ fun TrackScreen(
           AdaptiveTopAppBar(
             title = stringResource(R.string.album_item_track_title),
             scrollBehavior = scrollBehavior,
-            isContentScrolled = isScrolled,
             search = TopBarSearchConfig(
               state = searchState,
               label = stringResource(R.string.search_hint)
